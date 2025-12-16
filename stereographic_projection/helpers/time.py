@@ -3,11 +3,14 @@
 from datetime import datetime, time, timedelta
 import numpy as np
 
+SECONDS_IN_HOUR = 3600.0
+MINUTES_IN_HOUR = 60.0
+SECONDS_IN_DAY = 86400.0
 
 def get_sidereal_time(longitude: float, local: datetime):
     """
     Calculate local sidereal time
-
+    See in "Practical Astronomy with your Calculator", Peter Duffett-Smith, 1979
     :param longitude: place longitude in radians
     :param local: local time
     :return: LST (Local Sidereal Time)
@@ -20,7 +23,7 @@ def get_sidereal_time(longitude: float, local: datetime):
     # From 0 January
     year = gmt.year
     origin = datetime(year, 1, 1, 0, 0, 0) - timedelta(days=1)
-    shift = int((gmt - origin).total_seconds() / 86400.0)
+    shift = int((gmt - origin).total_seconds() / SECONDS_IN_DAY)
 
     # Calculate julian date on 0 January
     jd = julian_date(origin)
@@ -59,7 +62,7 @@ def get_total_hours(t: time) -> float:
     :return: hours
     """
 
-    return t.hour + t.minute / 60.0 + t.second / 3600.0
+    return t.hour + t.minute / MINUTES_IN_HOUR + t.second / SECONDS_IN_HOUR
 
 
 def get_timeshift(longitude: float) -> timedelta:

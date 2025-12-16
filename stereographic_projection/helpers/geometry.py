@@ -27,6 +27,7 @@ class StarView(object):
 class PointProjection(object):
     """
     Class of point projection.
+
     radius: star image circle radius
     phi: star image azimuth
     rho: star image polar radius
@@ -40,13 +41,14 @@ class PointProjection(object):
 def get_horizontal_coords(config: dict, catalog_data: NDArray[Star]):
     """
     Get horizontal coordinates from catalog data.
+
     :param config: place configuration
     :param catalog_data: star catalog data
     :return: horizontal coordinates, zenith distances and azimuths
     """
 
     # Get ECI star coordinates
-    eci_coords = np.array([np.array(list(star.eci_coords)) for star in catalog_data]).T
+    eci_coords = np.array([list(star.eci_coords) for star in catalog_data]).T
 
     # Calculate local sidereal time
     sidereal_time = vequinox_hour_angle(

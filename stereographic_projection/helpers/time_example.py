@@ -11,7 +11,7 @@ print(
             day=22,
             hour=14,
             minute=36,
-            second=52
+            second=52,
         )
     )
 )
