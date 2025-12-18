@@ -1,54 +1,22 @@
 """Module with astronomical geometrical functions."""
-
-from stereographic_projection.hip_catalog.hip_catalog import Star
+from typing import Tuple, Union
+from stereographic_projection.hip_catalog.hip_catalog import CatalogConstraints, NumpyCatalog
 from stereographic_projection.helpers.time import vequinox_hour_angle
 from numpy.typing import NDArray
 import numpy as np
-from dataclasses import dataclass
 
 
-@dataclass
-class HorizontalCoords(object):
-    """Class of horizontal coordinates."""
-
-    zenith_dist: float
-    azimuth: float
-
-
-@dataclass
-class StarView(object):
-    """Class of star view."""
-
-    v_mag : float
-    hor_coords : HorizontalCoords
-
-
-@dataclass
-class PointProjection(object):
-    """
-    Class of point projection.
-
-    radius: star image circle radius
-    phi: star image azimuth
-    rho: star image polar radius
-    """
-
-    radius : float
-    rho: float
-    phi: float
-
-
-def get_horizontal_coords(config: dict, catalog_data: NDArray[Star]):
+def get_horizontal_coords(config: dict, catalog: NumpyCatalog) -> Tuple[NDArray, NDArray, NDArray]:
     """
     Get horizontal coordinates from catalog data.
 
     :param config: place configuration
-    :param catalog_data: star catalog data
+    :param catalog: star catalog data
     :return: horizontal coordinates, zenith distances and azimuths
     """
 
     # Get ECI star coordinates
-    eci_coords = np.array([list(star.eci_coords) for star in catalog_data]).T
+    eci_coords = np.column_stack([catalog.data['x'], catalog.data['y'], catalog.data['z']]).T
 
     # Calculate local sidereal time
     sidereal_time = vequinox_hour_angle(
@@ -70,7 +38,7 @@ def get_horizontal_coords(config: dict, catalog_data: NDArray[Star]):
             [cl * ct, cl * st, sl]
         ]
     )
-    cartesian_hor_coords = rotation_matrix @ eci_coords
+    cartesian_hor_coords =  rotation_matrix @ eci_coords
 
     # 0, 1, 2 is x, y, z below
     azimuths = np.atan2(cartesian_hor_coords[0, :], cartesian_hor_coords[1, :]) - np.pi / 2
@@ -79,35 +47,39 @@ def get_horizontal_coords(config: dict, catalog_data: NDArray[Star]):
     return cartesian_hor_coords, azimuths, zeniths
 
 
-def mag_to_radius(magnitude: float, mag_criteria: float) -> float:
+def mag_to_radius(magnitude: Union[float, NDArray[np.float32]], constrains: CatalogConstraints) -> Union[float, NDArray[np.float32]]:
     """
     Returns radius of the point corresponds to given star magnitude.
     :param magnitude: star magnitude
-    :param mag_criteria: max radius criteria
+    :param constrains: constrains criteria
     :return: radius: star image radius
     """
-    return 1.5*np.max([mag_criteria - magnitude, 0])
+    mag_criteria = constrains.max_magnitude
+    diff = mag_criteria - magnitude
+    radii = 1.5 * np.maximum(diff, 0.0)
+    return radii
 
 
-def make_point_projections(star_view_data: NDArray[StarView], mag_criteria: float) -> NDArray[PointProjection]:
+def make_point_projections(star_view_data: NDArray, constraints: CatalogConstraints) -> NDArray:
     """
     Returns star point projections array.
+
     :param star_view_data: observed stars parameters in horizontal coordinates
-    :param mag_criteria: max star catalog magnitude
+    :param constraints: catalog constraints
     :return: star image point parameters
-
-    TODO: check if it can be implemented using np.where or smth more fast and robust
     """
+    PROJECTION_DTYPE = np.dtype([
+        ('size', np.float32),
+        ('radius', np.float32),
+        ('angle', np.float32),
+        ('hip_id', np.int32),
+    ])
+    number_of_stars = star_view_data.shape[0]
 
-    points_data = np.array(
-        [
-            PointProjection(
-                radius=mag_to_radius(star_view.v_mag, mag_criteria),
-                rho=2 * np.tan(star_view.hor_coords.zenith_dist / 2),
-                phi=star_view.hor_coords.azimuth
-            )
-            for star_view in star_view_data
-            if star_view.hor_coords.zenith_dist <= np.pi / 2
-        ]
-    )
+    points_data = np.zeros(number_of_stars, dtype=PROJECTION_DTYPE)
+    points_data['size'] = mag_to_radius(star_view_data['v_mag'], constraints)
+    points_data['radius'] = 2 * np.tan(star_view_data['zenith'] / 2.0)
+    points_data['angle'] = star_view_data['azimuth']
+    points_data['hip_id'] = star_view_data['hip_id']
+
     return points_data

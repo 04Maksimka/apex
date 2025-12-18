@@ -5,11 +5,11 @@ import numpy as np
 import pathlib
 import hashlib
 import json
-from typing import Dict, Tuple, List, Optional, Any
+from typing import Dict, Tuple, Optional, Any
 
 
 @dataclass
-class Catalogconstraints(object):
+class CatalogConstraints(object):
     """
     Data class of user Hipparchus catalog constraints.
     """
@@ -37,11 +37,11 @@ class NumpyCatalog(object):
 
     catalog_name: str
     catalog_path: pathlib.Path
-    cache_dir: pathlib.Path
+    cache_dir: Optional[pathlib.Path]
     use_cache: bool
 
     _data: Optional[np.ndarray]
-    _constraints: Optional[Catalogconstraints]
+    _constraints: Optional[CatalogConstraints]
     _cache_key: Optional[str]
 
     STAR_DTYPE = np.dtype([
@@ -54,7 +54,7 @@ class NumpyCatalog(object):
         ('hip_id', np.int32),       # hip identifier
     ])
 
-    def __init__(self, catalog_name: str, cache_dir: str, use_cache: bool):
+    def __init__(self, catalog_name: str, cache_dir: Optional[str] = None, use_cache: bool = False):
         """
         :param catalog_name: file star catalog name
         :param cache_dir: caching directory
@@ -64,10 +64,12 @@ class NumpyCatalog(object):
         self.catalog_name = catalog_name
         self.catalog_path = pathlib.Path(__file__).parent.absolute() / self.catalog_name
 
-        # make pathlib object for cache directory if not exist
-        self.cache_dir = pathlib.Path(cache_dir)
+        # Make pathlib object for cache directory if not exist
         self.use_cache = use_cache
-        self.cache_dir.mkdir(exist_ok=True)
+        if use_cache:
+            self.cache_dir = pathlib.Path(cache_dir)
+            # Create directory, if exists do nothing
+            self.cache_dir.mkdir(exist_ok=True)
 
         # internal storage
         self._data = None
@@ -75,7 +77,7 @@ class NumpyCatalog(object):
         self._constraints = None
 
     @staticmethod
-    def _generate_cache_key(constraints: Catalogconstraints) -> str:
+    def _generate_cache_key(constraints: CatalogConstraints) -> str:
         """
         Unique cache key generator.
 
@@ -95,7 +97,7 @@ class NumpyCatalog(object):
     def _get_metadata_path(self, cache_key: str) -> pathlib.Path:
         return self.cache_dir / f"{cache_key}_meta.npy"
 
-    def _is_cached(self, constraints: Catalogconstraints) -> bool:
+    def _is_cached(self, constraints: CatalogConstraints) -> bool:
         """
         Checks if catalog with these constraints is cached or not.
 
@@ -111,7 +113,7 @@ class NumpyCatalog(object):
 
         return cache_file.exists() and meta_file.exists()
 
-    def load_from_cache(self, constraints: Catalogconstraints) -> NDArray:
+    def load_from_cache(self, constraints: CatalogConstraints) -> NDArray:
         """
         Loads catalog from cache.
 
@@ -130,7 +132,7 @@ class NumpyCatalog(object):
         data = np.load(cache_file)
         return data
 
-    def cache_data(self, data: NDArray, constraints: Catalogconstraints):
+    def cache_data(self, data: NDArray, constraints: CatalogConstraints):
         """
         Store data to cache
 
@@ -171,37 +173,41 @@ class NumpyCatalog(object):
         clean_data = self._clean_raw_data(raw_data)
         return clean_data
 
-    def _apply_constraints(self, data: NDArray, constraints: Catalogconstraints) -> NDArray:
+    @staticmethod
+    def _apply_constraints(data: NDArray, constraints: CatalogConstraints) -> NDArray:
         """
         Applies constraints to raw data
 
         :param data: data to constraint
         :param constraints: constraints
-        :return: constrained data
+        :return: filtered data
         """
 
         masks = []
 
         # Magnitude filtering
-        if constraints.max_magnitude is not None:
-            mask_mag = (constraints.min_magnitude <= data['Vmag']) & (data['Vmag'] <= constraints.max_magnitude)
+        if constraints.min_magnitude is not None:
+            mask_mag = (data['v_mag'] >= constraints.min_magnitude) & (data['v_mag'] <= constraints.max_magnitude)
+            masks.append(mask_mag)
+        else:
+            mask_mag = (data['v_mag'] <= constraints.max_magnitude)
             masks.append(mask_mag)
 
         # Declination filtering
         if constraints.min_magnitude is not None:
-            mask_min_mag = data['Vmag'] >= constraints.min_magnitude
+            mask_min_mag = data['v_mag'] >= constraints.min_magnitude
             masks.append(mask_min_mag)
 
         # Right ascension filtering
         if constraints.ra_range is not None:
             ra_min, ra_max = constraints.ra_range
-            mask_ra = (data['_RAJ2000'] >= ra_min) & (data['_RAJ2000'] <= ra_max)
+            mask_ra = (data['ra'] >= ra_min) & (data['ra'] <= ra_max)
             masks.append(mask_ra)
 
         # Declination filtering
         if constraints.dec_range is not None:
             dec_min, dec_max = constraints.dec_range
-            mask_dec = (data['_DEJ2000'] >= dec_min) & (data['_DEJ2000'] <= dec_max)
+            mask_dec = (data['dec'] >= dec_min) & (data['dec'] <= dec_max)
             masks.append(mask_dec)
 
         # Combine all the masks
@@ -225,8 +231,8 @@ class NumpyCatalog(object):
 
         structured_data['v_mag'] = raw_data['Vmag'].astype(np.float32)
 
-        ra = np.deg2rad(raw_data['_RAJ2000'])
-        dec = np.deg2rad(raw_data['_DEJ2000'])
+        ra = np.deg2rad(raw_data['_RAJ2000'].astype(np.float32))
+        dec = np.deg2rad(raw_data['_DEJ2000'].astype(np.float32))
         structured_data['ra'] = ra
         structured_data['dec'] = dec
 
@@ -242,14 +248,14 @@ class NumpyCatalog(object):
 
         return structured_data
 
-    def get_stars(self, constraints: Optional[Catalogconstraints] = None) -> NDArray:
+    def get_stars(self, constraints: Optional[CatalogConstraints] = None) -> NDArray:
         """
         Main catalog generation method
 
         :param constraints: constraints, optional, defaults to None
         """
         if constraints is None:
-            constraints = Catalogconstraints()
+            constraints = CatalogConstraints()
 
         if self._is_cached(constraints):
             self._data = self.load_from_cache(constraints)
@@ -258,10 +264,10 @@ class NumpyCatalog(object):
 
         # Load from file
         raw_data = self._load_raw_data()
-        # Apply constraints
-        filtered_data = self._apply_constraints(raw_data, constraints)
         # Convert to star type, save state and store to cache
-        self._data = self._convert_to_structured_numpy(filtered_data)
+        structured_data = self._convert_to_structured_numpy(raw_data)
+        # Apply constraints
+        self._data = self._apply_constraints(structured_data, constraints)
         self._constraints = constraints
         self.cache_data(self._data, constraints)
 
@@ -272,6 +278,14 @@ class NumpyCatalog(object):
         if self._data is None:
             self.get_stars()
         return self._data
+
+    @property
+    def number_of_stars(self) -> int:
+        return self._data.shape[0]
+
+    @property
+    def constraints(self) -> Optional[CatalogConstraints]:
+        return self._constraints
 
     @staticmethod
     def _clean_raw_data(raw_data):
@@ -289,129 +303,19 @@ class NumpyCatalog(object):
         return clean_data
 
 
-
-@dataclass
-class EquatorialCoords(object):
-    """Data class of equatorial coordinates."""
-
-    right_ascension: float
-    declination: float
-
-    def __repr__(self):
-        return f'(alpha:{np.rad2deg(self.right_ascension):8.2f}, ' \
-               f'delta:{np.rad2deg(self.declination):8.2f})'
-
-
-@dataclass
-class ECICoords(object):
-    """Data class of ECI coordinates."""
-
-    x: float
-    y: float
-    z: float
-
-    def __repr__(self):
-        return f'(x: {self.x:6.2f}, y: {self.y:6.2f}, z: {self.z:6.2f})'
-
-    def __iter__(self):
-        for att in ['x', 'y', 'z']:
-            yield getattr(self, att)
-
-
-@dataclass
-class Star(object):
-    """Class of a singular star."""
-
-    v_mag: float                    # visual magnitude
-    eq_coords: EquatorialCoords     # equatorial coordinates (alpha, delta)
-
-    def __repr__(self):
-        return f'eq={self.eq_coords}, eci={self.eci_coords}, m={self.v_mag:7.2f}'
-
-    @property
-    def eci_coords(self) -> ECICoords:
-        """Initialize ECI coordinates."""
-
-        # short names for usage
-        alpha = self.eq_coords.right_ascension
-        delta = self.eq_coords.declination
-
-        # to spherical coordinate system
-        x = np.cos(alpha) * np.cos(delta)
-        y = np.sin(alpha) * np.cos(delta)
-        z = np.sin(delta)
-
-        return ECICoords(x=x, y=y, z=z)
-
-
-@dataclass
-class Catalog(object):
-    """
-    Hipparchus catalog.
-    """
-
-    mag_criteria: float = 5.5
-    catalog_name: str = 'hip_data.tsv'
-
-    def parse_data(self) -> NDArray[Star]:
-        """
-        Returns list of stars with given constraints.
-        """
-
-        catalog_path = pathlib.Path(__file__).parent.absolute() / self.catalog_name
-
-        # read data from file
-        raw_data = np.genfromtxt(
-            fname=catalog_path,
-            delimiter=';',
-            dtype=None,
-            names=True,
-            encoding='utf-8',
-            missing_values='',
-            filling_values=None
-        )
-
-        cleaned_data = self._clean_raw_data(raw_data)
-
-        # make numpy array of Stars
-        data = np.array(
-            [
-                Star(
-                    v_mag=float(line['Vmag']),
-                    eq_coords=EquatorialCoords(
-                        right_ascension=np.deg2rad(float(line['_RAJ2000'])),
-                        declination=np.deg2rad(float(line['_DEJ2000']))
-                    )
-                )
-                for line in cleaned_data
-            ],
-            dtype=Star
-        )
-        return data
-
-    @staticmethod
-    def _clean_raw_data(raw_data):
-        """
-        function removing units and rows with missing values
-        in right ascension and declinations columns
-
-        :param raw_data: source catalog data
-        :return: cleaned catalog data
-        """
-        raw_data = raw_data[1:]
-        mask = (raw_data['_RAJ2000'] != '') & (raw_data['_DEJ2000'] != '')
-        clean_data = raw_data[mask]
-
-        return clean_data
-
-
 def main():
     """Main function."""
 
     # test catalog print
-    catalog = Catalog()
-    data = catalog.parse_data()
-    print(data)
+    catalog = NumpyCatalog(catalog_name='hip_data.tsv', use_cache=False)
+    constraints = CatalogConstraints(
+        max_magnitude=6.0,
+    )
+    data = catalog.get_stars(constraints=constraints)
+    print(data[['x', 'y', 'z']].view('f4'))
+    print(data[['x', 'y', 'z']])
+    xyz = np.column_stack([data['x'], data['y'], data['z']]).T
+    print(xyz[0, :])
 
 if __name__ == "__main__":
     main()

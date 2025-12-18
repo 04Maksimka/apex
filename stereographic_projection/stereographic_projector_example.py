@@ -1,5 +1,5 @@
 from stereographic_projection.stereographic_projector import StereoProjector, StereoProjConfig
-from stereographic_projection.hip_catalog.hip_catalog import Catalog
+from stereographic_projection.hip_catalog.hip_catalog import NumpyCatalog
 from stereographic_projection.helpers.pdf_helpers.figure2pdf import save_figure
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -33,11 +33,11 @@ if __name__ == "__main__":
             minute=20,
             second=40
         ),
-        latitude=-21.1111,
-        longitude=125.926
+        latitude=90.0,
+        longitude=0.0
     )
 
-    catalog = Catalog()
+    catalog = NumpyCatalog(catalog_name="hip_data.tsv")
     proj = StereoProjector(cfg, catalog)
 
     figure = proj.generate()

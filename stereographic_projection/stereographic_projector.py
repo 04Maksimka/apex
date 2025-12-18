@@ -4,8 +4,8 @@ from datetime import datetime
 from numpy.typing import NDArray
 import numpy as np
 from matplotlib import pyplot as plt
-from stereographic_projection.hip_catalog.hip_catalog import Catalog, Star
-from stereographic_projection.helpers.geometry import get_horizontal_coords, make_point_projections, StarView, PointProjection, HorizontalCoords
+from stereographic_projection.hip_catalog.hip_catalog import NumpyCatalog
+from stereographic_projection.helpers.geometry import get_horizontal_coords, make_point_projections
 
 
 @dataclass
@@ -26,59 +26,60 @@ class StereoProjConfig(object):
 class StereoProjector(object):
     """Class of the stereographic projector."""
 
-    def __init__(self, config: StereoProjConfig, catalog: Catalog):
+    def __init__(self, config: StereoProjConfig, catalog: NumpyCatalog):
         self.config = config
         self.catalog = catalog
 
     def generate(self) -> plt.Figure:
         """
         Generate a projection.
+
         :return: figure
         """
 
         # Get catalog
-        catalog_data = self.catalog.parse_data()
+        catalog_data = self.catalog.get_stars()
         # From equatorial to horizontal
-        star_view_data = self._make_star_views(catalog_data)
+        star_view_data = self._make_star_views()
         # Make projections
-        points_data = make_point_projections(star_view_data, self.catalog.mag_criteria)
+        points_data = make_point_projections(star_view_data, self.catalog.constraints)
         # Make figure with projections
         fig, _ = self._create_polar_scatter(points_data)
 
         return fig
 
 
-    def _make_star_views(self, catalog_data: NDArray[Star]) -> NDArray[StarView]:
+    def _make_star_views(self) -> NDArray:
         """
         Returns horizontal coordinates.
-        :param catalog_data: catalog of the stars
+
         :return: star view parameters
         """
+        STAR_VIEW_DTYPE = np.dtype([
+            ('v_mag', np.float32),  # visual magnitude, m
+            ('zenith', np.float32),
+            ('azimuth', np.float32),
+            ('hip_id', np.int32),  # hip identifier
+        ])
 
-        _, azimuths, zeniths = get_horizontal_coords(self.config.__dict__, catalog_data=catalog_data)
+        _, azimuths, zeniths = get_horizontal_coords(self.config.__dict__, catalog=self.catalog)
 
-        magnitudes = np.array([star.v_mag for star in catalog_data])
+        number_of_stars = self.catalog.number_of_stars
+        star_view_data = np.zeros(number_of_stars, dtype=STAR_VIEW_DTYPE)
+        star_view_data['v_mag'] = self.catalog.data['v_mag']
+        star_view_data['zenith'] = zeniths
+        star_view_data['azimuth'] = azimuths
+        star_view_data['hip_id'] = self.catalog.data['hip_id']
 
-        star_view_data = np.array(
-            [
-                StarView(
-                    v_mag=m,
-                    hor_coords=HorizontalCoords(
-                        zenith_dist=z,
-                        azimuth=a
-                    )
-                )
-                for m, z, a in zip(magnitudes, zeniths, azimuths)
-            ]
-        )
         return star_view_data
 
 
 
     @staticmethod
-    def _create_polar_scatter(data: NDArray[PointProjection]):
+    def _create_polar_scatter(data: NDArray):
         """
         Create a scatter plot in polar coordinates.
+
         :param data: projection points to place on figure
         """
 
@@ -87,14 +88,14 @@ class StereoProjector(object):
         ax = fig.add_subplot(111, projection='polar')
 
         # Get parameters from projections data array
-        sizes = [point.radius for point in data]
-        phi = [point.phi for point in data]
-        rho = [point.rho for point in data]
+        sizes = data['size']
+        angles = data['angle']
+        radii = data['radius']
 
         # Make scatter
         ax.scatter(
-            phi,
-            rho,
+            angles,
+            radii,
             c='black',
             s=sizes,
             alpha=0.7,
