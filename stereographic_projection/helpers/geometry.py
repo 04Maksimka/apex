@@ -50,7 +50,7 @@ def get_horizontal_coords(config: dict, catalog: NumpyCatalog) -> Tuple[NDArray,
 def mag_to_radius(magnitude: Union[float, NDArray[np.float32]], constrains: CatalogConstraints) -> Union[float, NDArray[np.float32]]:
     """
     Returns radius of the point corresponds to given star magnitude.
-    :param magnitude: star magnitude
+    :param magnitude: star magnitude(s)
     :param constrains: constrains criteria
     :return: radius: star image radius
     """

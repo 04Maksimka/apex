@@ -1,12 +1,19 @@
+from sqlalchemy.dialects.mssql.information_schema import constraints
+
 from stereographic_projection.stereographic_projector import StereoProjector, StereoProjConfig
-from stereographic_projection.hip_catalog.hip_catalog import NumpyCatalog
+from stereographic_projection.hip_catalog.hip_catalog import NumpyCatalog, CatalogConstraints
 from stereographic_projection.helpers.pdf_helpers.figure2pdf import save_figure
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-def stars_with_logo(figure, need_pdf: bool = False):
-    """Example with local logo file."""
-    # Footer text
+def stars_with_logo(figure: plt.Figure, need_pdf: bool = False):
+    """
+    Example with local logo file.
+
+    :param figure: projection figure to plot
+    :param need_pdf: enable / disable pdf saving
+    """
+
     footer = "© 2025 AstraGeek. All rights reserved."
 
     if need_pdf:
@@ -23,8 +30,18 @@ def stars_with_logo(figure, need_pdf: bool = False):
 
 
 if __name__ == "__main__":
-    cfg = StereoProjConfig(
+
+    # Configure catalog
+    constraints = CatalogConstraints(
+        max_magnitude=8.0,
+        dec_range=(45.0, 90.0),
+    )
+
+    # Configure projection: date, time and place
+    config = StereoProjConfig(
         add_ecliptic=True,
+        add_equator=True,
+        add_galactic_equator=True,
         local_time=datetime(
             year=2025,
             month=9,
@@ -33,12 +50,25 @@ if __name__ == "__main__":
             minute=20,
             second=40
         ),
-        latitude=90.0,
+        latitude=45.0,
         longitude=0.0
     )
 
-    catalog = NumpyCatalog(catalog_name="hip_data.tsv")
-    proj = StereoProjector(cfg, catalog)
+    # Create catalog object (without data)
+    catalog = NumpyCatalog(
+        catalog_name='hip_data.tsv',
+        cache_dir='cache',
+        use_cache=True
+    )
 
-    figure = proj.generate()
+    # Create projector object with configuration
+    proj = StereoProjector(
+        config=config,
+        catalog=catalog
+    )
+
+    # Make figure with constrains
+    figure = proj.generate(constraints=constraints)
+
+    # Plot figure
     stars_with_logo(figure, need_pdf=False)

@@ -19,6 +19,26 @@ class CatalogConstraints(object):
     ra_range: Optional[Tuple[float, float]] = None  # right ascension range
     dec_range: Optional[Tuple[float, float]] = None # declination range
 
+    def __post_init__(self):
+        if self.ra_range and self.ra_range[0] > self.ra_range[1]:
+            raise ValueError(f'Invalid right ascension interval: {self.ra_range}')
+        if self.dec_range and self.dec_range[0] > self.dec_range[1]:
+            raise ValueError(f'Invalid declination interval: {self.ra_range}')
+        if self.dec_range and (abs(self.dec_range[0]) > 90 or abs(self.dec_range[1]) > 90):
+            raise ValueError(f'Declination must be in range [-90, 90]')
+
+        if self.ra_range:
+            self.ra_range = (
+                np.deg2rad(self.ra_range[0]) % (2 * np.pi),
+                np.deg2rad(self.ra_range[1]) % (2 * np.pi)
+            )
+
+        if self.dec_range:
+            self.dec_range = (
+                np.deg2rad(self.dec_range[0]),
+                np.deg2rad(self.dec_range[1])
+            )
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert constraints to a dictionary for caching"""
 
@@ -35,14 +55,14 @@ class NumpyCatalog(object):
     Hipparchus catalog optimized for fast numpy operating.
     """
 
-    catalog_name: str
-    catalog_path: pathlib.Path
-    cache_dir: Optional[pathlib.Path]
-    use_cache: bool
+    catalog_name: str                           # catalog filename
+    catalog_path: pathlib.Path                  # path to the catalog with catalog_name
+    cache_dir: Optional[pathlib.Path]           # cache directory
+    use_cache: bool                             # enable / disable caching
 
-    _data: Optional[np.ndarray]
-    _constraints: Optional[CatalogConstraints]
-    _cache_key: Optional[str]
+    _data: Optional[np.ndarray]                 # catalog data storage
+    _constraints: Optional[CatalogConstraints]  # constrains
+    _cache_key: Optional[str]                   # key for cache with chosen constrains
 
     STAR_DTYPE = np.dtype([
         ('v_mag', np.float32),      # visual magnitude, m
@@ -79,7 +99,7 @@ class NumpyCatalog(object):
     @staticmethod
     def _generate_cache_key(constraints: CatalogConstraints) -> str:
         """
-        Unique cache key generator.
+        Unique cache key generator for chosen catalog constraints.
 
         :param constraints: catalog constraints
         :return: sha256 key string
@@ -92,9 +112,11 @@ class NumpyCatalog(object):
         return hashlib.sha256(hash_json.encode()).hexdigest()
 
     def _get_cache_path(self, cache_key: str) -> pathlib.Path:
+        """ Get path to the cache file by cache key. """
         return self.cache_dir / f"{cache_key}.npy"
 
     def _get_metadata_path(self, cache_key: str) -> pathlib.Path:
+        """ Get path to the metadata by cache key. """
         return self.cache_dir / f"{cache_key}_meta.npy"
 
     def _is_cached(self, constraints: CatalogConstraints) -> bool:

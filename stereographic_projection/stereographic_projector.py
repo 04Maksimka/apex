@@ -1,10 +1,12 @@
 """Module implementing main stereographic projection."""
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Optional, Tuple
+
 from numpy.typing import NDArray
 import numpy as np
 from matplotlib import pyplot as plt
-from stereographic_projection.hip_catalog.hip_catalog import NumpyCatalog
+from stereographic_projection.hip_catalog.hip_catalog import NumpyCatalog, CatalogConstraints
 from stereographic_projection.helpers.geometry import get_horizontal_coords, make_point_projections
 
 
@@ -13,6 +15,8 @@ class StereoProjConfig(object):
     """Class of configuration of the StereoProjector."""
 
     add_ecliptic: bool
+    add_equator: bool
+    add_galactic_equator: bool
     local_time: datetime
     latitude: float
     longitude: float
@@ -22,15 +26,19 @@ class StereoProjConfig(object):
         self.longitude = np.deg2rad(self.longitude)
 
 
-
 class StereoProjector(object):
     """Class of the stereographic projector."""
+
+    catalog: NumpyCatalog       # Star catalog
+    config: StereoProjConfig    # Stereo projector configuration
+    _fig: plt.Figure            # Skychart figure
+    _ax: plt.Axes               # Skychart axes
 
     def __init__(self, config: StereoProjConfig, catalog: NumpyCatalog):
         self.config = config
         self.catalog = catalog
 
-    def generate(self) -> plt.Figure:
+    def generate(self, constraints: Optional[CatalogConstraints]=None) -> plt.Figure:
         """
         Generate a projection.
 
@@ -38,16 +46,30 @@ class StereoProjector(object):
         """
 
         # Get catalog
-        catalog_data = self.catalog.get_stars()
+        _ = self.catalog.get_stars(constraints)
+
         # From equatorial to horizontal
         star_view_data = self._make_star_views()
+
         # Make projections
         points_data = make_point_projections(star_view_data, self.catalog.constraints)
+
         # Make figure with projections
-        fig, _ = self._create_polar_scatter(points_data)
+        self._create_polar_scatter(points_data)
 
-        return fig
+        # Add ecliptic
+        if self.config.add_ecliptic:
+            self._add_ecliptic()
 
+        # Add equator
+        if self.config.add_equator:
+            self._add_equator()
+
+        # Add galactic equator
+        if self.config.add_galactic_equator:
+            self._add_galactic_equator()
+
+        return self._fig
 
     def _make_star_views(self) -> NDArray:
         """
@@ -73,10 +95,32 @@ class StereoProjector(object):
 
         return star_view_data
 
+    def _add_ecliptic(self):
+        """
+        Add ecliptic on skychart
+        TODO: Implement this function
+        """
 
+        pass
+
+    def _add_equator(self):
+        """
+        Add celestial equator on skychart
+        TODO: Implement this function
+        """
+
+        pass
+
+    def _add_galactic_equator(self):
+        """
+        Add galactic equator on skychart
+        TODO: Implement this function
+        """
+
+        pass
 
     @staticmethod
-    def _create_polar_scatter(data: NDArray):
+    def _create_polar_scatter(projection_data: NDArray) -> Tuple[plt.Figure, plt.Axes]:
         """
         Create a scatter plot in polar coordinates.
 
@@ -88,9 +132,9 @@ class StereoProjector(object):
         ax = fig.add_subplot(111, projection='polar')
 
         # Get parameters from projections data array
-        sizes = data['size']
-        angles = data['angle']
-        radii = data['radius']
+        sizes = projection_data['size']
+        angles = projection_data['angle']
+        radii = projection_data['radius']
 
         # Make scatter
         ax.scatter(
