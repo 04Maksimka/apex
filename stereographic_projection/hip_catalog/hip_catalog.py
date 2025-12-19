@@ -5,7 +5,7 @@ import numpy as np
 import pathlib
 import hashlib
 import json
-from typing import Dict, Tuple, Optional, Any
+from typing import Dict, Optional, Any
 
 
 @dataclass
@@ -16,28 +16,6 @@ class CatalogConstraints(object):
 
     max_magnitude: float = 6.0                      # maximum magnitude of stars (dimmest)
     min_magnitude: Optional[float] = None           # minimum magnitude of stars (brightest)
-    ra_range: Optional[Tuple[float, float]] = None  # right ascension range
-    dec_range: Optional[Tuple[float, float]] = None # declination range
-
-    def __post_init__(self):
-        if self.ra_range and self.ra_range[0] > self.ra_range[1]:
-            raise ValueError(f'Invalid right ascension interval: {self.ra_range}')
-        if self.dec_range and self.dec_range[0] > self.dec_range[1]:
-            raise ValueError(f'Invalid declination interval: {self.ra_range}')
-        if self.dec_range and (abs(self.dec_range[0]) > 90 or abs(self.dec_range[1]) > 90):
-            raise ValueError(f'Declination must be in range [-90, 90]')
-
-        if self.ra_range:
-            self.ra_range = (
-                np.deg2rad(self.ra_range[0]) % (2 * np.pi),
-                np.deg2rad(self.ra_range[1]) % (2 * np.pi)
-            )
-
-        if self.dec_range:
-            self.dec_range = (
-                np.deg2rad(self.dec_range[0]),
-                np.deg2rad(self.dec_range[1])
-            )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert constraints to a dictionary for caching"""
@@ -45,12 +23,10 @@ class CatalogConstraints(object):
         return {
             'max_magnitude': self.max_magnitude,
             'min_magnitude': self.min_magnitude,
-            'ra_range': self.ra_range,
-            'dec_range': self.dec_range,
         }
 
 
-class NumpyCatalog(object):
+class Catalog(object):
     """
     Hipparchus catalog optimized for fast numpy operating.
     """
@@ -154,7 +130,7 @@ class NumpyCatalog(object):
         data = np.load(cache_file)
         return data
 
-    def cache_data(self, data: NDArray, constraints: CatalogConstraints):
+    def _cache_data(self, data: NDArray, constraints: CatalogConstraints):
         """
         Store data to cache
 
@@ -215,23 +191,6 @@ class NumpyCatalog(object):
             mask_mag = (data['v_mag'] <= constraints.max_magnitude)
             masks.append(mask_mag)
 
-        # Declination filtering
-        if constraints.min_magnitude is not None:
-            mask_min_mag = data['v_mag'] >= constraints.min_magnitude
-            masks.append(mask_min_mag)
-
-        # Right ascension filtering
-        if constraints.ra_range is not None:
-            ra_min, ra_max = constraints.ra_range
-            mask_ra = (data['ra'] >= ra_min) & (data['ra'] <= ra_max)
-            masks.append(mask_ra)
-
-        # Declination filtering
-        if constraints.dec_range is not None:
-            dec_min, dec_max = constraints.dec_range
-            mask_dec = (data['dec'] >= dec_min) & (data['dec'] <= dec_max)
-            masks.append(mask_dec)
-
         # Combine all the masks
         if masks:
             combined_mask = np.all(masks, axis=0)
@@ -291,7 +250,7 @@ class NumpyCatalog(object):
         # Apply constraints
         self._data = self._apply_constraints(structured_data, constraints)
         self._constraints = constraints
-        self.cache_data(self._data, constraints)
+        self._cache_data(self._data, constraints)
 
         return self._data
 
@@ -329,7 +288,7 @@ def main():
     """Main function."""
 
     # test catalog print
-    catalog = NumpyCatalog(catalog_name='hip_data.tsv', use_cache=False)
+    catalog = Catalog(catalog_name='hip_data.tsv', use_cache=False)
     constraints = CatalogConstraints(
         max_magnitude=6.0,
     )

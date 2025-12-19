@@ -1,22 +1,22 @@
 """Module with astronomical geometrical functions."""
 from typing import Tuple, Union
-from stereographic_projection.hip_catalog.hip_catalog import CatalogConstraints, NumpyCatalog
+from stereographic_projection.hip_catalog.hip_catalog import CatalogConstraints, Catalog
 from stereographic_projection.helpers.time import vequinox_hour_angle
 from numpy.typing import NDArray
 import numpy as np
 
 
-def get_horizontal_coords(config: dict, catalog: NumpyCatalog) -> Tuple[NDArray, NDArray, NDArray]:
+def get_horizontal_coords(config: dict, data: NDArray) -> Tuple[NDArray, NDArray, NDArray]:
     """
     Get horizontal coordinates from catalog data.
 
     :param config: place configuration
-    :param catalog: star catalog data
+    :param data: data to make conversion into horizontal coordinates
     :return: horizontal coordinates, zenith distances and azimuths
     """
 
     # Get ECI star coordinates
-    eci_coords = np.column_stack([catalog.data['x'], catalog.data['y'], catalog.data['z']]).T
+    eci_coords = np.column_stack([data['x'], data['y'], data['z']]).T
 
     # Calculate local sidereal time
     sidereal_time = vequinox_hour_angle(
@@ -56,11 +56,11 @@ def mag_to_radius(magnitude: Union[float, NDArray[np.float32]], constrains: Cata
     """
     mag_criteria = constrains.max_magnitude
     diff = mag_criteria - magnitude
-    radii = 1.5 * np.maximum(diff, 0.0)
+    radii = np.maximum(diff, 0.0)
     return radii
 
 
-def make_point_projections(star_view_data: NDArray, constraints: CatalogConstraints) -> NDArray:
+def make_stars_projections(star_view_data: NDArray, constraints: CatalogConstraints) -> NDArray:
     """
     Returns star point projections array.
 
@@ -81,5 +81,74 @@ def make_point_projections(star_view_data: NDArray, constraints: CatalogConstrai
     points_data['radius'] = 2 * np.tan(star_view_data['zenith'] / 2.0)
     points_data['angle'] = star_view_data['azimuth']
     points_data['hip_id'] = star_view_data['hip_id']
+
+    return points_data
+
+def generate_small_circle(spheric_normal: NDArray, alpha: float, num_points: int) -> NDArray:
+    """
+    Generate a small circle on unit sphere in ECI coordinates.
+
+    :param spheric_normal: spherical coordinates on the normal to hte place of circle, angles in degrees
+    :param alpha: angle between any radis vector of the point on small circle and normal
+    :param num_points: number of points to generate
+    :return: array of points in cartesian ECI coordinates
+    """
+
+    POINTS_DTYPE = np.dtype([
+        ('x', np.float32),
+        ('y', np.float32),
+        ('z', np.float32),
+    ])
+
+    theta = np.deg2rad(spheric_normal[0])
+    phi = np.deg2rad(spheric_normal[1])
+    n = np.array(
+        [
+            np.cos(theta) * np.cos(phi),
+            np.cos(theta) * np.sin(phi),
+            np.sin(theta)
+        ]
+    )
+    a = np.zeros_like(n)
+    if not np.isclose(abs(n[2]), 1.0):
+        a[2] = 1.0
+    else:
+        a[0] = 1.0
+
+    u = np.cross(a, n)
+    u = u / np.linalg.norm(u)
+
+    v = np.cross(n, u)
+
+    phi = np.linspace(0, 2 * np.pi, num_points, endpoint=False)
+    alpha = np.deg2rad(alpha)
+    cos_alpha = np.cos(alpha)
+    sin_alpha = np.sin(alpha)
+    cos_phi = np.cos(phi)
+    sin_phi = np.sin(phi)
+
+    points = np.zeros(num_points, dtype=POINTS_DTYPE)
+    points['x'] = cos_alpha * n[0] + sin_alpha * (cos_phi * u[0] + sin_phi * v[0])
+    points['y'] = cos_alpha * n[1] + sin_alpha * (cos_phi * u[1] + sin_phi * v[1])
+    points['z'] = cos_alpha * n[2] + sin_alpha * (cos_phi * u[2] + sin_phi * v[2])
+
+    return points
+
+def make_circle_projection(azimuths: NDArray, zeniths: NDArray) -> NDArray:
+    """
+    Returns star point projections array.
+
+    :param points: horizontal coordinates of circle points
+    :return: projection point polar coordinates
+    """
+    PROJECTION_DTYPE = np.dtype([
+        ('radius', np.float32),
+        ('angle', np.float32),
+    ])
+    number_of_stars = azimuths.shape[0]
+
+    points_data = np.zeros(number_of_stars, dtype=PROJECTION_DTYPE)
+    points_data['radius'] = 2 * np.tan(zeniths / 2.0)
+    points_data['angle'] = azimuths
 
     return points_data

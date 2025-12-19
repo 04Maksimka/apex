@@ -6,8 +6,8 @@ from typing import Optional, Tuple
 from numpy.typing import NDArray
 import numpy as np
 from matplotlib import pyplot as plt
-from stereographic_projection.hip_catalog.hip_catalog import NumpyCatalog, CatalogConstraints
-from stereographic_projection.helpers.geometry import get_horizontal_coords, make_point_projections
+from stereographic_projection.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from stereographic_projection.helpers.geometry import get_horizontal_coords, make_stars_projections, make_circle_projection, generate_small_circle
 
 
 @dataclass
@@ -29,12 +29,12 @@ class StereoProjConfig(object):
 class StereoProjector(object):
     """Class of the stereographic projector."""
 
-    catalog: NumpyCatalog       # Star catalog
+    catalog: Catalog       # Star catalog
     config: StereoProjConfig    # Stereo projector configuration
     _fig: plt.Figure            # Skychart figure
     _ax: plt.Axes               # Skychart axes
 
-    def __init__(self, config: StereoProjConfig, catalog: NumpyCatalog):
+    def __init__(self, config: StereoProjConfig, catalog: Catalog):
         self.config = config
         self.catalog = catalog
 
@@ -52,7 +52,7 @@ class StereoProjector(object):
         star_view_data = self._make_star_views()
 
         # Make projections
-        points_data = make_point_projections(star_view_data, self.catalog.constraints)
+        points_data = make_stars_projections(star_view_data, self.catalog.constraints)
 
         # Make figure with projections
         self._create_polar_scatter(points_data)
@@ -69,6 +69,8 @@ class StereoProjector(object):
         if self.config.add_galactic_equator:
             self._add_galactic_equator()
 
+        self._ax.legend()
+
         return self._fig
 
     def _make_star_views(self) -> NDArray:
@@ -84,7 +86,7 @@ class StereoProjector(object):
             ('hip_id', np.int32),  # hip identifier
         ])
 
-        _, azimuths, zeniths = get_horizontal_coords(self.config.__dict__, catalog=self.catalog)
+        _, azimuths, zeniths = get_horizontal_coords(self.config.__dict__, data=self.catalog.data)
 
         number_of_stars = self.catalog.number_of_stars
         star_view_data = np.zeros(number_of_stars, dtype=STAR_VIEW_DTYPE)
@@ -98,29 +100,74 @@ class StereoProjector(object):
     def _add_ecliptic(self):
         """
         Add ecliptic on skychart
-        TODO: Implement this function
         """
 
-        pass
+        RA = 270.0
+        DEC = 66.5607
+
+        ecliptic_eci_coords = generate_small_circle(
+            spheric_normal=np.array([DEC, RA]),
+            alpha=90.0,
+            num_points=1000
+        )
+
+        _, azimuths, zeniths = get_horizontal_coords(config=self.config.__dict__, data=ecliptic_eci_coords)
+        projection_coords = make_circle_projection(azimuths=azimuths, zeniths=zeniths)
+        self._ax.plot(
+            projection_coords['angle'],
+            projection_coords['radius'],
+            c='green',
+            linewidth=1,
+            label='Ecliptic',
+        )
+
 
     def _add_equator(self):
         """
         Add celestial equator on skychart
-        TODO: Implement this function
         """
 
-        pass
+        equator_eci_coords = generate_small_circle(
+            spheric_normal=np.array([90.0, 0.0]),
+            alpha=90.0,
+            num_points=1000
+        )
+
+        _, azimuths, zeniths = get_horizontal_coords(config=self.config.__dict__, data=equator_eci_coords)
+        projection_coords = make_circle_projection(azimuths=azimuths, zeniths=zeniths)
+        self._ax.plot(
+            projection_coords['angle'],
+            projection_coords['radius'],
+            c='red',
+            linewidth=1,
+            label='Equator',
+        )
 
     def _add_galactic_equator(self):
         """
         Add galactic equator on skychart
-        TODO: Implement this function
         """
 
-        pass
+        RA = 192.85948
+        DEC = 27.12825
 
-    @staticmethod
-    def _create_polar_scatter(projection_data: NDArray) -> Tuple[plt.Figure, plt.Axes]:
+        galactic_eci_coords = generate_small_circle(
+            spheric_normal=np.array([DEC, RA]),
+            alpha=90.0,
+            num_points=1000
+        )
+
+        _, azimuths, zeniths = get_horizontal_coords(config=self.config.__dict__, data=galactic_eci_coords)
+        projection_coords = make_circle_projection(azimuths=azimuths, zeniths=zeniths)
+        self._ax.plot(
+            projection_coords['angle'],
+            projection_coords['radius'],
+            c='blue',
+            linewidth=1,
+            label='Galactic equator'
+        )
+
+    def _create_polar_scatter(self, projection_data: NDArray):
         """
         Create a scatter plot in polar coordinates.
 
@@ -128,8 +175,8 @@ class StereoProjector(object):
         """
 
         # Set up the figure with polar projection
-        fig = plt.figure(figsize=(15, 12))
-        ax = fig.add_subplot(111, projection='polar')
+        self._fig = plt.figure(figsize=(15, 12))
+        self._ax = self._fig.add_subplot(111, projection='polar')
 
         # Get parameters from projections data array
         sizes = projection_data['size']
@@ -137,21 +184,18 @@ class StereoProjector(object):
         radii = projection_data['radius']
 
         # Make scatter
-        ax.scatter(
+        self._ax.scatter(
             angles,
             radii,
             c='black',
             s=sizes,
             alpha=0.7,
-            edgecolors='white',
             linewidth=0.5,
         )
 
-        ax.set_title("Skychart", va='bottom', fontsize=14, pad=20)
-        ax.set_xlabel("Angle (θ)", labelpad=15)
-        ax.grid(True)
+        self._ax.set_title("Skychart", va='bottom', fontsize=14, pad=20)
+        self._ax.set_xlabel("Angle (θ)", labelpad=15)
+        self._ax.grid(True)
         # ax.set_xticks([])
-        ax.set_yticks([])
-        ax.set_ylim((0.0, 2.0))
-
-        return fig, ax
+        self._ax.set_yticks([])
+        self._ax.set_ylim((0.0, 2.0))

@@ -1,7 +1,7 @@
 from sqlalchemy.dialects.mssql.information_schema import constraints
 
 from stereographic_projection.stereographic_projector import StereoProjector, StereoProjConfig
-from stereographic_projection.hip_catalog.hip_catalog import NumpyCatalog, CatalogConstraints
+from stereographic_projection.hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from stereographic_projection.helpers.pdf_helpers.figure2pdf import save_figure
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -33,8 +33,7 @@ if __name__ == "__main__":
 
     # Configure catalog
     constraints = CatalogConstraints(
-        max_magnitude=8.0,
-        dec_range=(45.0, 90.0),
+        max_magnitude=6.0,
     )
 
     # Configure projection: date, time and place
@@ -55,7 +54,7 @@ if __name__ == "__main__":
     )
 
     # Create catalog object (without data)
-    catalog = NumpyCatalog(
+    catalog = Catalog(
         catalog_name='hip_data.tsv',
         cache_dir='cache',
         use_cache=True
