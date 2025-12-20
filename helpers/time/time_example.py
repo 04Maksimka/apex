@@ -1,4 +1,4 @@
-from stereographic_projection.helpers.time import get_sidereal_time, julian_date
+from helpers.time.time import get_sidereal_time, julian_date
 from datetime import datetime
 import numpy as np
 

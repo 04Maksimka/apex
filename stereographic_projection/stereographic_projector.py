@@ -1,13 +1,15 @@
 """Module implementing main stereographic projection."""
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import Optional
 
 from numpy.typing import NDArray
 import numpy as np
 from matplotlib import pyplot as plt
-from stereographic_projection.hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from stereographic_projection.helpers.geometry import get_horizontal_coords, make_stars_projections, make_circle_projection, generate_small_circle
+from helpers.geometry import (
+    get_horizontal_coords, make_stars_projections, make_circle_projection, generate_small_circle,
+)
+from hip_catalog.hip_catalog import CatalogConstraints, Catalog
 
 
 @dataclass

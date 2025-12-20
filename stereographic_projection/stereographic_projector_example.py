@@ -1,8 +1,6 @@
-from sqlalchemy.dialects.mssql.information_schema import constraints
-
 from stereographic_projection.stereographic_projector import StereoProjector, StereoProjConfig
-from stereographic_projection.hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from stereographic_projection.helpers.pdf_helpers.figure2pdf import save_figure
+from hip_catalog import Catalog, CatalogConstraints
+from helpers.pdf_helpers.figure2pdf import save_figure
 import matplotlib.pyplot as plt
 from datetime import datetime
 
@@ -20,7 +18,7 @@ def stars_with_logo(figure: plt.Figure, need_pdf: bool = False):
         save_figure(
             fig=figure,
             filename="polar_scatter_local_logo.pdf",
-            logo_path="./helpers/pdf_helpers/logo_astrageek.png",
+            logo_path="../helpers/pdf_helpers/logo_astrageek.png",
             footer_text=footer,
             logo_position=(0.15, 0.97),
             text_position=(0.5, 0.01),

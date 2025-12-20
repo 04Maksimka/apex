@@ -1,1 +1,0 @@
-"""Here you acn find catalogs used in our project."""

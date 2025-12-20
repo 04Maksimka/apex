@@ -1,9 +1,9 @@
 """Module with astronomical geometrical functions."""
 from typing import Tuple, Union
-from stereographic_projection.hip_catalog.hip_catalog import CatalogConstraints, Catalog
-from stereographic_projection.helpers.time import vequinox_hour_angle
+from helpers.time.time import vequinox_hour_angle
 from numpy.typing import NDArray
 import numpy as np
+from hip_catalog.hip_catalog import CatalogConstraints
 
 
 def get_horizontal_coords(config: dict, data: NDArray) -> Tuple[NDArray, NDArray, NDArray]:
