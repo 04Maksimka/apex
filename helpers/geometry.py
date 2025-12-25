@@ -47,7 +47,10 @@ def get_horizontal_coords(config: dict, data: NDArray) -> Tuple[NDArray, NDArray
     return cartesian_hor_coords, azimuths, zeniths
 
 
-def mag_to_radius(magnitude: Union[float, NDArray[np.float32]], constrains: CatalogConstraints) -> Union[float, NDArray[np.float32]]:
+def mag_to_radius(
+        magnitude: Union[float, NDArray[np.float32]],
+        constrains: CatalogConstraints,
+) -> Union[float, NDArray[np.float32]]:
     """
     Returns radius of the point corresponds to given star magnitude.
     :param magnitude: star magnitude(s)

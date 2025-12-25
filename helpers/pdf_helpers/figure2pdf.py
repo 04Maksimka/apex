@@ -9,8 +9,8 @@ from PIL import Image
 def add_logo_to_figure(
     fig: plt.Figure,
     logo_path: str | None = None,
-    position: tuple[float, float] = (0.05, 0.95),
-    size: float = 0.1,
+    position: tuple[float, float] = (0.02, 0.95),
+    size: float = 0.2,
 ) -> None:
     """Add a logo to the figure.
 
@@ -69,7 +69,7 @@ def save_figure(
     logo_path: str | None = None,
     footer_text: str | None = None,
     dpi: int = 300,
-    logo_position: tuple[float, float] = (0.05, 0.95),
+    logo_position: tuple[float, float] = (0.02, 0.95),
     text_position: tuple[float, float] = (0.5, 0.02),
 
 ):
