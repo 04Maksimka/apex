@@ -60,7 +60,7 @@ def mag_to_radius(
     mag_criteria = constrains.max_magnitude
     diff = mag_criteria - magnitude
     radii = np.maximum(diff, 0.0)
-    return radii
+    return radii ** 1.3
 
 
 def make_stars_projections(star_view_data: NDArray, constraints: CatalogConstraints) -> NDArray:

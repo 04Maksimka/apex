@@ -162,6 +162,7 @@ Desktop.ini
 *.bak
 *~
 *.swp
+*.npy
 
 # Astronomy-specific (optional: ignore generated or large temporary data files if applicable)
 # e.g., *.fits (but only if they are generated; commit essential datasets)
