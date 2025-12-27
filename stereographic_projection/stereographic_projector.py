@@ -17,13 +17,15 @@ from planets_catalog.planet_catalog import PlanetCatalog, Planets
 class StereoProjConfig(object):
     """Class of configuration of the StereoProjector."""
 
-    add_ecliptic: bool
-    add_equator: bool
-    add_galactic_equator: bool
-    add_planets: bool
-    local_time: datetime
-    latitude: float
-    longitude: float
+    local_time: datetime = datetime.now()
+    latitude: float = 0.0
+    longitude: float = 0.0
+    add_ecliptic: bool = False
+    add_equator: bool = False
+    add_galactic_equator: bool = False
+    add_planets: bool = False
+    add_ticks: bool = False
+    random_origin: bool = False
 
     def __post_init__(self):
         self.latitude = np.deg2rad(self.latitude)
@@ -193,7 +195,7 @@ class StereoProjector(object):
         """
 
         # Set up the figure with polar projection
-        self._fig = plt.figure(figsize=(15, 12))
+        self._fig = plt.figure()
         self._ax = self._fig.add_subplot(111, projection='polar')
 
         # Get parameters from projections data array
@@ -211,9 +213,54 @@ class StereoProjector(object):
             linewidth=0.5,
         )
 
-        # self._ax.set_title("Skychart", va='bottom', fontsize=14, pad=20)
-        # self._ax.grid(True)
-        self._ax.set_xticks([])
+        if self.config.random_origin:
+            self._ax.set_theta_offset(np.random.uniform(-np.pi, +np.pi))
+        else:
+            self._ax.set_theta_offset(-np.pi / 2)
+
+        self._ax.xaxis.grid(False)
+
+        if self.config.add_ticks:
+            angles_deg = [0, 90, 180, 270]
+            angles_rad = np.deg2rad(angles_deg)
+            cardinal_labels = ['S', 'W', 'N', 'E']
+
+            self._ax.set_xticks(angles_rad)
+            self._ax.set_xticklabels(cardinal_labels, fontsize=12, fontweight='bold')
+
+            minor_angles_deg = np.arange(0, 360, 30)
+            minor_angles_rad = np.deg2rad(minor_angles_deg)
+            numeric_labels = [f'{angle}°' for angle in minor_angles_deg]
+
+            self._ax.set_xticks(minor_angles_rad, minor=True)
+            self._ax.set_xticklabels(numeric_labels, minor=True, fontsize=9)
+
+            self._ax.xaxis.set_tick_params(
+                direction='out',
+                length=10,
+                width=2,
+                colors='black',
+                pad=12,
+                labelsize=12
+            )
+
+            for tick in self._ax.xaxis.get_minor_ticks():
+                tick.tick2line.set_visible(True)
+                tick.tick2line.set_markersize(2)
+                tick.tick2line.set_markeredgewidth(1)
+
+            for tick in self._ax.xaxis.get_major_ticks():
+                tick.tick2line.set_visible(True)
+                tick.tick2line.set_markersize(4)
+                tick.tick2line.set_markeredgewidth(1.5)
+        else:
+            self._ax.set_xticks([])
+
+        self._ax.spines['polar'].set_visible(True)
+        self._ax.spines['polar'].set_linewidth(1)
+        self._ax.spines['polar'].set_color('black')
+        self._ax.spines['polar'].set_alpha(1)
+
         self._ax.set_yticks([])
         self._ax.set_ylim((0.0, 2.0))
 
@@ -226,6 +273,7 @@ class StereoProjector(object):
         for p in projection_data:
             if p['hip_id'] >= 0:
                 continue  # not a planet
+
             planet_id = -p['hip_id'] - 1
             planet = Planets(planet_id)
             name = planet.name.capitalize()

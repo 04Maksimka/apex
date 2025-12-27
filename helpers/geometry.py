@@ -1,5 +1,6 @@
 """Module with astronomical geometrical functions."""
 from typing import Tuple, Union
+
 from helpers.time.time import vequinox_hour_angle
 from numpy.typing import NDArray
 import numpy as np
@@ -31,17 +32,25 @@ def get_horizontal_coords(config: dict, data: NDArray) -> Tuple[NDArray, NDArray
     cl = np.cos(latitude)
     st = np.sin(sidereal_time)
     ct = np.cos(sidereal_time)
-    rotation_matrix = np.array(
+    rotation_latitude = np.array(
         [
-            [st, -ct, 0],
-            [sl * ct, sl * st, -cl],
-            [cl * ct, cl * st, sl]
+            [1.0, 0.0, 0.0],
+            [0.0, sl, -cl],
+            [0.0, cl, sl]
         ]
     )
+    rotation_time = np.array(
+        [
+            [st, -ct, 0.0],
+            [ct, st, 0.0],
+            [0.0, 0.0, 1.0]
+        ]
+    )
+    rotation_matrix = rotation_latitude @ rotation_time
     cartesian_hor_coords =  rotation_matrix @ eci_coords
 
     # 0, 1, 2 is x, y, z below
-    azimuths = np.atan2(cartesian_hor_coords[0, :], cartesian_hor_coords[1, :]) - np.pi / 2
+    azimuths = np.atan2(cartesian_hor_coords[0, :], cartesian_hor_coords[1, :])
     zeniths = np.arccos(cartesian_hor_coords[2, :])
 
     return cartesian_hor_coords, azimuths, zeniths
@@ -101,6 +110,8 @@ def generate_small_circle(spheric_normal: NDArray, alpha: float, num_points: int
         ('x', np.float32),
         ('y', np.float32),
         ('z', np.float32),
+        ('theta', np.float32),
+        ('phi', np.float32),
     ])
 
     theta = np.deg2rad(spheric_normal[0])
@@ -123,7 +134,7 @@ def generate_small_circle(spheric_normal: NDArray, alpha: float, num_points: int
 
     v = np.cross(n, u)
 
-    phi = np.linspace(0, 2 * np.pi, num_points, endpoint=False)
+    phi = np.linspace(0, 2 * np.pi, num_points)
     alpha = np.deg2rad(alpha)
     cos_alpha = np.cos(alpha)
     sin_alpha = np.sin(alpha)
@@ -134,6 +145,8 @@ def generate_small_circle(spheric_normal: NDArray, alpha: float, num_points: int
     points['x'] = cos_alpha * n[0] + sin_alpha * (cos_phi * u[0] + sin_phi * v[0])
     points['y'] = cos_alpha * n[1] + sin_alpha * (cos_phi * u[1] + sin_phi * v[1])
     points['z'] = cos_alpha * n[2] + sin_alpha * (cos_phi * u[2] + sin_phi * v[2])
+    points['phi'] = np.atan2(points['y'], points['x'])
+    points['theta'] = np.arccos(points['z'])
 
     return points
 
