@@ -13,7 +13,8 @@ constraints = CatalogConstraints(
 config = StereoProjConfig(
     add_ecliptic=True,
     add_equator=True,
-    add_galactic_equator=False,
+    add_galactic_equator=True,
+    add_planets=True,
     local_time=datetime(
         year=2004,
         month=6,
@@ -39,9 +40,8 @@ proj = StereoProjector(
 )
 # Make figure with constrains
 figure = proj.generate(constraints=constraints)
-# Plot figure
 
-
+# Save skychart
 save_figure_skychart(
     fig=figure,
     filename="polar_scatter_local_logo.pdf",
@@ -51,4 +51,5 @@ save_figure_skychart(
     footer_text="Generate more on skychart.astrageek.ru.",
     logo_position=(0.12, 0.97),
     text_position=(0.5, 0.01),
+    teacher=True,
 )

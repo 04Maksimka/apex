@@ -5,7 +5,7 @@ from enum import IntEnum
 from numpy.typing import NDArray
 import numpy as np
 import astropy.units as u
-from astropy.coordinates import get_body, get_sun, get_moon
+from astropy.coordinates import get_body, get_sun
 from astropy.time import Time
 from hip_catalog.hip_catalog import Catalog
 
@@ -63,7 +63,7 @@ class PlanetCatalog(object):
             if name == 'sun':
                 coord = get_sun(t)
             elif name == 'moon':
-                coord = get_moon(t)
+                coord =  get_body('moon', t)
             else:
                 coord = get_body(name, t)
             ra = coord.ra.to_value(u.rad)

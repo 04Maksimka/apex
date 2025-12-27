@@ -20,6 +20,7 @@ class StereoProjConfig(object):
     add_ecliptic: bool
     add_equator: bool
     add_galactic_equator: bool
+    add_planets: bool
     local_time: datetime
     latitude: float
     longitude: float
@@ -63,10 +64,11 @@ class StereoProjector(object):
         self._create_polar_scatter(points_data)
 
         # Add planets
-        planet_data = self.planets_catalog.get_planets(self.config.local_time)
-        planet_view_data = self._make_horizontal_views(planet_data)
-        planet_points_data = make_stars_projections(planet_view_data, self.catalog.constraints)
-        self._add_planets(planet_points_data)
+        if self.config.add_planets:
+            planet_data = self.planets_catalog.get_planets(self.config.local_time)
+            planet_view_data = self._make_horizontal_views(planet_data)
+            planet_points_data = make_stars_projections(planet_view_data, self.catalog.constraints)
+            self._add_planets(planet_points_data)
 
         # Add ecliptic
         if self.config.add_ecliptic:
@@ -80,7 +82,12 @@ class StereoProjector(object):
         if self.config.add_galactic_equator:
             self._add_galactic_equator()
 
-        self._ax.legend()
+        box = self._ax.get_position()
+        self._ax.set_position((box.x0, box.y0, box.width * 0.8, box.height))
+
+        # Put a legend to the bottom of the current axis
+        self._ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+                  fancybox=True, shadow=True, ncol=5)
 
         return self._fig
 
