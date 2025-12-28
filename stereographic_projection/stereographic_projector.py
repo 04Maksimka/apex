@@ -6,7 +6,7 @@ from typing import Optional
 from numpy.typing import NDArray
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.patches import Circle
+from matplotlib.patches import Circle, Patch
 
 from helpers.geometry import (
     get_horizontal_coords, make_projections, make_circle_projection, generate_small_circle,
@@ -50,6 +50,7 @@ class StereoProjector(object):
     config: StereoProjConfig    # Stereo projector configuration
     _fig: plt.Figure            # Skychart figure
     _ax: plt.Axes               # Skychart axes
+    _groups: dict = {}          # Legend groups
 
     def __init__(self, config: StereoProjConfig, catalog: Catalog, planets_catalog: PlanetCatalog):
         self.config = config
@@ -113,11 +114,7 @@ class StereoProjector(object):
             self._add_planets(planet_points_data)
 
         # Put a legend to the bottom of the current axis
-        box = self._ax.get_position()
-        self._ax.set_position((box.x0, box.y0, box.width * 0.8, box.height))
-        if self._ax.get_legend_handles_labels()[1]:
-            self._ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
-                  fancybox=True, shadow=True, ncol=5)
+        self._create_grouped_legend()
 
         return self._fig
 
@@ -155,7 +152,7 @@ class StereoProjector(object):
         """
         Add ecliptic on skychart
         """
-
+        # Galactical center
         RA = 270.0
         DEC = 66.5607
 
@@ -172,13 +169,14 @@ class StereoProjector(object):
             azimuths=horizontal_coords['azimuth'],
             zeniths=horizontal_coords['zenith']
         )
-        self._ax.plot(
+        line, = self._ax.plot(
             projection_coords['angle'],
             projection_coords['radius'],
             c='green',
             linewidth=1,
-            label='Ecliptic',
         )
+        # Add to the legend groups
+        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Ecliptic')]
 
     def _add_equator(self):
         """
@@ -190,7 +188,6 @@ class StereoProjector(object):
             alpha=90.0,
             num_points=1000
         )
-
         horizontal_coords = get_horizontal_coords(
             config=self.config.__dict__,
             data=equator_eci_coords
@@ -199,13 +196,14 @@ class StereoProjector(object):
             azimuths=horizontal_coords['azimuth'],
             zeniths=horizontal_coords['zenith']
         )
-        self._ax.plot(
+        line, = self._ax.plot(
             projection_coords['angle'],
             projection_coords['radius'],
             c='red',
             linewidth=1,
-            label='Equator',
         )
+        # Add to the legend groups
+        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Celestial equator')]
 
     def _add_galactic_equator(self):
         """
@@ -220,7 +218,6 @@ class StereoProjector(object):
             alpha=90.0,
             num_points=1000
         )
-
         horizontal_coords = get_horizontal_coords(
             config=self.config.__dict__,
             data=galactic_eci_coords
@@ -229,13 +226,14 @@ class StereoProjector(object):
             azimuths=horizontal_coords['azimuth'],
             zeniths=horizontal_coords['zenith']
         )
-        self._ax.plot(
+        line, = self._ax.plot(
             projection_coords['angle'],
             projection_coords['radius'],
             c='blue',
             linewidth=1,
-            label='Galactic equator'
         )
+        # Add to the legend groups
+        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Galactic equator')]
 
     def _add_planets(self, projection_data: NDArray):
         """
@@ -243,19 +241,21 @@ class StereoProjector(object):
 
         :param projection_data: projection points for planets
         """
+        # Draw each planet separately
         for planet_data in projection_data:
             planet = Planets(planet_data['id'])
             name = planet.name.capitalize()
             color = self.planets_catalog.get_planet_color(planet)
-            self._ax.scatter(
+            scatter = self._ax.scatter(
                 planet_data['angle'],
                 planet_data['radius'],
                 c=color,
                 s=max(planet_data['size'] * 3, 0.5),  # make planets larger for visibility
                 alpha=0.8,
                 linewidth=0.5,
-                label=name,
             )
+            # Add to the legend groups
+            self._groups['Planets'] = self._groups.get('Planets', []) + [(scatter, name)]
 
     def _add_horizontal_grid(self):
         """
@@ -266,6 +266,7 @@ class StereoProjector(object):
 
         array_grid = []
 
+        # Draw azimuthal great circles
         for azimuth in azimuths:
             circle = generate_small_circle(
                 spheric_normal=np.array([90.0, azimuth + 90.0]),
@@ -284,7 +285,7 @@ class StereoProjector(object):
                     ]
                 )
             )
-
+        # Draw zenith small circles
         for zenith in zeniths:
             circle = generate_small_circle(
                 spheric_normal=np.array([0.0, 0.0]),
@@ -312,6 +313,7 @@ class StereoProjector(object):
             linewidth=0.5
         )
         self._ax.add_collection(grid)
+        self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Azimuthal grid')]
 
     def _add_equatorial_grid(self):
         """
@@ -322,7 +324,7 @@ class StereoProjector(object):
         right_ascensions = np.arange(0, 180.0, self.config.grid_phi_step, dtype=np.float64)
 
         array_grid = []
-
+        # Draw great circles right ascension
         for ra in right_ascensions:
             eq_circle = generate_small_circle(
                 spheric_normal=np.array([90.0, ra + 90.0]),
@@ -345,7 +347,7 @@ class StereoProjector(object):
                     ]
                 )
             )
-
+        # Draw small circles declination
         for dec in declinations:
             eq_circle = generate_small_circle(
                 spheric_normal=np.array([0.0, 0.0]),
@@ -372,6 +374,7 @@ class StereoProjector(object):
         grid = LineCollection(array_grid, label='Equatorial grid',
                               colors='magenta', alpha=0.25, linewidth=0.5)
         self._ax.add_collection(grid)
+        self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Equatorial grid')]
 
     def _create_polar_scatter(self, projection_data: NDArray):
         """
@@ -401,7 +404,7 @@ class StereoProjector(object):
 
         # Randomize north direction
         if self.config.random_origin:
-            self._ax.set_theta_offset(np.random.uniform(-np.pi, +np.pi))
+            self._ax.set_theta_offset(np.random.uniform(0.0, 2*np.pi))
         else:
             self._ax.set_theta_offset(-np.pi / 2)
 
@@ -429,18 +432,21 @@ class StereoProjector(object):
             # Configure major (literal NESW) ticks
             for tick in self._ax.xaxis.get_major_ticks():
                 tick.tick2line.set_visible(True)
-                tick.tick2line.set_markersize(3)
+                tick.tick2line.set_markersize(2)
                 tick.tick2line.set_markeredgewidth(1)
         else:
             self._ax.set_xticks([])
 
-        # Add circle around skychart
-        r_max = self._ax.get_rmax()
+        # Remove border
+        self._ax.spines['polar'].set_visible(False)
+
+        # Add circle around skychart, draw border
+        r_max = 2.0
         circle = Circle((0, 0), r_max,
                         transform=self._ax.transData._b,
                         fill=False,
                         edgecolor='black',
-                        linewidth=1,
+                        linewidth=1.5,
                         alpha=1.0,
                         zorder=10)  # поверх всего
 
@@ -448,4 +454,46 @@ class StereoProjector(object):
 
         self._ax.xaxis.grid(False)
         self._ax.set_yticks([])
-        self._ax.set_ylim((0.0, 2.0))
+        self._ax.set_ylim((0.0, r_max))
+
+    def _create_grouped_legend(self):
+        """
+        Create legend split by groups
+        """
+        groups = {k: v for k, v in self._groups.items() if v}
+        if not groups:
+            return
+
+        n_groups = len(groups)
+        n_columns = n_groups
+        n_rows = 1
+        group_items = list(groups.items())
+        legend_height = 0.25 / n_rows
+        vertical_spacing = 0.05
+
+        for i, (title, items) in enumerate(group_items):
+            row = i // n_columns
+            col = i % n_columns
+
+            handles, labels = zip(*items)
+
+            if n_columns == 1:
+                bbox_x = 0.5
+            else:
+                bbox_x = 0.1 + col * (0.8 / (n_columns - 1))
+
+            bbox_y = -0.05 - row * (legend_height + vertical_spacing)
+
+            legend = self._ax.legend(
+                handles, labels,
+                title=title,
+                loc='upper center',
+                bbox_to_anchor=(bbox_x, bbox_y),
+                ncol=1,
+                frameon=True,
+                fancybox=True,
+                borderaxespad=0.3
+            )
+
+            legend.get_title().set_fontweight('bold')
+            self._ax.add_artist(legend)
