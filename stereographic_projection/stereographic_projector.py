@@ -6,11 +6,14 @@ from typing import Optional
 from numpy.typing import NDArray
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.patches import Circle
+
 from helpers.geometry import (
     get_horizontal_coords, make_projections, make_circle_projection, generate_small_circle,
 )
 from hip_catalog.hip_catalog import CatalogConstraints, Catalog
 from planets_catalog.planet_catalog import PlanetCatalog, Planets
+from matplotlib.collections import LineCollection
 
 
 @dataclass
@@ -20,6 +23,8 @@ class StereoProjConfig(object):
     local_time: datetime
     latitude: float = 0.0
     longitude: float = 0.0
+    grid_theta_step: float = 10.0
+    grid_phi_step: float = 10.0
 
     # Flags
     add_ecliptic: bool = False
@@ -27,6 +32,8 @@ class StereoProjConfig(object):
     add_galactic_equator: bool = False
     add_planets: bool = False
     add_ticks: bool = False
+    add_horizontal_grid: bool = False
+    add_equatorial_grid: bool = False
     random_origin: bool = False
 
     def __post_init__(self):
@@ -84,6 +91,14 @@ class StereoProjector(object):
         if self.config.add_galactic_equator:
             self._add_galactic_equator()
 
+        # Add horizontal grid
+        if self.config.add_horizontal_grid:
+            self._add_horizontal_grid()
+
+        # Add equatorial grid
+        if self.config.add_equatorial_grid:
+            self._add_equatorial_grid()
+
         # Add planets
         if self.config.add_planets:
             planet_data = self.planets_catalog.get_planets(self.config.local_time)
@@ -121,13 +136,13 @@ class StereoProjector(object):
             ('id', np.int32),
         ])
 
-        _, azimuths, zeniths = get_horizontal_coords(self.config.__dict__, data=data)
+        horizontal_coords = get_horizontal_coords(self.config.__dict__, data=data)
 
         number_of_stars = data.shape[0]
         view_data = np.zeros(number_of_stars, dtype=VIEW_DTYPE)
         view_data['v_mag'] = data['v_mag']
-        view_data['zenith'] = zeniths
-        view_data['azimuth'] = azimuths
+        view_data['zenith'] = horizontal_coords['zenith']
+        view_data['azimuth'] = horizontal_coords['azimuth']
 
         if object_type == 'star':
             view_data['id'] = data['hip_id']
@@ -145,13 +160,18 @@ class StereoProjector(object):
         DEC = 66.5607
 
         ecliptic_eci_coords = generate_small_circle(
-            spheric_normal=np.array([DEC, RA]),
+            spheric_normal=np.array([90.0 - DEC, RA]),
             alpha=90.0,
             num_points=1000
         )
-
-        _, azimuths, zeniths = get_horizontal_coords(config=self.config.__dict__, data=ecliptic_eci_coords)
-        projection_coords = make_circle_projection(azimuths=azimuths, zeniths=zeniths)
+        horizontal_coords = get_horizontal_coords(
+            config=self.config.__dict__,
+            data=ecliptic_eci_coords
+        )
+        projection_coords = make_circle_projection(
+            azimuths=horizontal_coords['azimuth'],
+            zeniths=horizontal_coords['zenith']
+        )
         self._ax.plot(
             projection_coords['angle'],
             projection_coords['radius'],
@@ -160,20 +180,25 @@ class StereoProjector(object):
             label='Ecliptic',
         )
 
-
     def _add_equator(self):
         """
         Add celestial equator on skychart
         """
 
         equator_eci_coords = generate_small_circle(
-            spheric_normal=np.array([90.0, 0.0]),
+            spheric_normal=np.array([0.0, 0.0]),
             alpha=90.0,
             num_points=1000
         )
 
-        _, azimuths, zeniths = get_horizontal_coords(config=self.config.__dict__, data=equator_eci_coords)
-        projection_coords = make_circle_projection(azimuths=azimuths, zeniths=zeniths)
+        horizontal_coords = get_horizontal_coords(
+            config=self.config.__dict__,
+            data=equator_eci_coords
+        )
+        projection_coords = make_circle_projection(
+            azimuths=horizontal_coords['azimuth'],
+            zeniths=horizontal_coords['zenith']
+        )
         self._ax.plot(
             projection_coords['angle'],
             projection_coords['radius'],
@@ -191,13 +216,19 @@ class StereoProjector(object):
         DEC = 27.12825
 
         galactic_eci_coords = generate_small_circle(
-            spheric_normal=np.array([DEC, RA]),
+            spheric_normal=np.array([90.0 - DEC, RA]),
             alpha=90.0,
             num_points=1000
         )
 
-        _, azimuths, zeniths = get_horizontal_coords(config=self.config.__dict__, data=galactic_eci_coords)
-        projection_coords = make_circle_projection(azimuths=azimuths, zeniths=zeniths)
+        horizontal_coords = get_horizontal_coords(
+            config=self.config.__dict__,
+            data=galactic_eci_coords
+        )
+        projection_coords = make_circle_projection(
+            azimuths=horizontal_coords['azimuth'],
+            zeniths=horizontal_coords['zenith']
+        )
         self._ax.plot(
             projection_coords['angle'],
             projection_coords['radius'],
@@ -225,6 +256,122 @@ class StereoProjector(object):
                 linewidth=0.5,
                 label=name,
             )
+
+    def _add_horizontal_grid(self):
+        """
+        Add horizontal grid to skychart
+        """
+        zeniths = np.arange(-90.0, 90.0, self.config.grid_theta_step, dtype=np.float64)
+        azimuths = np.arange(0, 180.0, self.config.grid_phi_step, dtype=np.float64)
+
+        array_grid = []
+
+        for azimuth in azimuths:
+            circle = generate_small_circle(
+                spheric_normal=np.array([90.0, azimuth + 90.0]),
+                alpha=90.0,
+                num_points=100,
+            )
+            projection = make_circle_projection(
+                azimuths=circle['phi'],
+                zeniths=circle['theta'],
+            )
+            array_grid.append(
+                np.column_stack(
+                    [
+                        projection['angle'].astype(np.float64),
+                        projection['radius'].astype(np.float64),
+                    ]
+                )
+            )
+
+        for zenith in zeniths:
+            circle = generate_small_circle(
+                spheric_normal=np.array([0.0, 0.0]),
+                alpha=zenith,
+                num_points=100,
+            )
+            projection = make_circle_projection(
+                azimuths=circle['phi'],
+                zeniths=circle['theta'],
+            )
+            array_grid.append(
+                np.column_stack(
+                    [
+                        projection['angle'].astype(np.float64),
+                        projection['radius'].astype(np.float64),
+                    ]
+                )
+            )
+
+        grid = LineCollection(
+            segments=array_grid,
+            label='Azimuthal grid',
+            colors='olive',
+            alpha=0.25,
+            linewidth=0.5
+        )
+        self._ax.add_collection(grid)
+
+    def _add_equatorial_grid(self):
+        """
+        Add equatorial grid to skychart
+        """
+
+        declinations = np.arange(-90.0, 90.0, self.config.grid_theta_step, dtype=np.float64)
+        right_ascensions = np.arange(0, 180.0, self.config.grid_phi_step, dtype=np.float64)
+
+        array_grid = []
+
+        for ra in right_ascensions:
+            eq_circle = generate_small_circle(
+                spheric_normal=np.array([90.0, ra + 90.0]),
+                alpha=90.0,
+                num_points=100,
+            )
+            horizontal_coords = get_horizontal_coords(
+                config=self.config.__dict__,
+                data=eq_circle,
+            )
+            projection = make_circle_projection(
+                azimuths=horizontal_coords['azimuth'],
+                zeniths=horizontal_coords['zenith'],
+            )
+            array_grid.append(
+                np.column_stack(
+                    [
+                        projection['angle'].astype(np.float64),
+                        projection['radius'].astype(np.float64),
+                    ]
+                )
+            )
+
+        for dec in declinations:
+            eq_circle = generate_small_circle(
+                spheric_normal=np.array([0.0, 0.0]),
+                alpha=(90.0 - dec),
+                num_points=100,
+            )
+            horizontal_coords = get_horizontal_coords(
+                config=self.config.__dict__,
+                data=eq_circle,
+            )
+            projection = make_circle_projection(
+                azimuths=horizontal_coords['azimuth'],
+                zeniths=horizontal_coords['zenith'],
+            )
+            array_grid.append(
+                np.column_stack(
+                    [
+                        projection['angle'].astype(np.float64),
+                        projection['radius'].astype(np.float64),
+                    ]
+                )
+            )
+
+        grid = LineCollection(array_grid, label='Equatorial grid',
+                              colors='magenta', alpha=0.25, linewidth=0.5)
+        self._ax.add_collection(grid)
 
     def _create_polar_scatter(self, projection_data: NDArray):
         """
@@ -274,30 +421,30 @@ class StereoProjector(object):
             self._ax.set_xticks(minor_angles_rad, minor=True)
             self._ax.set_xticklabels(numeric_labels, minor=True, fontsize=9)
 
-            self._ax.xaxis.set_tick_params(
-                direction='out',
-                length=5,
-                width=2,
-                colors='black',
-            )
-
+            # Configure minor (numerical) ticks
             for tick in self._ax.xaxis.get_minor_ticks():
                 tick.tick2line.set_visible(True)
-                tick.tick2line.set_markersize(2)
-                tick.tick2line.set_markeredgewidth(1)
-
+                tick.tick2line.set_markersize(1)
+                tick.tick2line.set_markeredgewidth(0.5)
+            # Configure major (literal NESW) ticks
             for tick in self._ax.xaxis.get_major_ticks():
                 tick.tick2line.set_visible(True)
-                tick.tick2line.set_markersize(4)
-                tick.tick2line.set_markeredgewidth(1.5)
+                tick.tick2line.set_markersize(3)
+                tick.tick2line.set_markeredgewidth(1)
         else:
             self._ax.set_xticks([])
 
         # Add circle around skychart
-        self._ax.spines['polar'].set_visible(True)
-        self._ax.spines['polar'].set_linewidth(1)
-        self._ax.spines['polar'].set_color('black')
-        self._ax.spines['polar'].set_alpha(1)
+        r_max = self._ax.get_rmax()
+        circle = Circle((0, 0), r_max,
+                        transform=self._ax.transData._b,
+                        fill=False,
+                        edgecolor='black',
+                        linewidth=1,
+                        alpha=1.0,
+                        zorder=10)  # поверх всего
+
+        self._ax.add_patch(circle)
 
         self._ax.xaxis.grid(False)
         self._ax.set_yticks([])

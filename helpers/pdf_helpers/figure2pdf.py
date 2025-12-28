@@ -119,7 +119,7 @@ def save_figure_skychart(
     logo_position: tuple[float, float] = (0.02, 0.95),
     text_position: tuple[float, float] = (0.5, 0.02),
     page_size: tuple[float, float] = (8.27, 11.69),
-    chart_margins: tuple[float, float, float, float] = (0.075, 0.2, 0.075, 0.05),
+    chart_margins: tuple[float, float, float, float] = (0.05, 0.15, 0.05, 0.05),
     print_skychart_info=True,
 ):
     if not filename.endswith('.pdf'):
@@ -199,7 +199,7 @@ def save_figure_skychart(
         if footer_text:
             add_footer_text(info_fig, footer_text, text_position)
 
-        pdf.savefig(info_fig, dpi=dpi)
+        pdf.savefig(info_fig, pad_inches=0.25, dpi=dpi)
         plt.close(info_fig)
 
         original_size = fig.get_size_inches().copy()
