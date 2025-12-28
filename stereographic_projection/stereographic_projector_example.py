@@ -9,12 +9,19 @@ from datetime import datetime
 constraints = CatalogConstraints(
     max_magnitude=5.5,
 )
+
 # Configure projection: date, time and place
 config = StereoProjConfig(
-    add_ecliptic=True,
-    add_equator=True,
-    add_galactic_equator=True,
+    add_ecliptic=False,
+    add_equator=False,
+    add_galactic_equator=False,
     add_planets=True,
+    add_ticks=False,
+    add_horizontal_grid=False,
+    add_equatorial_grid=False,
+    grid_theta_step=10.0,
+    grid_phi_step=45.0,
+    random_origin=True,
     local_time=datetime(
         year=2004,
         month=6,
@@ -26,18 +33,21 @@ config = StereoProjConfig(
     latitude=43.0,
     longitude=131.5,
 )
+
 # Create catalog object (without data)
 catalog = Catalog(
     catalog_name='hip_data.tsv',
     cache_dir='cache',
     use_cache=True,
 )
+
 # Create projector object with configuration
 proj = StereoProjector(
     config=config,
     catalog=catalog,
     planets_catalog=PlanetCatalog()
 )
+
 # Make figure with constrains
 figure = proj.generate(constraints=constraints)
 
@@ -51,5 +61,5 @@ save_figure_skychart(
     footer_text="Generate more on skychart.astrageek.ru.",
     logo_position=(0.12, 0.97),
     text_position=(0.5, 0.01),
-    teacher=True,
+    print_skychart_info=True,
 )

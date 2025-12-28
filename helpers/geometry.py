@@ -1,12 +1,13 @@
 """Module with astronomical geometrical functions."""
 from typing import Tuple, Union
+
 from helpers.time.time import vequinox_hour_angle
 from numpy.typing import NDArray
 import numpy as np
 from hip_catalog.hip_catalog import CatalogConstraints
 
 
-def get_horizontal_coords(config: dict, data: NDArray) -> Tuple[NDArray, NDArray, NDArray]:
+def get_horizontal_coords(config: dict, data: NDArray) -> NDArray:
     """
     Get horizontal coordinates from catalog data.
 
@@ -14,6 +15,13 @@ def get_horizontal_coords(config: dict, data: NDArray) -> Tuple[NDArray, NDArray
     :param data: data to make conversion into horizontal coordinates
     :return: horizontal coordinates, zenith distances and azimuths
     """
+    HORIZONTAL_DTYPE = np.dtype([
+        ('x', np.float32),
+        ('y', np.float32),
+        ('z', np.float32),
+        ('azimuth', np.float32),
+        ('zenith', np.float32),
+    ])
 
     # Get ECI star coordinates
     eci_coords = np.column_stack([data['x'], data['y'], data['z']]).T
@@ -31,20 +39,32 @@ def get_horizontal_coords(config: dict, data: NDArray) -> Tuple[NDArray, NDArray
     cl = np.cos(latitude)
     st = np.sin(sidereal_time)
     ct = np.cos(sidereal_time)
-    rotation_matrix = np.array(
+    rotation_latitude = np.array(
         [
-            [st, -ct, 0],
-            [sl * ct, sl * st, -cl],
-            [cl * ct, cl * st, sl]
+            [1.0, 0.0, 0.0],
+            [0.0, sl, -cl],
+            [0.0, cl, sl]
         ]
     )
+    rotation_time = np.array(
+        [
+            [st, -ct, 0.0],
+            [ct, st, 0.0],
+            [0.0, 0.0, 1.0]
+        ]
+    )
+    rotation_matrix = rotation_latitude @ rotation_time
     cartesian_hor_coords =  rotation_matrix @ eci_coords
 
     # 0, 1, 2 is x, y, z below
-    azimuths = np.atan2(cartesian_hor_coords[0, :], cartesian_hor_coords[1, :]) - np.pi / 2
-    zeniths = np.arccos(cartesian_hor_coords[2, :])
+    horizontal_coords = np.zeros(eci_coords.shape[1], dtype=HORIZONTAL_DTYPE)
+    horizontal_coords['x'] = cartesian_hor_coords[0, :]
+    horizontal_coords['y'] = cartesian_hor_coords[1, :]
+    horizontal_coords['z'] = cartesian_hor_coords[2, :]
+    horizontal_coords['azimuth'] = np.atan2(cartesian_hor_coords[0, :], cartesian_hor_coords[1, :])
+    horizontal_coords['zenith'] = np.arccos(cartesian_hor_coords[2, :])
 
-    return cartesian_hor_coords, azimuths, zeniths
+    return horizontal_coords
 
 
 def mag_to_radius(
@@ -63,27 +83,28 @@ def mag_to_radius(
     return radii ** 1.3
 
 
-def make_stars_projections(star_view_data: NDArray, constraints: CatalogConstraints) -> NDArray:
+def make_projections(view_data: NDArray, constraints: CatalogConstraints) -> NDArray:
     """
-    Returns star point projections array.
+    Returns point projections array.
 
-    :param star_view_data: observed stars parameters in horizontal coordinates
-    :param constraints: catalog constraints
-    :return: star image point parameters
+    :param view_data: observed object parameters in horizontal coordinates
+    :param constraints: constraints
+    :return: image point parameters
     """
+
     PROJECTION_DTYPE = np.dtype([
         ('size', np.float32),
         ('radius', np.float32),
         ('angle', np.float32),
-        ('hip_id', np.int32),
+        ('id', np.int32),
     ])
-    number_of_stars = star_view_data.shape[0]
 
-    points_data = np.zeros(number_of_stars, dtype=PROJECTION_DTYPE)
-    points_data['size'] = mag_to_radius(star_view_data['v_mag'], constraints)
-    points_data['radius'] = 2 * np.tan(star_view_data['zenith'] / 2.0)
-    points_data['angle'] = star_view_data['azimuth']
-    points_data['hip_id'] = star_view_data['hip_id']
+    points_data = np.zeros(view_data.shape[0], dtype=PROJECTION_DTYPE)
+    points_data['size'] = mag_to_radius(view_data['v_mag'], constraints)
+    points_data['radius'] = 2 * np.tan(view_data['zenith'] / 2.0)
+    points_data['angle'] = view_data['azimuth']
+
+    points_data['id'] = view_data['id']
 
     return points_data
 
@@ -101,15 +122,17 @@ def generate_small_circle(spheric_normal: NDArray, alpha: float, num_points: int
         ('x', np.float32),
         ('y', np.float32),
         ('z', np.float32),
+        ('theta', np.float32),
+        ('phi', np.float32),
     ])
 
     theta = np.deg2rad(spheric_normal[0])
     phi = np.deg2rad(spheric_normal[1])
     n = np.array(
         [
-            np.cos(theta) * np.cos(phi),
-            np.cos(theta) * np.sin(phi),
-            np.sin(theta)
+            np.sin(theta) * np.cos(phi),
+            np.sin(theta) * np.sin(phi),
+            np.cos(theta)
         ]
     )
     a = np.zeros_like(n)
@@ -123,7 +146,7 @@ def generate_small_circle(spheric_normal: NDArray, alpha: float, num_points: int
 
     v = np.cross(n, u)
 
-    phi = np.linspace(0, 2 * np.pi, num_points, endpoint=False)
+    phi = np.linspace(0, 2 * np.pi, num_points)
     alpha = np.deg2rad(alpha)
     cos_alpha = np.cos(alpha)
     sin_alpha = np.sin(alpha)
@@ -134,6 +157,8 @@ def generate_small_circle(spheric_normal: NDArray, alpha: float, num_points: int
     points['x'] = cos_alpha * n[0] + sin_alpha * (cos_phi * u[0] + sin_phi * v[0])
     points['y'] = cos_alpha * n[1] + sin_alpha * (cos_phi * u[1] + sin_phi * v[1])
     points['z'] = cos_alpha * n[2] + sin_alpha * (cos_phi * u[2] + sin_phi * v[2])
+    points['phi'] = np.atan2(points['y'], points['x'])
+    points['theta'] = np.arccos(points['z'])
 
     return points
 
@@ -141,7 +166,8 @@ def make_circle_projection(azimuths: NDArray, zeniths: NDArray) -> NDArray:
     """
     Returns star point projections array.
 
-    :param points: horizontal coordinates of circle points
+    :param azimuths: azimuth coordinates of circle points
+    :param zeniths: zenith coordinates of circle points
     :return: projection point polar coordinates
     """
     PROJECTION_DTYPE = np.dtype([

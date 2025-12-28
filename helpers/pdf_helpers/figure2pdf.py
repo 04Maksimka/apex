@@ -119,8 +119,8 @@ def save_figure_skychart(
     logo_position: tuple[float, float] = (0.02, 0.95),
     text_position: tuple[float, float] = (0.5, 0.02),
     page_size: tuple[float, float] = (8.27, 11.69),
-    chart_margins: tuple[float, float, float, float] = (0.03, 0.06, 0.03, 0.03),
-    teacher=True,
+    chart_margins: tuple[float, float, float, float] = (0.075, 0.25, 0.075, 0.1),
+    print_skychart_info=True,
 ):
     if not filename.endswith('.pdf'):
         filename += '.pdf'
@@ -177,7 +177,7 @@ def save_figure_skychart(
             info_fig.text(0.08, y, t, fontsize=12, va='top')
             y -= line_step
 
-        if teacher:
+        if print_skychart_info:
             info_lines: list[str] = [
                 f'Время наблюдения: {observation_time.strftime('%Y-%m-%d %H:%M:%S')}',
                 f'Звездное время: {get_sidereal_time(longitude=longitude, local=observation_time)}'
@@ -199,7 +199,7 @@ def save_figure_skychart(
         if footer_text:
             add_footer_text(info_fig, footer_text, text_position)
 
-        pdf.savefig(info_fig, dpi=dpi)
+        pdf.savefig(info_fig, pad_inches=0.25, dpi=dpi)
         plt.close(info_fig)
 
         original_size = fig.get_size_inches().copy()
@@ -217,7 +217,7 @@ def save_figure_skychart(
         if footer_text:
             add_footer_text(fig, footer_text, text_position)
 
-        pdf.savefig(fig, dpi=dpi)
+        pdf.savefig(fig, pad_inches=0.25, dpi=dpi)
 
         for ax, pos in zip(fig.axes, original_ax_positions):
             ax.set_position(pos)
