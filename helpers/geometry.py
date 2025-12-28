@@ -72,27 +72,32 @@ def mag_to_radius(
     return radii ** 1.3
 
 
-def make_stars_projections(star_view_data: NDArray, constraints: CatalogConstraints) -> NDArray:
+def make_projections(view_data: NDArray, constraints: CatalogConstraints, object_type: str = 'star') -> NDArray:
     """
-    Returns star point projections array.
+    Returns point projections array.
 
-    :param star_view_data: observed stars parameters in horizontal coordinates
-    :param constraints: catalog constraints
-    :return: star image point parameters
+    :param view_data: observed object parameters in horizontal coordinates
+    :param constraints: constraints
+    :param object_type: star or planet
+    :return: image point parameters
     """
+
     PROJECTION_DTYPE = np.dtype([
         ('size', np.float32),
         ('radius', np.float32),
         ('angle', np.float32),
-        ('hip_id', np.int32),
+        ('id', np.int32),
     ])
-    number_of_stars = star_view_data.shape[0]
 
-    points_data = np.zeros(number_of_stars, dtype=PROJECTION_DTYPE)
-    points_data['size'] = mag_to_radius(star_view_data['v_mag'], constraints)
-    points_data['radius'] = 2 * np.tan(star_view_data['zenith'] / 2.0)
-    points_data['angle'] = star_view_data['azimuth']
-    points_data['hip_id'] = star_view_data['hip_id']
+    points_data = np.zeros(view_data.shape[0], dtype=PROJECTION_DTYPE)
+    points_data['size'] = mag_to_radius(view_data['v_mag'], constraints)
+    points_data['radius'] = 2 * np.tan(view_data['zenith'] / 2.0)
+    points_data['angle'] = view_data['azimuth']
+
+    if object_type == 'star':
+        points_data['id'] = view_data['hip_id']
+    elif object_type == 'planet':
+        points_data['id'] = view_data['planet_id']
 
     return points_data
 
