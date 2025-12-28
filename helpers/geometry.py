@@ -72,7 +72,7 @@ def mag_to_radius(
     return radii ** 1.3
 
 
-def make_projections(view_data: NDArray, constraints: CatalogConstraints, object_type: str = 'star') -> NDArray:
+def make_projections(view_data: NDArray, constraints: CatalogConstraints) -> NDArray:
     """
     Returns point projections array.
 
@@ -94,10 +94,7 @@ def make_projections(view_data: NDArray, constraints: CatalogConstraints, object
     points_data['radius'] = 2 * np.tan(view_data['zenith'] / 2.0)
     points_data['angle'] = view_data['azimuth']
 
-    if object_type == 'star':
-        points_data['id'] = view_data['hip_id']
-    elif object_type == 'planet':
-        points_data['id'] = view_data['planet_id']
+    points_data['id'] = view_data['id']
 
     return points_data
 

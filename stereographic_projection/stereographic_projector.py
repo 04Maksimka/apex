@@ -62,30 +62,15 @@ class StereoProjector(object):
         # From equatorial to horizontal
         star_view_data = self._make_horizontal_views(
             data=self.catalog.data,
-            type='star'
+            object_type='star'
         )
         # Make projections
         points_data = make_projections(
             view_data=star_view_data,
             constraints=self.catalog.constraints,
-            object_type='star'
         )
         # Make figure with projections
         self._create_polar_scatter(points_data)
-
-        # Add planets
-        if self.config.add_planets:
-            planet_data = self.planets_catalog.get_planets(self.config.local_time)
-            planet_view_data = self._make_horizontal_views(
-                data=planet_data,
-                object_type='planet'
-            )
-            planet_points_data = make_projections(
-                view_data=planet_view_data,
-                constraints=self.catalog.constraints,
-                object_type='planet'
-            )
-            self._add_planets(planet_points_data)
 
         # Add ecliptic
         if self.config.add_ecliptic:
@@ -99,10 +84,24 @@ class StereoProjector(object):
         if self.config.add_galactic_equator:
             self._add_galactic_equator()
 
+        # Add planets
+        if self.config.add_planets:
+            planet_data = self.planets_catalog.get_planets(self.config.local_time)
+            planet_view_data = self._make_horizontal_views(
+                data=planet_data,
+                object_type='planet'
+            )
+            planet_points_data = make_projections(
+                view_data=planet_view_data,
+                constraints=self.catalog.constraints,
+            )
+            self._add_planets(planet_points_data)
+
         # Put a legend to the bottom of the current axis
         box = self._ax.get_position()
         self._ax.set_position((box.x0, box.y0, box.width * 0.8, box.height))
-        self._ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+        if self._ax.get_legend_handles_labels()[1]:
+            self._ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
                   fancybox=True, shadow=True, ncol=5)
 
         return self._fig
@@ -214,14 +213,14 @@ class StereoProjector(object):
         :param projection_data: projection points for planets
         """
         for planet_data in projection_data:
-            planet = Planets(planet_data['planet_id'])
+            planet = Planets(planet_data['id'])
             name = planet.name.capitalize()
             color = self.planets_catalog.get_planet_color(planet)
             self._ax.scatter(
                 planet_data['angle'],
                 planet_data['radius'],
                 c=color,
-                s=planet_data['size'] * 3,  # make planets larger for visibility
+                s=max(planet_data['size'] * 3, 0.5),  # make planets larger for visibility
                 alpha=0.8,
                 linewidth=0.5,
                 label=name,
@@ -277,11 +276,9 @@ class StereoProjector(object):
 
             self._ax.xaxis.set_tick_params(
                 direction='out',
-                length=10,
+                length=5,
                 width=2,
                 colors='black',
-                pad=12,
-                labelsize=12
             )
 
             for tick in self._ax.xaxis.get_minor_ticks():
