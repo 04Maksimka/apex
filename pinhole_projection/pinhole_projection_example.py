@@ -1,4 +1,5 @@
 """Usage example of pinhole projection."""
+import numpy as np
 from matplotlib import pyplot as plt
 
 from constellations_metadata.contellations_centers import get_constellation_dir, \
@@ -6,45 +7,51 @@ from constellations_metadata.contellations_centers import get_constellation_dir,
 from hip_catalog.hip_catalog import Catalog
 from pinhole_projection.pinhole_projector import ShotConditions, CameraCfg, \
     Pinhole
-from planets_catalog.planet_catalog import PlanetCatalog, Planets
+from planets_catalog.planet_catalog import PlanetCatalog
+from datetime import datetime
 
 
-def example_visualization():
+def example_pinhole_visualization(
+        constellation: Constellation,
+        tilt_angle: float = 0,
+        use_dark_mode: bool = True,
+):
     """Create example visualization of pinhole projections."""
-    from datetime import datetime
-
     # Create catalogs
     catalog = Catalog(catalog_name='hip_data.tsv', use_cache=False)
-
     planet_catalog = PlanetCatalog()
 
-    camera_cfg = CameraCfg(
-        width=1024,
-        height=900,
-        foc_len=1500.0
+    fov_deg = 60
+    aspect_ratio = 1.5
+    height = 1000
+
+    camera_cfg = CameraCfg.from_fov_and_aspect(
+        fov_deg=fov_deg,
+        aspect_ratio=aspect_ratio,
+        height_pix=height
     )
 
     time = datetime(2024, 1, 1, 0, 0, 0)
-
-    # Example: Pointing at specific region (Orion)
-    print("\nExample: Pointing at Orion region")
     shot_cond = ShotConditions(
-        center_dir=get_constellation_dir(Constellation.ORI),
-        tilt_angle=180,
+        center_dir=get_constellation_dir(constellation),
+        tilt_angle=tilt_angle,
     )
 
     pinhole = Pinhole(shot_cond, camera_cfg, time, catalog, planet_catalog)
     result = pinhole.project()
-
     # Create visualizations
-    plt.style.use('dark_background')
+    if use_dark_mode:
+        plt.style.use('dark_background')
     fig, ax = plt.subplots(1, 1, figsize=(15, 18))
-
     sizes = (6.0 - result.stars['v_mag']) ** 1.5
     ax.scatter(result.stars['x_pix'], result.stars['y_pix'], s=sizes, c='white')
     ax.invert_xaxis()
 
-    plt.show()
 
 if __name__ == '__main__':
-    example_visualization()
+    example_pinhole_visualization(
+        constellation=Constellation.UMA,
+        tilt_angle=180,
+    )
+
+    plt.show()

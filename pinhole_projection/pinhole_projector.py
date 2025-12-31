@@ -23,6 +23,27 @@ class CameraCfg:
     height: int  # pix
     foc_len: float  # pix (focal length)
 
+    @classmethod
+    def from_fov_and_aspect(
+            cls,
+            fov_deg: float,
+            aspect_ratio: float,
+            height_pix: int,
+    ):
+        """
+        Create CameraCfg from field of view and aspect ratio.
+
+        :param fov_deg: Horizontal field of view in degrees
+        :param aspect_ratio: Width/height ratio
+        :param height_pix: Height in pixels
+        """
+        width_pix = int(height_pix * aspect_ratio)
+        # Calculate focal length from FOV
+        fov_rad = np.deg2rad(fov_deg)
+        foc_len_pix = (width_pix / 2) / np.tan(fov_rad / 2)
+
+        return cls(width=width_pix, height=height_pix, foc_len=foc_len_pix)
+
 
 @dataclass
 class ProjectionResult:
