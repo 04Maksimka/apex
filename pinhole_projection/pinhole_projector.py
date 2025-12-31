@@ -5,8 +5,6 @@ from typing import Tuple, Optional
 import numpy as np
 from numpy.typing import NDArray
 
-from constellations_metadata.contellations_centers import Constellation, \
-    get_constellation_dir
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from planets_catalog.planet_catalog import PlanetCatalog
 
@@ -31,8 +29,6 @@ class ProjectionResult:
     """Result of pinhole projection."""
     stars: NDArray  # Structured array with star projections
     planets: NDArray  # Structured array with planet projections
-    constellations: Optional[
-        NDArray] = None  # Structured array with constellation projections
 
 
 class Pinhole:
@@ -197,48 +193,9 @@ class Pinhole:
 
         return result
 
-    def get_constellations(self, constellation_names=None) -> NDArray:
-        """Get projections of constellation centers."""
-        if constellation_names is None:
-            constellation_names = list(Constellation)
-
-        # Get constellation directions
-        const_dirs = []
-        const_ids = []
-        for i, name in enumerate(constellation_names):
-            try:
-                dir_vec = get_constellation_dir(name)
-                const_dirs.append(dir_vec)
-                const_ids.append(i)
-            except KeyError:
-                continue
-
-        if not const_dirs:
-            return np.array([], dtype=[('x_pix', 'f4'), ('y_pix', 'f4'),
-                                       ('const_id', 'i4')])
-
-        const_dirs = np.array(const_dirs)
-
-        # Project constellation centers
-        valid_mask, pixel_coords = self._project_points(const_dirs)
-
-        # Create structured array
-        dtype = [('x_pix', 'f4'), ('y_pix', 'f4'), ('const_id', 'i4')]
-        result = np.zeros(np.sum(valid_mask), dtype=dtype)
-        result['x_pix'] = pixel_coords[valid_mask, 0]
-        result['y_pix'] = pixel_coords[valid_mask, 1]
-        result['const_id'] = np.array(const_ids)[valid_mask]
-
-        return result
-
-    def project(self, include_constellations: bool = False) -> ProjectionResult:
+    def project(self) -> ProjectionResult:
         """Get pinhole projections of stars and planets."""
         stars = self.get_stars()
         planets = self.get_planets()
 
-        constellations = None
-        if include_constellations:
-            constellations = self.get_constellations()
-
-        return ProjectionResult(stars=stars, planets=planets,
-                                constellations=constellations)
+        return ProjectionResult(stars=stars, planets=planets)

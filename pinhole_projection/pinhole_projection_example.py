@@ -20,7 +20,7 @@ def example_visualization():
 
     camera_cfg = CameraCfg(
         width=1024,
-        height=768,
+        height=900,
         foc_len=1500.0
     )
 
@@ -34,7 +34,7 @@ def example_visualization():
     )
 
     pinhole = Pinhole(shot_cond, camera_cfg, time, catalog, planet_catalog)
-    result = pinhole.project(include_constellations=True)
+    result = pinhole.project()
 
     # Create visualizations
     plt.style.use('dark_background')
