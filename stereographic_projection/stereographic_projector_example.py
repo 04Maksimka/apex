@@ -12,13 +12,13 @@ constraints = CatalogConstraints(
 
 # Configure projection: date, time and place
 config = StereoProjConfig(
-    add_ecliptic=False,
+    add_ecliptic=True,
     add_equator=False,
     add_galactic_equator=False,
     add_planets=True,
     add_ticks=False,
     add_horizontal_grid=False,
-    add_equatorial_grid=False,
+    add_equatorial_grid=True,
     grid_theta_step=10.0,
     grid_phi_step=45.0,
     random_origin=True,

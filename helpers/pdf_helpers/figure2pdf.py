@@ -179,7 +179,7 @@ def save_figure_skychart(
 
         if print_skychart_info:
             info_lines: list[str] = [
-                f'Время наблюдения: {observation_time.strftime('%Y-%m-%d %H:%M:%S')}',
+                f"Время наблюдения: {observation_time.strftime('%Y-%m-%d %H:%M:%S')}",
                 f'Звездное время: {get_sidereal_time(longitude=longitude, local=observation_time)}'
             ]
             if latitude is not None and longitude is not None:
@@ -192,7 +192,14 @@ def save_figure_skychart(
             elif location_name:
                 info_lines.append(f'Место: {location_name}')
 
-            info_fig.text(0.08, 0.16, '\n'.join(info_lines), fontsize=10, va='top', color='gray')
+            info_fig.text(
+                0.08,
+                0.16,
+                '\n'.join(info_lines),
+                fontsize=10,
+                va='top',
+                color='gray',
+            )
 
         if resolved_logo_path:
             add_logo_to_figure(info_fig, resolved_logo_path, logo_position)
