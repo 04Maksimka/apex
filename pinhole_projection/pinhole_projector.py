@@ -139,7 +139,7 @@ class Pinhole:
                   constraints: Optional[CatalogConstraints] = None) -> NDArray:
         """Get ECI coords of stars located in the field of view."""
         if constraints is None:
-            constraints = CatalogConstraints(max_magnitude=6.0)
+            constraints = CatalogConstraints(max_magnitude=5.5)
 
         stars_data = self.catalog.get_stars(constraints)
 

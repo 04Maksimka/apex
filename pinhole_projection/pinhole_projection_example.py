@@ -37,10 +37,12 @@ def example_visualization():
     result = pinhole.project(include_constellations=True)
 
     # Create visualizations
+    plt.style.use('dark_background')
     fig, ax = plt.subplots(1, 1, figsize=(15, 18))
 
-    sizes = (6.5 - result.stars['v_mag']) ** 1.3
-    ax.scatter(result.stars['x_pix'], result.stars['y_pix'], s=sizes)
+    sizes = (6.0 - result.stars['v_mag']) ** 1.5
+    ax.scatter(result.stars['x_pix'], result.stars['y_pix'], s=sizes, c='white')
+    ax.invert_xaxis()
 
     plt.show()
 
