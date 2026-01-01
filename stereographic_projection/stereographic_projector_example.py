@@ -61,5 +61,5 @@ save_figure_skychart(
     footer_text="Generate more on skychart.astrageek.ru.",
     logo_position=(0.12, 0.97),
     text_position=(0.5, 0.01),
-    print_skychart_info=True,
+    print_skychart_info=False,
 )

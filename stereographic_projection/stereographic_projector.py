@@ -52,10 +52,17 @@ class StereoProjector(object):
     _ax: plt.Axes               # Skychart axes
     _groups: dict = {}          # Legend groups
 
-    def __init__(self, config: StereoProjConfig, catalog: Catalog, planets_catalog: PlanetCatalog):
+    def __init__(
+        self,
+        config: StereoProjConfig,
+        catalog: Catalog,
+        planets_catalog: PlanetCatalog,
+        random_angle: float = np.random.uniform(0.0, 2*np.pi)
+    ):
         self.config = config
         self.catalog = catalog
         self.planets_catalog = planets_catalog
+        self.random_angle = random_angle
 
     def generate(self, constraints: Optional[CatalogConstraints]=None) -> plt.Figure:
         """
@@ -404,7 +411,7 @@ class StereoProjector(object):
 
         # Randomize north direction
         if self.config.random_origin:
-            self._ax.set_theta_offset(np.random.uniform(0.0, 2*np.pi))
+            self._ax.set_theta_offset(self.random_angle)
         else:
             self._ax.set_theta_offset(-np.pi / 2)
 
