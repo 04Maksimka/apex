@@ -168,3 +168,5 @@ Desktop.ini
 # e.g., *.fits (but only if they are generated; commit essential datasets)
 # temp_data/
 # output/
+
+stereographic_projection/samples/
