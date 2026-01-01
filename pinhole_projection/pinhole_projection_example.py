@@ -15,6 +15,7 @@ def example_pinhole_visualization(
         constellation: Constellation,
         tilt_angle: float = 0,
         use_dark_mode: bool = True,
+        remove_ticks: bool = True,
 ):
     """Create example visualization of pinhole projections."""
     # Create catalogs
@@ -40,18 +41,26 @@ def example_pinhole_visualization(
     pinhole = Pinhole(shot_cond, camera_cfg, time, catalog, planet_catalog)
     result = pinhole.project()
     # Create visualizations
+    color = 'black'
     if use_dark_mode:
+        color = 'white'
         plt.style.use('dark_background')
     fig, ax = plt.subplots(1, 1, figsize=(15, 18))
     sizes = (6.0 - result.stars['v_mag']) ** 1.5
-    ax.scatter(result.stars['x_pix'], result.stars['y_pix'], s=sizes, c='white')
+    ax.scatter(result.stars['x_pix'], result.stars['y_pix'], s=sizes, c=color)
     ax.invert_xaxis()
+
+    if remove_ticks:
+        ax.set_xticks([])
+        ax.set_yticks([])
 
 
 if __name__ == '__main__':
     example_pinhole_visualization(
         constellation=Constellation.UMA,
         tilt_angle=180,
+        use_dark_mode=False,
+        remove_ticks=True,
     )
 
     plt.show()
