@@ -230,4 +230,4 @@ def save_figure_skychart(
             ax.set_position(pos)
         fig.set_size_inches(original_size, forward=False)
 
-    logger.info(f"Skychart saved as two-page PDF '{filename}'")
+    logger.info(f"Skychart saved as PDF '{filename}'")
