@@ -21,7 +21,7 @@ def example_all_constellations():
 
     # Configuration
     config = StereoConstellationConfig(
-        local_time=datetime(2024, 6, 21, 23, 0),  # Summer solstice night
+        local_time=datetime(2024, 6, 21, 23, 0),
         latitude=55.75,  # Moscow
         longitude=37.62,
         add_ecliptic=True,
@@ -56,11 +56,6 @@ def example_all_constellations():
 
     # Generate projection
     fig = projector.generate(constraints=constraints)
-
-    # Save result
-    plt.savefig('stereographic_all_constellations.pdf', dpi=300,
-                bbox_inches='tight')
-    print("Saved: stereographic_all_constellations.pdf")
 
     return fig
 
@@ -118,11 +113,6 @@ def example_specific_constellations():
     # Generate projection
     fig = projector.generate(constraints=constraints)
 
-    # Save result
-    plt.savefig('stereographic_specific_constellations.pdf', dpi=300,
-                bbox_inches='tight')
-    print("Saved: stereographic_specific_constellations.pdf")
-
     return fig
 
 
@@ -176,11 +166,6 @@ def example_colored_constellations():
     # Generate projection
     fig = projector.generate(constraints=constraints)
 
-    # Save result
-    plt.savefig('stereographic_colored_constellations.pdf', dpi=300,
-                bbox_inches='tight')
-    print("Saved: stereographic_colored_constellations.pdf")
-
     return fig
 
 
@@ -233,38 +218,17 @@ def example_with_planets_and_grids():
     # Generate projection
     fig = projector.generate(constraints=constraints)
 
-    # Save result
-    plt.savefig('stereographic_complete_chart.pdf', dpi=300,
-                bbox_inches='tight')
-    print("Saved: stereographic_complete_chart.pdf")
-
     return fig
 
 
 if __name__ == '__main__':
-    # Run examples
-    print("=" * 60)
-    print("Stereographic Projection with Constellations - Examples")
-    print("=" * 60)
-    print()
-
     # Example 1: All constellations
     example_all_constellations()
-    print()
-
     # Example 2: Specific constellations
     example_specific_constellations()
-    print()
-
     # Example 3: Colored constellations
     example_colored_constellations()
-    print()
-
     # Example 4: Complete chart
     example_with_planets_and_grids()
-    print()
 
-    print("=" * 60)
-    print("All examples completed!")
-    print("=" * 60)
     plt.show()
