@@ -45,13 +45,6 @@ class StereoProjConfig(object):
 class StereoProjector(object):
     """Class of the stereographic projector."""
 
-    catalog: Catalog       # Star catalog
-    planets_catalog: PlanetCatalog
-    config: StereoProjConfig    # Stereo projector configuration
-    _fig: plt.Figure            # Skychart figure
-    _ax: plt.Axes               # Skychart axes
-    _groups: dict = {}          # Legend groups
-
     def __init__(
         self,
         config: StereoProjConfig,
@@ -63,6 +56,7 @@ class StereoProjector(object):
         self.catalog = catalog
         self.planets_catalog = planets_catalog
         self.random_angle = random_angle
+        self._groups = {}  # Legend groups - initialize as instance variable
 
     def generate(self, constraints: Optional[CatalogConstraints]=None) -> plt.Figure:
         """
