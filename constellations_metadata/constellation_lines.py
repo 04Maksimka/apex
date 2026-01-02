@@ -12,7 +12,6 @@ Data sources:
 All HIP IDs have been verified for accuracy.
 """
 
-from enum import Enum
 from typing import Dict, List, Tuple
 from constellations_metadata.contellations_centers import Constellation
 
