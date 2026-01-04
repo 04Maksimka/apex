@@ -6,9 +6,9 @@ from typing import Optional
 from numpy.typing import NDArray
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.patches import Circle, Patch
+from matplotlib.patches import Circle
 
-from helpers.geometry import (
+from helpers.geometry.geometry import (
     get_horizontal_coords, make_projections, make_circle_projection, generate_small_circle,
 )
 from hip_catalog.hip_catalog import CatalogConstraints, Catalog
@@ -158,8 +158,8 @@ class StereoProjector(object):
         DEC = 66.5607
 
         ecliptic_eci_coords = generate_small_circle(
-            spheric_normal=np.array([90.0 - DEC, RA]),
-            alpha=90.0,
+            spheric_normal_deg=np.array([90.0 - DEC, RA]),
+            alpha_deg=90.0,
             num_points=1000
         )
         horizontal_coords = get_horizontal_coords(
@@ -185,8 +185,8 @@ class StereoProjector(object):
         """
 
         equator_eci_coords = generate_small_circle(
-            spheric_normal=np.array([0.0, 0.0]),
-            alpha=90.0,
+            spheric_normal_deg=np.array([0.0, 0.0]),
+            alpha_deg=90.0,
             num_points=1000
         )
         horizontal_coords = get_horizontal_coords(
@@ -215,8 +215,8 @@ class StereoProjector(object):
         DEC = 27.12825
 
         galactic_eci_coords = generate_small_circle(
-            spheric_normal=np.array([90.0 - DEC, RA]),
-            alpha=90.0,
+            spheric_normal_deg=np.array([90.0 - DEC, RA]),
+            alpha_deg=90.0,
             num_points=1000
         )
         horizontal_coords = get_horizontal_coords(
@@ -270,8 +270,8 @@ class StereoProjector(object):
         # Draw azimuthal great circles
         for azimuth in azimuths:
             circle = generate_small_circle(
-                spheric_normal=np.array([90.0, azimuth + 90.0]),
-                alpha=90.0,
+                spheric_normal_deg=np.array([90.0, azimuth + 90.0]),
+                alpha_deg=90.0,
                 num_points=100,
             )
             projection = make_circle_projection(
@@ -289,8 +289,8 @@ class StereoProjector(object):
         # Draw zenith small circles
         for zenith in zeniths:
             circle = generate_small_circle(
-                spheric_normal=np.array([0.0, 0.0]),
-                alpha=zenith,
+                spheric_normal_deg=np.array([0.0, 0.0]),
+                alpha_deg=zenith,
                 num_points=100,
             )
             projection = make_circle_projection(
@@ -328,8 +328,8 @@ class StereoProjector(object):
         # Draw great circles right ascension
         for ra in right_ascensions:
             eq_circle = generate_small_circle(
-                spheric_normal=np.array([90.0, ra + 90.0]),
-                alpha=90.0,
+                spheric_normal_deg=np.array([90.0, ra + 90.0]),
+                alpha_deg=90.0,
                 num_points=100,
             )
             horizontal_coords = get_horizontal_coords(
@@ -351,8 +351,8 @@ class StereoProjector(object):
         # Draw small circles declination
         for dec in declinations:
             eq_circle = generate_small_circle(
-                spheric_normal=np.array([0.0, 0.0]),
-                alpha=(90.0 - dec),
+                spheric_normal_deg=np.array([0.0, 0.0]),
+                alpha_deg=(90.0 - dec),
                 num_points=100,
             )
             horizontal_coords = get_horizontal_coords(

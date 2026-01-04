@@ -63,7 +63,10 @@ class Catalog(object):
         # Make pathlib object for cache directory if not exist
         self.use_cache = use_cache
         if use_cache:
-            self.cache_dir = pathlib.Path(cache_dir)
+            if cache_dir is None:
+                self.cache_dir = pathlib.Path(__file__).parent.absolute() / 'cache'
+            else:
+                self.cache_dir = pathlib.Path(cache_dir)
             # Create directory, if exists do nothing
             self.cache_dir.mkdir(exist_ok=True)
 
@@ -71,6 +74,28 @@ class Catalog(object):
         self._data = None
         self._cache_key = None
         self._constraints = None
+
+    def _find_cache_root(self) -> pathlib.Path:
+        """
+        Search for cache directory
+        :param project_name: Имя корневой папки проекта
+        :param start_path: Начальная точка поиска (по умолчанию - текущий файл)
+        :return: Абсолютный путь к корню проекта
+        """
+        if start_path is None:
+            start_path = pathlib.Path(__file__).resolve()
+        else:
+            start_path = pathlib.Path(start_path).resolve()
+
+        for parent in start_path.parents:
+            if parent.name == project_name:
+                return parent
+
+        # Если не нашли - падаем с понятной ошибкой
+        raise FileNotFoundError(
+            f"Project directory '{project_name}' not found in path hierarchy. "
+            f"Search started from: {start_path}"
+        )
 
     @staticmethod
     def _generate_cache_key(constraints: CatalogConstraints) -> str:

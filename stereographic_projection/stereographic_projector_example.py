@@ -7,7 +7,7 @@ from datetime import datetime
 
 # Configure catalog
 constraints = CatalogConstraints(
-    max_magnitude=5.5,
+    max_magnitude=6.0,
 )
 
 # Configure projection: date, time and place
@@ -37,7 +37,6 @@ config = StereoProjConfig(
 # Create catalog object (without data)
 catalog = Catalog(
     catalog_name='hip_data.tsv',
-    cache_dir='cache',
     use_cache=True,
 )
 

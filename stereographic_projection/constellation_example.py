@@ -42,7 +42,6 @@ def example_all_constellations():
     # Create catalogs
     catalog = Catalog(
         catalog_name='hip_data.tsv',
-        cache_dir='cache',
         use_cache=True,
     )
     planets_catalog = PlanetCatalog()
@@ -98,7 +97,6 @@ def example_specific_constellations():
     # Create catalogs
     catalog = Catalog(
         catalog_name='hip_data.tsv',
-        cache_dir='cache',
         use_cache=True,
     )
     planets_catalog = PlanetCatalog()
@@ -151,7 +149,6 @@ def example_colored_constellations():
     # Create catalogs
     catalog = Catalog(
         catalog_name='hip_data.tsv',
-        cache_dir='cache',
         use_cache=True,
     )
     planets_catalog = PlanetCatalog()
@@ -203,7 +200,6 @@ def example_with_planets_and_grids():
     # Create catalogs
     catalog = Catalog(
         catalog_name='hip_data.tsv',
-        cache_dir='cache',
         use_cache=True,
     )
     planets_catalog = PlanetCatalog()

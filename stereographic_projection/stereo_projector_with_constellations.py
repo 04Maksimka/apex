@@ -75,7 +75,7 @@ class StereoProjectorWithConstellations(StereoProjector):
         )
 
         # Make projections
-        from helpers.geometry import make_projections
+        from helpers.geometry.geometry import make_projections
         points_data = make_projections(
             view_data=star_view_data,
             constraints=self.catalog.constraints,
@@ -113,7 +113,7 @@ class StereoProjectorWithConstellations(StereoProjector):
 
         # Add planets
         if self.config.add_planets:
-            from helpers.geometry import make_projections
+            from helpers.geometry.geometry import make_projections
             planet_data = self.planets_catalog.get_planets(
                 self.config.local_time)
             planet_view_data = self._make_horizontal_views(

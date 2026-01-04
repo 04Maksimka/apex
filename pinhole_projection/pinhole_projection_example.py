@@ -4,7 +4,8 @@ from matplotlib import pyplot as plt
 
 from constellations_metadata.contellations_centers import get_constellation_dir, \
     Constellation
-from hip_catalog.hip_catalog import Catalog
+from helpers.geometry.geometry import mag_to_radius
+from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from pinhole_projection.pinhole_projector import ShotConditions, CameraCfg, \
     Pinhole
 from planets_catalog.planet_catalog import PlanetCatalog
@@ -19,36 +20,45 @@ def example_pinhole_visualization(
 ):
     """Create example visualization of pinhole projections."""
     # Create catalogs
-    catalog = Catalog(catalog_name='hip_data.tsv', use_cache=False)
+    constraints = CatalogConstraints(max_magnitude=6.0)
+    catalog = Catalog(catalog_name='hip_data.tsv', use_cache=True)
     planet_catalog = PlanetCatalog()
 
-    fov_deg = 60
+    # Define camera configuration
+    fov_deg = 90
     aspect_ratio = 1.5
     height = 1000
-
     camera_cfg = CameraCfg.from_fov_and_aspect(
         fov_deg=fov_deg,
         aspect_ratio=aspect_ratio,
         height_pix=height
     )
 
+    # Set time
     time = datetime(2024, 1, 1, 0, 0, 0)
+    # And shot conditions
     shot_cond = ShotConditions(
         center_dir=get_constellation_dir(constellation),
         tilt_angle=tilt_angle,
     )
-
+    # Define pinhole camera with all the configurations
     pinhole = Pinhole(shot_cond, camera_cfg, time, catalog, planet_catalog)
-    result = pinhole.project()
+    # Make a shot
+    result = pinhole.project(constraints=constraints)
+
     # Create visualizations
     color = 'black'
     if use_dark_mode:
         color = 'white'
         plt.style.use('dark_background')
     fig, ax = plt.subplots(1, 1, figsize=(15, 18))
-    sizes = (6.0 - result.stars['v_mag']) ** 1.5
+
+    sizes = mag_to_radius(
+        magnitude=result.stars['v_mag'],
+        constraints=constraints
+    )
+
     ax.scatter(result.stars['x_pix'], result.stars['y_pix'], s=sizes, c=color)
-    ax.invert_xaxis()
 
     if remove_ticks:
         ax.set_xticks([])
@@ -57,10 +67,10 @@ def example_pinhole_visualization(
 
 if __name__ == '__main__':
     example_pinhole_visualization(
-        constellation=Constellation.UMA,
-        tilt_angle=180,
+        constellation=Constellation.UMI,
+        tilt_angle=0.0,
         use_dark_mode=False,
-        remove_ticks=True,
+        remove_ticks=False,
     )
 
     plt.show()

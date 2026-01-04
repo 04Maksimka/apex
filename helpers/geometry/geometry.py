@@ -69,15 +69,15 @@ def get_horizontal_coords(config: dict, data: NDArray) -> NDArray:
 
 def mag_to_radius(
         magnitude: Union[float, NDArray[np.float32]],
-        constrains: CatalogConstraints,
+        constraints: CatalogConstraints,
 ) -> Union[float, NDArray[np.float32]]:
     """
     Returns radius of the point corresponds to given star magnitude.
     :param magnitude: star magnitude(s)
-    :param constrains: constrains criteria
+    :param constraints: constrains criteria
     :return: radius: star image radius
     """
-    mag_criteria = constrains.max_magnitude
+    mag_criteria = constraints.max_magnitude
     diff = mag_criteria - magnitude
     radii = np.maximum(diff, 0.0)
     return radii ** 1.3
@@ -108,12 +108,12 @@ def make_projections(view_data: NDArray, constraints: CatalogConstraints) -> NDA
 
     return points_data
 
-def generate_small_circle(spheric_normal: NDArray, alpha: float, num_points: int) -> NDArray:
+def generate_small_circle(spheric_normal_deg: NDArray, alpha_deg: float, num_points: int) -> NDArray:
     """
     Generate a small circle on unit sphere in ECI coordinates.
 
-    :param spheric_normal: spherical coordinates on the normal to hte place of circle, angles in degrees
-    :param alpha: angle between any radis vector of the point on small circle and normal
+    :param spheric_normal_deg: spherical coordinates on the normal to hte place of circle, angles in degrees
+    :param alpha_deg: angle between any radis vector of the point on small circle and normal
     :param num_points: number of points to generate
     :return: array of points in cartesian ECI coordinates
     """
@@ -126,37 +126,41 @@ def generate_small_circle(spheric_normal: NDArray, alpha: float, num_points: int
         ('phi', np.float32),
     ])
 
-    theta = np.deg2rad(spheric_normal[0])
-    phi = np.deg2rad(spheric_normal[1])
-    n = np.array(
+    # Extract angles, convert to radians
+    theta = np.deg2rad(spheric_normal_deg[0])
+    phi = np.deg2rad(spheric_normal_deg[1])
+
+    # Define normal in cartesian coordinates
+    normal = np.array(
         [
             np.sin(theta) * np.cos(phi),
             np.sin(theta) * np.sin(phi),
             np.cos(theta)
         ]
     )
-    a = np.zeros_like(n)
-    if not np.isclose(abs(n[2]), 1.0):
-        a[2] = 1.0
-    else:
-        a[0] = 1.0
 
-    u = np.cross(a, n)
+    # Define ECI z-axis
+    up_vec = np.array([0.0, 0.0, 1.0])
+    # If normal is close to zenith axis choose y-axis
+    if np.isclose(abs(normal[2]), 1.0):
+        up_vec = np.array([0.0, 1.0, 0.0])
+
+    u = np.cross(up_vec, normal)
     u = u / np.linalg.norm(u)
 
-    v = np.cross(n, u)
+    v = np.cross(normal, u)
 
     phi = np.linspace(0, 2 * np.pi, num_points)
-    alpha = np.deg2rad(alpha)
-    cos_alpha = np.cos(alpha)
-    sin_alpha = np.sin(alpha)
+    alpha_rad = np.deg2rad(alpha_deg)
+    cos_alpha = np.cos(alpha_rad)
+    sin_alpha = np.sin(alpha_rad)
     cos_phi = np.cos(phi)
     sin_phi = np.sin(phi)
 
     points = np.zeros(num_points, dtype=POINTS_DTYPE)
-    points['x'] = cos_alpha * n[0] + sin_alpha * (cos_phi * u[0] + sin_phi * v[0])
-    points['y'] = cos_alpha * n[1] + sin_alpha * (cos_phi * u[1] + sin_phi * v[1])
-    points['z'] = cos_alpha * n[2] + sin_alpha * (cos_phi * u[2] + sin_phi * v[2])
+    points['x'] = cos_alpha * normal[0] + sin_alpha * (cos_phi * u[0] + sin_phi * v[0])
+    points['y'] = cos_alpha * normal[1] + sin_alpha * (cos_phi * u[1] + sin_phi * v[1])
+    points['z'] = cos_alpha * normal[2] + sin_alpha * (cos_phi * u[2] + sin_phi * v[2])
     points['phi'] = np.atan2(points['y'], points['x'])
     points['theta'] = np.arccos(points['z'])
 

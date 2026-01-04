@@ -15,6 +15,10 @@ class ShotConditions:
     center_dir: NDArray  # direction in ECI (unit vector)
     tilt_angle: float  # angle in degrees on which we rotate a camera
 
+    def __post_init__(self):
+        # Normalize direction vector
+        self.center_dir /= np.linalg.norm(self.center_dir)
+
 
 @dataclass
 class CameraCfg:
@@ -55,61 +59,58 @@ class ProjectionResult:
 class Pinhole:
     """Pinhole camera projector."""
 
-    def __init__(self,
-                 shot_cond: ShotConditions,
-                 camera_cfg: CameraCfg,
-                 time: datetime,
-                 catalog: Catalog,
-                 planet_catalog: PlanetCatalog):
+    def __init__(
+            self,
+            shot_cond: ShotConditions,
+            camera_cfg: CameraCfg,
+            time: datetime,
+            catalog: Catalog,
+            planet_catalog: PlanetCatalog
+    ):
         """
         Initialize pinhole projector.
 
-        Args:
-            shot_cond: Shot conditions
-            camera_cfg: Camera configuration
-            time: Observation time
-            catalog: Star catalog instance
-            planet_catalog: Planet catalog instance
+        :param shot_cond: Shot conditions
+        :param camera_cfg: Camera configuration
+        :param time: Observation time
+        :param catalog: Star catalog instance
+        :param planet_catalog: Planet catalog instance
         """
+
         self.shot_cond = shot_cond
         self.camera_cfg = camera_cfg
         self.time = time
         self.catalog = catalog
         self.planet_catalog = planet_catalog
 
-        # Normalize center direction
-        self.center_dir = shot_cond.center_dir / np.linalg.norm(
-            shot_cond.center_dir)
-
         # Create camera coordinate system
-        self._create_camera_frame()
+        self._create_camera_frame_system()
 
-    def _create_camera_frame(self):
+    def _create_camera_frame_system(self):
         """Create camera coordinate system from shot conditions."""
+
         # Z-axis: pointing direction (negative because camera looks along negative Z)
-        z_axis = -self.center_dir
+        z_axis = -self.shot_cond.center_dir
 
-        # Initial up vector (ECI Z-axis)
-        up_vec = np.array([0, 0, 1])
+        # Define ECI z-axis
+        up_vec = np.array([0.0, 0.0, 1.0])
+        # If view is close to zenith choose y-axis
+        if np.isclose(abs(z_axis[2]), 1.0):
+            up_vec = np.array([0.0, 1.0, 0.0])
 
-        # Handle edge case when pointing near zenith
-        if np.abs(np.dot(z_axis, up_vec)) > 0.99:
-            up_vec = np.array([0, 1, 0])
-
-        # X-axis: right direction (cross product of up and view direction)
+        # x-axis: right direction
         x_axis = np.cross(up_vec, z_axis)
-        x_axis = x_axis / np.linalg.norm(x_axis)
+        x_axis /= np.linalg.norm(x_axis)
 
-        # Y-axis: up direction in camera frame
+        # y-axis: up direction in camera frame
         y_axis = np.cross(z_axis, x_axis)
-        y_axis = y_axis / np.linalg.norm(y_axis)
+        y_axis /= np.linalg.norm(y_axis)
 
         # Apply tilt rotation around Z-axis
         tilt_rad = np.deg2rad(self.shot_cond.tilt_angle)
         cos_tilt = np.cos(tilt_rad)
         sin_tilt = np.sin(tilt_rad)
 
-        # Rotate X and Y axes around Z axis
         x_axis_rot = cos_tilt * x_axis + sin_tilt * y_axis
         y_axis_rot = -sin_tilt * x_axis + cos_tilt * y_axis
 
@@ -120,11 +121,9 @@ class Pinhole:
         """
         Project ECI points to image plane.
 
-        Args:
-            points_eci: (N, 3) array of unit vectors in ECI
+        :param points_eci: (N, 3) array of unit vectors in ECI
 
-        Returns:
-            Tuple of (valid_mask, pixel_coords) where:
+        :return: Tuple of (valid_mask, pixel_coords) where:
             - valid_mask: boolean array of points in front of camera
             - pixel_coords: (N, 2) array of pixel coordinates
         """
@@ -135,13 +134,13 @@ class Pinhole:
         valid_mask = points_cam[:, 2] < 0
 
         # Perspective projection
-        x_proj = -self.camera_cfg.foc_len * points_cam[:, 0] / points_cam[:, 2]
-        y_proj = -self.camera_cfg.foc_len * points_cam[:, 1] / points_cam[:, 2]
+        x_proj = self.camera_cfg.foc_len * points_cam[:, 0] / points_cam[:, 2]
+        y_proj = self.camera_cfg.foc_len * points_cam[:, 1] / points_cam[:, 2]
 
         # Convert to pixel coordinates
         # Origin at center, X right, Y up
         x_pix = x_proj + self.camera_cfg.width / 2
-        y_pix = -y_proj + self.camera_cfg.height / 2  # Flip Y axis
+        y_pix = y_proj + self.camera_cfg.height / 2
 
         pixel_coords = np.column_stack([x_pix, y_pix])
 
@@ -156,7 +155,7 @@ class Pinhole:
                   constraints: Optional[CatalogConstraints] = None) -> NDArray:
         """Get ECI coords of stars located in the field of view."""
         if constraints is None:
-            constraints = CatalogConstraints(max_magnitude=5.5)
+            constraints = CatalogConstraints(max_magnitude=6.0)
 
         stars_data = self.catalog.get_stars(constraints)
 
@@ -169,13 +168,18 @@ class Pinhole:
         valid_mask, pixel_coords = self._project_points(star_coords)
 
         # Create structured array with results
-        dtype = [
-            ('x_pix', 'f4'), ('y_pix', 'f4'),
-            ('v_mag', 'f4'), ('ra', 'f4'), ('dec', 'f4'),
-            ('hip_id', 'i4')
-        ]
+        RESULT_DTYPE = np.dtype(
+            [
+                ('x_pix', np.float32),
+                ('y_pix', np.float32),
+                ('v_mag', np.float32),
+                ('ra', np.float32),
+                ('dec', np.float32),
+                ('hip_id', np.int32)
+            ]
+        )
 
-        result = np.zeros(np.sum(valid_mask), dtype=dtype)
+        result = np.zeros(np.sum(valid_mask), dtype=RESULT_DTYPE)
         result['x_pix'] = pixel_coords[valid_mask, 0]
         result['y_pix'] = pixel_coords[valid_mask, 1]
         result['v_mag'] = stars_data['v_mag'][valid_mask]
@@ -198,13 +202,18 @@ class Pinhole:
         valid_mask, pixel_coords = self._project_points(planet_coords)
 
         # Create structured array with results
-        dtype = [
-            ('x_pix', 'f4'), ('y_pix', 'f4'),
-            ('v_mag', 'f4'), ('ra', 'f4'), ('dec', 'f4'),
-            ('planet_id', 'i4')
-        ]
+        RESULT_DTYPE = np.dtype(
+            [
+                ('x_pix', np.float32),
+                ('y_pix', np.float32),
+                ('v_mag', np.float32),
+                ('ra', np.float32),
+                ('dec', np.float32),
+                ('planet_id', np.int32)
+            ]
+        )
 
-        result = np.zeros(np.sum(valid_mask), dtype=dtype)
+        result = np.zeros(np.sum(valid_mask), dtype=RESULT_DTYPE)
         result['x_pix'] = pixel_coords[valid_mask, 0]
         result['y_pix'] = pixel_coords[valid_mask, 1]
         result['v_mag'] = planets_data['v_mag'][valid_mask]
@@ -214,9 +223,10 @@ class Pinhole:
 
         return result
 
-    def project(self) -> ProjectionResult:
+    def project(self, constraints: Optional[CatalogConstraints]=None) -> ProjectionResult:
         """Get pinhole projections of stars and planets."""
-        stars = self.get_stars()
+        stars = self.get_stars(constraints=constraints)
         planets = self.get_planets()
 
         return ProjectionResult(stars=stars, planets=planets)
+
