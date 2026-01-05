@@ -199,8 +199,8 @@ def generate_small_circle(spheric_normal_deg: NDArray, alpha_deg: float, num_poi
         ('x', np.float32),
         ('y', np.float32),
         ('z', np.float32),
-        ('theta', np.float32),
-        ('phi', np.float32),
+        ('zenith', np.float32),
+        ('azimuth', np.float32),
     ])
 
     # Extract angles, convert to radians
@@ -238,12 +238,12 @@ def generate_small_circle(spheric_normal_deg: NDArray, alpha_deg: float, num_poi
     points['x'] = cos_alpha * normal[0] + sin_alpha * (cos_phi * u[0] + sin_phi * v[0])
     points['y'] = cos_alpha * normal[1] + sin_alpha * (cos_phi * u[1] + sin_phi * v[1])
     points['z'] = cos_alpha * normal[2] + sin_alpha * (cos_phi * u[2] + sin_phi * v[2])
-    points['phi'] = np.atan2(points['y'], points['x'])
-    points['theta'] = np.arccos(points['z'])
+    points['azimuth'] = np.atan2(points['y'], points['x'])
+    points['zenith'] = np.arccos(points['z'])
 
     return points
 
-def make_circle_stereo_projection(azimuths: NDArray, zeniths: NDArray) -> NDArray:
+def make_points_stereo_projection(points: NDArray) -> NDArray:
     """
     Returns star point projections array.
 
@@ -256,9 +256,9 @@ def make_circle_stereo_projection(azimuths: NDArray, zeniths: NDArray) -> NDArra
         ('angle', np.float32),
     ])
 
-    points_data = np.zeros(len(azimuths), dtype=PROJECTION_DTYPE)
-    points_data['radius'] = 2 * np.tan(zeniths / 2.0)
-    points_data['angle'] = azimuths
+    points_data = np.zeros(len(points), dtype=PROJECTION_DTYPE)
+    points_data['radius'] = 2 * np.tan(points['zenith'] / 2.0)
+    points_data['angle'] = points['azimuth']
 
     return points_data
 

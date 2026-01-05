@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 
 from helpers.geometry.geometry import (
-    get_horizontal_coords, make_stereo_projection, make_circle_stereo_projection, generate_small_circle,
+    get_horizontal_coords, make_stereo_projection, make_points_stereo_projection, generate_small_circle,
 )
 from hip_catalog.hip_catalog import CatalogConstraints, Catalog
 from planets_catalog.planet_catalog import PlanetCatalog, Planets
@@ -34,6 +34,8 @@ class StereoProjConfig(object):
     add_ticks: bool = False
     add_horizontal_grid: bool = False
     add_equatorial_grid: bool = False
+    add_zenith: bool = False
+    add_poles: bool = False
     random_origin: bool = False
 
     def __post_init__(self):
@@ -102,6 +104,12 @@ class StereoProjector(object):
         if self.config.add_equatorial_grid:
             self._add_equatorial_grid()
 
+        if self.config.add_zenith:
+            self._add_zenith()
+
+        if self.config.add_poles:
+            self._add_poles()
+
         # Add planets
         if self.config.add_planets:
             planet_data = self.planets_catalog.get_planets(self.config.local_time)
@@ -149,6 +157,81 @@ class StereoProjector(object):
 
         return view_data
 
+    def _add_zenith(self):
+        point = self._ax.scatter(
+            x=0,
+            y=0,
+            c='red',
+            sizes=[5],
+        )
+        self._ax.annotate(
+            'Z',
+            xy=(0, 0),
+            xytext=(3, 3),
+            fontsize=14,
+            textcoords='offset points',
+            color='black',
+            fontweight='bold'
+        )
+        self._groups['Points'] = self._groups.get('Points', []) + [(point, 'Zenith')]
+
+    def _add_poles(self):
+        POINT_DTYPE = np.dtype([('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
+        north_pole = np.array([(0, 0, 1)], dtype=POINT_DTYPE)
+        south_pole = np.array([(0, 0, -1)], dtype=POINT_DTYPE)
+
+        _, north_horizontal = get_horizontal_coords(
+            config=self.config.__dict__,
+            data=north_pole
+        )
+        if north_horizontal['zenith'] < np.pi / 2:
+            north_projection = make_points_stereo_projection(
+                points=north_horizontal
+            )
+            print(north_projection)
+            north = self._ax.scatter(
+                north_projection['angle'],
+                north_projection['radius'],
+                c='blue',
+                s=5,
+            )
+            self._ax.annotate(
+                text='P',
+                xy=(north_projection['angle'][0], north_projection['radius'][0]),
+                xytext=(3, -10),
+                fontsize=14,
+                textcoords='offset points',
+                color='black',
+                fontweight='bold'
+            )
+            self._groups['Points'] = self._groups.get('Points', []) + [(north, 'North Pole')]
+
+        _, south_horizontal = get_horizontal_coords(
+            config=self.config.__dict__,
+            data=south_pole
+        )
+
+        if south_horizontal['zenith'] < np.pi / 2:
+            south_projection = make_points_stereo_projection(
+                points=south_horizontal
+            )
+            south = self._ax.scatter(
+                south_projection['angle'],
+                south_projection['radius'],
+                c='blue',
+                s=5,
+            )
+            self._ax.annotate(
+                text='P',
+                xy=(south_projection['angle'][0], south_projection['radius'][0]),
+                xytext=(3, -10),
+                fontsize=14,
+                textcoords='offset points',
+                color='black',
+                fontweight='bold'
+            )
+            self._groups['Points'] = self._groups.get('Points', []) + [(south, 'South Pole')]
+
     def _add_ecliptic(self):
         """
         Add ecliptic on skychart
@@ -166,9 +249,8 @@ class StereoProjector(object):
             config=self.config.__dict__,
             data=ecliptic_eci_coords
         )
-        projection_coords = make_circle_stereo_projection(
-            azimuths=horizontal_coords['azimuth'],
-            zeniths=horizontal_coords['zenith']
+        projection_coords = make_points_stereo_projection(
+            points=horizontal_coords
         )
         line, = self._ax.plot(
             projection_coords['angle'],
@@ -193,9 +275,8 @@ class StereoProjector(object):
             config=self.config.__dict__,
             data=equator_eci_coords
         )
-        projection_coords = make_circle_stereo_projection(
-            azimuths=horizontal_coords['azimuth'],
-            zeniths=horizontal_coords['zenith']
+        projection_coords = make_points_stereo_projection(
+            points=horizontal_coords
         )
         line, = self._ax.plot(
             projection_coords['angle'],
@@ -224,9 +305,8 @@ class StereoProjector(object):
             config=self.config.__dict__,
             data=galactic_eci_coords
         )
-        projection_coords = make_circle_stereo_projection(
-            azimuths=horizontal_coords['azimuth'],
-            zeniths=horizontal_coords['zenith']
+        projection_coords = make_points_stereo_projection(
+            points=horizontal_coords
         )
         line, = self._ax.plot(
             projection_coords['angle'],
@@ -275,9 +355,8 @@ class StereoProjector(object):
                 alpha_deg=90.0,
                 num_points=250,
             )
-            projection = make_circle_stereo_projection(
-                azimuths=circle['phi'],
-                zeniths=circle['theta'],
+            projection = make_points_stereo_projection(
+                points=circle
             )
             array_grid.append(
                 np.column_stack(
@@ -294,9 +373,8 @@ class StereoProjector(object):
                 alpha_deg=zenith,
                 num_points=250,
             )
-            projection = make_circle_stereo_projection(
-                azimuths=circle['phi'],
-                zeniths=circle['theta'],
+            projection = make_points_stereo_projection(
+                points=circle
             )
             array_grid.append(
                 np.column_stack(
@@ -337,9 +415,8 @@ class StereoProjector(object):
                 config=self.config.__dict__,
                 data=eq_circle,
             )
-            projection = make_circle_stereo_projection(
-                azimuths=horizontal_coords['azimuth'],
-                zeniths=horizontal_coords['zenith'],
+            projection = make_points_stereo_projection(
+                points=horizontal_coords
             )
             array_grid.append(
                 np.column_stack(
@@ -360,9 +437,8 @@ class StereoProjector(object):
                 config=self.config.__dict__,
                 data=eq_circle,
             )
-            projection = make_circle_stereo_projection(
-                azimuths=horizontal_coords['azimuth'],
-                zeniths=horizontal_coords['zenith'],
+            projection = make_points_stereo_projection(
+                points=horizontal_coords
             )
             array_grid.append(
                 np.column_stack(
