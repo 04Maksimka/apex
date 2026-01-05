@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 
 from helpers.geometry.geometry import (
-    get_horizontal_coords, make_projections, make_circle_projection, generate_small_circle,
+    get_horizontal_coords, make_stereo_projection, make_circle_stereo_projection, generate_small_circle,
 )
 from hip_catalog.hip_catalog import CatalogConstraints, Catalog
 from planets_catalog.planet_catalog import PlanetCatalog, Planets
@@ -60,8 +60,9 @@ class StereoProjector(object):
 
     def generate(self, constraints: Optional[CatalogConstraints]=None) -> plt.Figure:
         """
-        Generate a projection.
+        Generate a stereographic projection image.
 
+        :param constraints: Catalog constraints
         :return: figure
         """
 
@@ -74,7 +75,7 @@ class StereoProjector(object):
             object_type='star'
         )
         # Make projections
-        points_data = make_projections(
+        points_data = make_stereo_projection(
             view_data=star_view_data,
             constraints=self.catalog.constraints,
         )
@@ -108,7 +109,7 @@ class StereoProjector(object):
                 data=planet_data,
                 object_type='planet'
             )
-            planet_points_data = make_projections(
+            planet_points_data = make_stereo_projection(
                 view_data=planet_view_data,
                 constraints=self.catalog.constraints,
             )
@@ -134,18 +135,17 @@ class StereoProjector(object):
             ('id', np.int32),
         ])
 
-        horizontal_coords = get_horizontal_coords(self.config.__dict__, data=data)
+        valid_mask, horizontal_coords = get_horizontal_coords(self.config.__dict__, data=data)
 
-        number_of_stars = data.shape[0]
-        view_data = np.zeros(number_of_stars, dtype=VIEW_DTYPE)
-        view_data['v_mag'] = data['v_mag']
-        view_data['zenith'] = horizontal_coords['zenith']
-        view_data['azimuth'] = horizontal_coords['azimuth']
+        view_data = np.zeros(np.sum(valid_mask), dtype=VIEW_DTYPE)
+        view_data['v_mag'] = data['v_mag'][valid_mask]
+        view_data['zenith'] = horizontal_coords['zenith'][valid_mask]
+        view_data['azimuth'] = horizontal_coords['azimuth'][valid_mask]
 
         if object_type == 'star':
-            view_data['id'] = data['hip_id']
+            view_data['id'] = data['hip_id'][valid_mask]
         elif object_type == 'planet':
-            view_data['id'] = data['planet_id']
+            view_data['id'] = data['planet_id'][valid_mask]
 
         return view_data
 
@@ -153,7 +153,7 @@ class StereoProjector(object):
         """
         Add ecliptic on skychart
         """
-        # Galactical center
+
         RA = 270.0
         DEC = 66.5607
 
@@ -162,11 +162,11 @@ class StereoProjector(object):
             alpha_deg=90.0,
             num_points=1000
         )
-        horizontal_coords = get_horizontal_coords(
+        _, horizontal_coords = get_horizontal_coords(
             config=self.config.__dict__,
             data=ecliptic_eci_coords
         )
-        projection_coords = make_circle_projection(
+        projection_coords = make_circle_stereo_projection(
             azimuths=horizontal_coords['azimuth'],
             zeniths=horizontal_coords['zenith']
         )
@@ -189,11 +189,11 @@ class StereoProjector(object):
             alpha_deg=90.0,
             num_points=1000
         )
-        horizontal_coords = get_horizontal_coords(
+        _, horizontal_coords = get_horizontal_coords(
             config=self.config.__dict__,
             data=equator_eci_coords
         )
-        projection_coords = make_circle_projection(
+        projection_coords = make_circle_stereo_projection(
             azimuths=horizontal_coords['azimuth'],
             zeniths=horizontal_coords['zenith']
         )
@@ -211,6 +211,7 @@ class StereoProjector(object):
         Add galactic equator on skychart
         """
 
+        # Galactical center
         RA = 192.85948
         DEC = 27.12825
 
@@ -219,11 +220,11 @@ class StereoProjector(object):
             alpha_deg=90.0,
             num_points=1000
         )
-        horizontal_coords = get_horizontal_coords(
+        _, horizontal_coords = get_horizontal_coords(
             config=self.config.__dict__,
             data=galactic_eci_coords
         )
-        projection_coords = make_circle_projection(
+        projection_coords = make_circle_stereo_projection(
             azimuths=horizontal_coords['azimuth'],
             zeniths=horizontal_coords['zenith']
         )
@@ -272,9 +273,9 @@ class StereoProjector(object):
             circle = generate_small_circle(
                 spheric_normal_deg=np.array([90.0, azimuth + 90.0]),
                 alpha_deg=90.0,
-                num_points=100,
+                num_points=250,
             )
-            projection = make_circle_projection(
+            projection = make_circle_stereo_projection(
                 azimuths=circle['phi'],
                 zeniths=circle['theta'],
             )
@@ -291,9 +292,9 @@ class StereoProjector(object):
             circle = generate_small_circle(
                 spheric_normal_deg=np.array([0.0, 0.0]),
                 alpha_deg=zenith,
-                num_points=100,
+                num_points=250,
             )
-            projection = make_circle_projection(
+            projection = make_circle_stereo_projection(
                 azimuths=circle['phi'],
                 zeniths=circle['theta'],
             )
@@ -330,13 +331,13 @@ class StereoProjector(object):
             eq_circle = generate_small_circle(
                 spheric_normal_deg=np.array([90.0, ra + 90.0]),
                 alpha_deg=90.0,
-                num_points=100,
+                num_points=250,
             )
-            horizontal_coords = get_horizontal_coords(
+            _, horizontal_coords = get_horizontal_coords(
                 config=self.config.__dict__,
                 data=eq_circle,
             )
-            projection = make_circle_projection(
+            projection = make_circle_stereo_projection(
                 azimuths=horizontal_coords['azimuth'],
                 zeniths=horizontal_coords['zenith'],
             )
@@ -353,13 +354,13 @@ class StereoProjector(object):
             eq_circle = generate_small_circle(
                 spheric_normal_deg=np.array([0.0, 0.0]),
                 alpha_deg=(90.0 - dec),
-                num_points=100,
+                num_points=250,
             )
-            horizontal_coords = get_horizontal_coords(
+            _, horizontal_coords = get_horizontal_coords(
                 config=self.config.__dict__,
                 data=eq_circle,
             )
-            projection = make_circle_projection(
+            projection = make_circle_stereo_projection(
                 azimuths=horizontal_coords['azimuth'],
                 zeniths=horizontal_coords['zenith'],
             )

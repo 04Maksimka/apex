@@ -19,9 +19,9 @@ config = StereoProjConfig(
     add_ticks=False,
     add_horizontal_grid=False,
     add_equatorial_grid=True,
-    grid_theta_step=10.0,
-    grid_phi_step=45.0,
-    random_origin=True,
+    grid_theta_step=15.0,
+    grid_phi_step=15.0,
+    random_origin=False,
     local_time=datetime(
         year=2004,
         month=6,
@@ -30,7 +30,7 @@ config = StereoProjConfig(
         minute=10,
         second=0,
     ),
-    latitude=43.0,
+    latitude=-90,
     longitude=131.5,
 )
 

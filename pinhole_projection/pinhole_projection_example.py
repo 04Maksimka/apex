@@ -7,7 +7,7 @@ from constellations_metadata.contellations_centers import get_constellation_dir,
 from helpers.geometry.geometry import mag_to_radius
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from pinhole_projection.pinhole_projector import ShotConditions, CameraCfg, \
-    Pinhole
+    Pinhole, PinholeConfig
 from planets_catalog.planet_catalog import PlanetCatalog
 from datetime import datetime
 
@@ -16,7 +16,12 @@ def example_pinhole_visualization(
         constellation: Constellation,
         tilt_angle: float = 0,
         use_dark_mode: bool = True,
-        remove_ticks: bool = True,
+        add_ticks: bool = False,
+        add_planets: bool = False,
+        add_ecliptic: bool = False,
+        add_equator: bool = False,
+        add_galactic_equator: bool = False,
+        add_horizontal_grid: bool = False,
 ):
     """Create example visualization of pinhole projections."""
     # Create catalogs
@@ -24,6 +29,8 @@ def example_pinhole_visualization(
     catalog = Catalog(catalog_name='hip_data.tsv', use_cache=True)
     planet_catalog = PlanetCatalog()
 
+    # Set time
+    time = datetime(2024, 1, 1, 0, 0, 0)
     # Define camera configuration
     fov_deg = 90
     aspect_ratio = 1.5
@@ -33,44 +40,38 @@ def example_pinhole_visualization(
         aspect_ratio=aspect_ratio,
         height_pix=height
     )
-
-    # Set time
-    time = datetime(2024, 1, 1, 0, 0, 0)
+    config = PinholeConfig(
+        add_ticks=add_ticks,
+        use_dark_mode=use_dark_mode,
+        add_planets=add_planets,
+        add_ecliptic=add_ecliptic,
+        add_equator=add_equator,
+        add_galactic_equator=add_galactic_equator,
+        add_horizontal_grid=add_horizontal_grid,
+        local_time=time
+    )
     # And shot conditions
     shot_cond = ShotConditions(
         center_dir=get_constellation_dir(constellation),
         tilt_angle=tilt_angle,
     )
     # Define pinhole camera with all the configurations
-    pinhole = Pinhole(shot_cond, camera_cfg, time, catalog, planet_catalog)
+    pinhole = Pinhole(shot_cond, camera_cfg, config, catalog, planet_catalog)
     # Make a shot
-    result = pinhole.project(constraints=constraints)
-
-    # Create visualizations
-    color = 'black'
-    if use_dark_mode:
-        color = 'white'
-        plt.style.use('dark_background')
-    fig, ax = plt.subplots(1, 1, figsize=(15, 18))
-
-    sizes = mag_to_radius(
-        magnitude=result.stars['v_mag'],
-        constraints=constraints
-    )
-
-    ax.scatter(result.stars['x_pix'], result.stars['y_pix'], s=sizes, c=color)
-
-    if remove_ticks:
-        ax.set_xticks([])
-        ax.set_yticks([])
+    pinhole.generate()
 
 
 if __name__ == '__main__':
     example_pinhole_visualization(
-        constellation=Constellation.UMI,
+        constellation=Constellation.LEO,
         tilt_angle=0.0,
         use_dark_mode=False,
-        remove_ticks=False,
+        add_ticks=True,
+        add_planets=True,
+        add_ecliptic=True,
+        add_equator=True,
+        add_galactic_equator=True,
+        add_horizontal_grid=True,
     )
 
     plt.show()

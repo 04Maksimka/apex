@@ -3,10 +3,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Tuple, Optional
 import numpy as np
+from matplotlib.collections import LineCollection
 from numpy.typing import NDArray
+from matplotlib import pyplot as plt
 
+from helpers.geometry.geometry import make_pinhole_projection, mag_to_radius, generate_small_circle
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from planets_catalog.planet_catalog import PlanetCatalog
+from planets_catalog.planet_catalog import PlanetCatalog, Planets
 
 
 @dataclass
@@ -48,6 +51,26 @@ class CameraCfg:
 
         return cls(width=width_pix, height=height_pix, foc_len=foc_len_pix)
 
+@dataclass
+class PinholeConfig:
+    """Class of the pinhole projector config"""
+
+    local_time: datetime
+    latitude: float = 0.0
+    longitude: float = 0.0
+    grid_theta_step: float = 10.0
+    grid_phi_step: float = 10.0
+
+    # Flags
+    add_ecliptic: bool = False
+    add_equator: bool = False
+    add_galactic_equator: bool = False
+    add_planets: bool = False
+    add_ticks: bool = False
+    add_horizontal_grid: bool = False
+    add_equatorial_grid: bool = False
+    use_dark_mode: bool = False
+
 
 @dataclass
 class ProjectionResult:
@@ -56,14 +79,14 @@ class ProjectionResult:
     planets: NDArray  # Structured array with planet projections
 
 
-class Pinhole:
+class Pinhole(object):
     """Pinhole camera projector."""
 
     def __init__(
             self,
             shot_cond: ShotConditions,
             camera_cfg: CameraCfg,
-            time: datetime,
+            config: PinholeConfig,
             catalog: Catalog,
             planet_catalog: PlanetCatalog
     ):
@@ -72,161 +95,328 @@ class Pinhole:
 
         :param shot_cond: Shot conditions
         :param camera_cfg: Camera configuration
-        :param time: Observation time
+        :param config: Configuration
         :param catalog: Star catalog instance
         :param planet_catalog: Planet catalog instance
         """
 
         self.shot_cond = shot_cond
-        self.camera_cfg = camera_cfg
-        self.time = time
+        self.camera_config = camera_cfg
+        self.config = config
         self.catalog = catalog
-        self.planet_catalog = planet_catalog
+        self.planets_catalog = planet_catalog
+        self._groups = {}
 
-        # Create camera coordinate system
-        self._create_camera_frame_system()
-
-    def _create_camera_frame_system(self):
-        """Create camera coordinate system from shot conditions."""
-
-        # Z-axis: pointing direction (negative because camera looks along negative Z)
-        z_axis = -self.shot_cond.center_dir
-
-        # Define ECI z-axis
-        up_vec = np.array([0.0, 0.0, 1.0])
-        # If view is close to zenith choose y-axis
-        if np.isclose(abs(z_axis[2]), 1.0):
-            up_vec = np.array([0.0, 1.0, 0.0])
-
-        # x-axis: right direction
-        x_axis = np.cross(up_vec, z_axis)
-        x_axis /= np.linalg.norm(x_axis)
-
-        # y-axis: up direction in camera frame
-        y_axis = np.cross(z_axis, x_axis)
-        y_axis /= np.linalg.norm(y_axis)
-
-        # Apply tilt rotation around Z-axis
-        tilt_rad = np.deg2rad(self.shot_cond.tilt_angle)
-        cos_tilt = np.cos(tilt_rad)
-        sin_tilt = np.sin(tilt_rad)
-
-        x_axis_rot = cos_tilt * x_axis + sin_tilt * y_axis
-        y_axis_rot = -sin_tilt * x_axis + cos_tilt * y_axis
-
-        # Rotation matrix from ECI to camera frame
-        self.R_eci_to_cam = np.vstack([x_axis_rot, y_axis_rot, z_axis])
-
-    def _project_points(self, points_eci: NDArray) -> Tuple[NDArray, NDArray]:
+    def _make_pinhole_views(self, data: NDArray, object_type: str = 'star') -> NDArray:
         """
-        Project ECI points to image plane.
+        Returns coordinates in picture plane (pinhole projection).
 
-        :param points_eci: (N, 3) array of unit vectors in ECI
-
-        :return: Tuple of (valid_mask, pixel_coords) where:
-            - valid_mask: boolean array of points in front of camera
-            - pixel_coords: (N, 2) array of pixel coordinates
+        :param data: objects equatorial coordinates
+        :param object_type: star or planet
+        :return: view parameters
         """
-        # Transform to camera coordinates
-        points_cam = points_eci @ self.R_eci_to_cam.T  # (N, 3)
+        VIEW_DTYPE = np.dtype([
+            ('v_mag', np.float32),
+            ('x_pix', np.float32),
+            ('y_pix', np.float32),
+            ('size', np.float32),
+            ('ra', np.float32),
+            ('dec', np.float32),
+            ('id', np.int32),
+        ])
 
-        # Check if points are in front of camera (z < 0 in camera coordinates)
-        valid_mask = points_cam[:, 2] < 0
+        valid_mask, picture_coords = make_pinhole_projection(
+            shot_condition=self.shot_cond.__dict__,
+            camera_config=self.camera_config.__dict__,
+            data=data
+        )
 
-        # Perspective projection
-        x_proj = self.camera_cfg.foc_len * points_cam[:, 0] / points_cam[:, 2]
-        y_proj = self.camera_cfg.foc_len * points_cam[:, 1] / points_cam[:, 2]
+        view_data = np.zeros(np.sum(valid_mask), dtype=VIEW_DTYPE)
+        view_data['v_mag'] = data['v_mag'][valid_mask]
+        view_data['x_pix'] = picture_coords['x_pix'][valid_mask]
+        view_data['y_pix'] = picture_coords['y_pix'][valid_mask]
+        view_data['ra'] = data['ra'][valid_mask]
+        view_data['dec'] = data['dec'][valid_mask]
+        view_data['size'] = mag_to_radius(
+            magnitude=view_data['v_mag'],
+            constraints=self.catalog.constraints
+        )
 
-        # Convert to pixel coordinates
-        # Origin at center, X right, Y up
-        x_pix = x_proj + self.camera_cfg.width / 2
-        y_pix = y_proj + self.camera_cfg.height / 2
+        if object_type == 'star':
+            view_data['id'] = data['hip_id'][valid_mask]
+        elif object_type == 'planet':
+            view_data['id'] = data['planet_id'][valid_mask]
 
-        pixel_coords = np.column_stack([x_pix, y_pix])
+        return view_data
 
-        # Check if points are within image bounds
-        in_bounds = ((x_pix >= 0) & (x_pix < self.camera_cfg.width) &
-                     (y_pix >= 0) & (y_pix < self.camera_cfg.height))
-        valid_mask = valid_mask & in_bounds
+    def generate(self, constraints: Optional[CatalogConstraints]=None) -> plt.Figure:
+        """
+        Generate a pinhole projection image.
 
-        return valid_mask, pixel_coords
+        :param constraints: Catalog constraints
+        :return: figure
+        """
 
-    def get_stars(self,
-                  constraints: Optional[CatalogConstraints] = None) -> NDArray:
-        """Get ECI coords of stars located in the field of view."""
-        if constraints is None:
-            constraints = CatalogConstraints(max_magnitude=6.0)
-
+        # Get stars data
         stars_data = self.catalog.get_stars(constraints)
-
-        # Extract ECI coordinates
-        star_coords = np.column_stack([stars_data['x'],
-                                       stars_data['y'],
-                                       stars_data['z']])
-
-        # Project stars
-        valid_mask, pixel_coords = self._project_points(star_coords)
-
-        # Create structured array with results
-        RESULT_DTYPE = np.dtype(
-            [
-                ('x_pix', np.float32),
-                ('y_pix', np.float32),
-                ('v_mag', np.float32),
-                ('ra', np.float32),
-                ('dec', np.float32),
-                ('hip_id', np.int32)
-            ]
+        # From ECI to picture plane, make projection
+        points_data = self._make_pinhole_views(
+            data=stars_data,
+            object_type='star'
         )
+        # Create picture plane to place stars and other objects
+        self._create_picture_plane(points_data)
 
-        result = np.zeros(np.sum(valid_mask), dtype=RESULT_DTYPE)
-        result['x_pix'] = pixel_coords[valid_mask, 0]
-        result['y_pix'] = pixel_coords[valid_mask, 1]
-        result['v_mag'] = stars_data['v_mag'][valid_mask]
-        result['ra'] = stars_data['ra'][valid_mask]
-        result['dec'] = stars_data['dec'][valid_mask]
-        result['hip_id'] = stars_data['hip_id'][valid_mask]
+        # Add planets
+        if self.config.add_planets:
+            planet_data = self.planets_catalog.get_planets(self.config.local_time)
+            planet_view_data = self._make_pinhole_views(
+                data=planet_data,
+                object_type='planet'
+            )
+            self._add_planets(planet_view_data)
 
-        return result
+        # Add ecliptic
+        if self.config.add_ecliptic:
+            self._add_ecliptic()
 
-    def get_planets(self) -> NDArray:
-        """Get ECI coords of planets located in the field of view."""
-        planets_data = self.planet_catalog.get_planets(self.time)
+        # Add equator
+        if self.config.add_equator:
+            self._add_equator()
 
-        # Extract ECI coordinates
-        planet_coords = np.column_stack([planets_data['x'],
-                                         planets_data['y'],
-                                         planets_data['z']])
+        # Add galactic equator
+        if self.config.add_galactic_equator:
+            self._add_galactic_equator()
 
-        # Project planets
-        valid_mask, pixel_coords = self._project_points(planet_coords)
+        # Add horizontal grid
+        if self.config.add_horizontal_grid:
+            self._add_horizontal_grid()
 
-        # Create structured array with results
-        RESULT_DTYPE = np.dtype(
-            [
-                ('x_pix', np.float32),
-                ('y_pix', np.float32),
-                ('v_mag', np.float32),
-                ('ra', np.float32),
-                ('dec', np.float32),
-                ('planet_id', np.int32)
-            ]
+        # Add equatorial grid
+        if self.config.add_equatorial_grid:
+            self._add_equatorial_grid()
+
+        # Put a legend to the bottom of the current axis
+        self._create_grouped_legend()
+        return self._fig
+
+    def _create_picture_plane(self, points_data):
+        self._fig = plt.figure()
+        self._ax = self._fig.add_subplot(111)
+
+        # Create visualizations
+        color = 'black'
+        if self.config.use_dark_mode:
+            color = 'white'
+            plt.style.use('dark_background')
+
+        self._ax.scatter(points_data['x_pix'], points_data['y_pix'], s=points_data['size'], c=color)
+
+        self._ax.set_ylim(bottom=0, top=self.camera_config.height)
+        self._ax.set_xlim(left=0, right=self.camera_config.width)
+
+        if not self.config.add_ticks:
+            self._ax.set_xticks([])
+            self._ax.set_yticks([])
+
+    def _add_planets(self, planet_data):
+        for planet_data in planet_data:
+            planet = Planets(planet_data['id'])
+            name = planet.name.capitalize()
+            color = self.planets_catalog.get_planet_color(planet)
+            scatter = self._ax.scatter(
+                planet_data['x_pix'],
+                planet_data['y_pix'],
+                c=color,
+                s=max(planet_data['size'] * 3, 0.5),  # make planets larger for visibility
+                alpha=0.8,
+                linewidth=0.5,
+            )
+            # Add to the legend groups
+            self._groups['Planets'] = self._groups.get('Planets', []) + [(scatter, name)]
+
+    def _add_ecliptic(self):
+        """
+        Add ecliptic on skychart
+        """
+
+        RA = 270.0
+        DEC = 66.5607
+
+        ecliptic_eci_coords = generate_small_circle(
+            spheric_normal_deg=np.array([90.0 - DEC, RA]),
+            alpha_deg=90.0,
+            num_points=1000
         )
+        valid_mask, picture_coords = make_pinhole_projection(
+            shot_condition=self.shot_cond.__dict__,
+            camera_config=self.camera_config.__dict__,
+            data=ecliptic_eci_coords
+        )
+        line, = self._ax.plot(
+            picture_coords['x_pix'][valid_mask],
+            picture_coords['y_pix'][valid_mask],
+            c='green',
+            linewidth=1,
+        )
+        # Add to the legend groups
+        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Ecliptic')]
 
-        result = np.zeros(np.sum(valid_mask), dtype=RESULT_DTYPE)
-        result['x_pix'] = pixel_coords[valid_mask, 0]
-        result['y_pix'] = pixel_coords[valid_mask, 1]
-        result['v_mag'] = planets_data['v_mag'][valid_mask]
-        result['ra'] = planets_data['ra'][valid_mask]
-        result['dec'] = planets_data['dec'][valid_mask]
-        result['planet_id'] = planets_data['planet_id'][valid_mask]
+    def _add_equator(self):
+        """
+        Add equator on skychart
+        """
 
-        return result
+        equator_eci_coords = generate_small_circle(
+            spheric_normal_deg=np.array([0.0, 0.0]),
+            alpha_deg=90.0,
+            num_points=1000
+        )
+        valid_mask, picture_coords = make_pinhole_projection(
+            shot_condition=self.shot_cond.__dict__,
+            camera_config=self.camera_config.__dict__,
+            data=equator_eci_coords
+        )
+        line, = self._ax.plot(
+            picture_coords['x_pix'][valid_mask],
+            picture_coords['y_pix'][valid_mask],
+            c='green',
+            linewidth=1,
+        )
+        # Add to the legend groups
+        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Celestial equator')]
 
-    def project(self, constraints: Optional[CatalogConstraints]=None) -> ProjectionResult:
-        """Get pinhole projections of stars and planets."""
-        stars = self.get_stars(constraints=constraints)
-        planets = self.get_planets()
+    def _add_galactic_equator(self):
+        """
+        Add galactic equator on skychart
+        """
 
-        return ProjectionResult(stars=stars, planets=planets)
+        # Galactical center
+        RA = 192.85948
+        DEC = 27.12825
+
+        galactic_eci_coords = generate_small_circle(
+            spheric_normal_deg=np.array([90.0 - DEC, RA]),
+            alpha_deg=90.0,
+            num_points=1000
+        )
+        valid_mask, picture_coords = make_pinhole_projection(
+            shot_condition=self.shot_cond.__dict__,
+            camera_config=self.camera_config.__dict__,
+            data=galactic_eci_coords
+        )
+        line, = self._ax.plot(
+            picture_coords['x_pix'][valid_mask],
+            picture_coords['y_pix'][valid_mask],
+            c='green',
+            linewidth=1,
+        )
+        # Add to the legend groups
+        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Galactic equator')]
+
+    def _add_horizontal_grid(self):
+        """
+                Add horizontal grid to skychart
+                """
+        zeniths = np.arange(-89.99, 89.99, self.config.grid_theta_step, dtype=np.float64)
+        azimuths = np.arange(0.01, 179.99, self.config.grid_phi_step, dtype=np.float64)
+
+        array_grid = []
+
+        # Draw azimuthal great circles
+        for azimuth in azimuths:
+            circle = generate_small_circle(
+                spheric_normal_deg=np.array([90.0, azimuth + 90.0]),
+                alpha_deg=90.0,
+                num_points=250,
+            )
+            valid_mask, projection = make_pinhole_projection(
+                shot_condition=self.shot_cond.__dict__,
+                camera_config=self.camera_config.__dict__,
+                data=circle
+            )
+            array_grid.append(
+                np.column_stack(
+                    [
+                        projection['x_pix'].astype(np.float64),
+                        projection['y_pix'].astype(np.float64),
+                    ]
+                )
+            )
+        # Draw zenith small circles
+        for zenith in zeniths:
+            circle = generate_small_circle(
+                spheric_normal_deg=np.array([0.0, 0.0]),
+                alpha_deg=zenith,
+                num_points=250,
+            )
+            valid_mask, projection = make_pinhole_projection(
+                shot_condition=self.shot_cond.__dict__,
+                camera_config=self.camera_config.__dict__,
+                data=circle
+            )
+            array_grid.append(
+                np.column_stack(
+                    [
+                        projection['x_pix'].astype(np.float64),
+                        projection['y_pix'].astype(np.float64),
+                    ]
+                )
+            )
+
+        grid = LineCollection(
+            segments=array_grid,
+            label='Azimuthal grid',
+            colors='olive',
+            alpha=0.25,
+            linewidth=0.5
+        )
+        self._ax.add_collection(grid)
+        self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Azimuthal grid')]
+
+    def _add_equatorial_grid(self):
+        pass
+
+    def _create_grouped_legend(self):
+        """
+        Create legend split by groups
+        """
+        groups = {k: v for k, v in self._groups.items() if v}
+        if not groups:
+            return
+
+        n_groups = len(groups)
+        n_columns = n_groups
+        n_rows = 1
+        group_items = list(groups.items())
+        legend_height = 0.25 / n_rows
+        vertical_spacing = 0.05
+
+        for i, (title, items) in enumerate(group_items):
+            row = i // n_columns
+            col = i % n_columns
+
+            handles, labels = zip(*items)
+
+            if n_columns == 1:
+                bbox_x = 0.5
+            else:
+                bbox_x = 0.1 + col * (0.8 / (n_columns - 1))
+
+            bbox_y = -0.05 - row * (legend_height + vertical_spacing)
+
+            legend = self._ax.legend(
+                handles, labels,
+                title=title,
+                loc='upper center',
+                bbox_to_anchor=(bbox_x, bbox_y),
+                ncol=1,
+                frameon=True,
+                fancybox=True,
+                borderaxespad=0.3
+            )
+
+            legend.get_title().set_fontweight('bold')
+            self._ax.add_artist(legend)
+
 
