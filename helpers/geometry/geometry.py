@@ -1,10 +1,37 @@
 """Module with astronomical geometrical functions."""
+from datetime import datetime
 from typing import Tuple, Union
+
+from matplotlib.collections import LineCollection
 
 from helpers.time.time import vequinox_hour_angle
 from numpy.typing import NDArray
 import numpy as np
 from hip_catalog.hip_catalog import CatalogConstraints
+
+
+def angular_distance(axis: NDArray, vectors: NDArray) -> float:
+    """
+    Angular distance between vectors and axis
+    """
+    axis = np.asarray(axis, dtype=np.float64)
+    vectors = np.asarray(vectors, dtype=np.float64)
+
+    axis_unit = axis / np.linalg.norm(axis)
+
+    # Normalize vectors
+    vec_norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+    if np.any(vec_norms == 0):
+        raise ValueError("Vectors cannot contain zero vectors")
+    vecs_normalized = vectors / vec_norms
+
+    # Calculate angular distance using dot product
+    cos_theta = np.dot(vecs_normalized, axis_unit)
+
+    angular_dists = np.arccos(cos_theta)
+
+    return angular_dists
+
 
 
 def mag_to_radius(
@@ -22,11 +49,13 @@ def mag_to_radius(
     radii = np.maximum(diff, 0.0)
     return radii ** 1.3
 
-def get_horizontal_coords(config: dict, data: NDArray) -> Tuple[NDArray, NDArray]:
+def get_horizontal_coords(longitude: float, latitude: float, local_time: datetime, data: NDArray) -> Tuple[NDArray, NDArray]:
     """
     Get horizontal coordinates from catalog data.
 
-    :param config: place configuration
+    :param longitude: place longitude
+    :param latitude: place latitude
+    :param local_time: local time
     :param data: data to make conversion into horizontal coordinates
     :return: tuple of mask and horizontal coordinates with zenith distances, azimuths
     """
@@ -43,13 +72,12 @@ def get_horizontal_coords(config: dict, data: NDArray) -> Tuple[NDArray, NDArray
 
     # Calculate local sidereal time
     sidereal_time = vequinox_hour_angle(
-        longitude=config['longitude'],
-        local=config['local_time']
+        longitude=longitude,
+        local=local_time
     )
 
     # Rotate ECI (XYZ) to "cartesian" equatorial system (X'Y'Z'),
     # so Z' is directed to the North celestial pole, X' --- to the West point
-    latitude = config['latitude']
     sl = np.sin(latitude)
     cl = np.cos(latitude)
     st = np.sin(sidereal_time)
@@ -108,11 +136,22 @@ def make_stereo_projection(view_data: NDArray, constraints: CatalogConstraints) 
 
     return points_data
 
-def make_pinhole_projection(shot_condition: dict, camera_config: dict, data: NDArray) -> Tuple[NDArray, NDArray]:
+def make_pinhole_projection(
+        center_direction: NDArray,
+        tilt_dec: float,
+        focal_length: float,
+        image_width: float,
+        image_height: float,
+        data: NDArray
+) -> Tuple[NDArray, NDArray]:
     """
 
-    :param shot_condition:
-    :param camera_config:
+
+    :param center_direction:
+    :param tilt_dec:
+    :param focal_length:
+    :param image_width:
+    :param image_height:
     :param data:
     :return:
     """
@@ -125,39 +164,39 @@ def make_pinhole_projection(shot_condition: dict, camera_config: dict, data: NDA
 
     # Transform to camera coordinates
     rotation_eci_to_cam = create_camera_frame_system(
-        center_dir=shot_condition['center_dir'],
-        tilt_dec=shot_condition['tilt_angle']
+        center_direction=center_direction,
+        tilt_dec=tilt_dec
     )
     eci_coords = np.column_stack([data['x'], data['y'], data['z']]).T
     points_cam = rotation_eci_to_cam @ eci_coords   # (N, 3)
 
     # Perspective projection
-    x_proj = -camera_config['foc_len'] * points_cam[0, :] / points_cam[2, :]
-    y_proj = -camera_config['foc_len'] * points_cam[1, :] / points_cam[2, :]
+    x_proj = -focal_length * points_cam[0, :] / points_cam[2, :]
+    y_proj = -focal_length * points_cam[1, :] / points_cam[2, :]
 
     # Convert to pixel coordinates
     # Origin at center, X right, Y up
-    picture_coords['x_pix'] = x_proj + camera_config['width'] / 2
-    picture_coords['y_pix'] = y_proj + camera_config['height'] / 2
+    picture_coords['x_pix'] = x_proj + image_width / 2
+    picture_coords['y_pix'] = y_proj + image_height / 2
 
     # Check if points are within image bounds
-    in_bounds = ((picture_coords['x_pix'] >= 0) & (picture_coords['x_pix'] < camera_config['width']) &
-                 (picture_coords['y_pix'] >= 0) & (picture_coords['y_pix'] < camera_config['height']))
+    in_bounds = ((picture_coords['x_pix'] >= 0) & (picture_coords['x_pix'] <= image_width) &
+                 (picture_coords['y_pix'] >= 0) & (picture_coords['y_pix'] <= image_height))
     valid_mask = (points_cam[2, :] < 0) & in_bounds
 
     return valid_mask, picture_coords
 
 
-def create_camera_frame_system(center_dir, tilt_dec):
+def create_camera_frame_system(center_direction: NDArray, tilt_dec: float) -> NDArray:
     """
     Create camera coordinate system from shot conditions.
-    :param center_dir: camera view direction
+    :param center_direction: camera view direction
     :param tilt_dec: tilt angle of frame with respect to zenith direction
     :return: camera frame system matrix
     """
 
     # Z-axis: pointing direction (negative because camera looks along negative Z)
-    z_axis = -center_dir
+    z_axis = -center_direction
     z_axis /= np.linalg.norm(z_axis)
 
     # Define ECI z-axis
@@ -220,14 +259,15 @@ def generate_small_circle(spheric_normal_deg: NDArray, alpha_deg: float, num_poi
     up_vec = np.array([0.0, 0.0, 1.0])
     # If normal is close to zenith axis choose y-axis
     if np.isclose(abs(normal[2]), 1.0):
-        up_vec = np.array([0.0, 1.0, 0.0])
+        up_vec = np.array([1.0, 0.0, 0.0])
 
     u = np.cross(up_vec, normal)
-    u = u / np.linalg.norm(u)
+    u /= np.linalg.norm(u)
 
     v = np.cross(normal, u)
+    v /= np.linalg.norm(v)
 
-    phi = np.linspace(0, 2 * np.pi, num_points, endpoint=True)
+    phi = np.linspace(0, 2 * np.pi, num_points, endpoint=False)
     alpha_rad = np.deg2rad(alpha_deg)
     cos_alpha = np.cos(alpha_rad)
     sin_alpha = np.sin(alpha_rad)
@@ -247,8 +287,7 @@ def make_points_stereo_projection(points: NDArray) -> NDArray:
     """
     Returns star point projections array.
 
-    :param azimuths: azimuth coordinates of circle points
-    :param zeniths: zenith coordinates of circle points
+    :param points: points to project, must contain azimuth and zenith args
     :return: projection point polar coordinates
     """
     PROJECTION_DTYPE = np.dtype([
@@ -262,3 +301,186 @@ def make_points_stereo_projection(points: NDArray) -> NDArray:
 
     return points_data
 
+
+def make_equatorial_grid_pinhole(
+        center_direction: NDArray,
+        tilt_dec: float,
+        focal_length: float,
+        image_width: float,
+        image_height: float,
+        grid_step_dec: float,
+        grid_step_ra: float
+) -> LineCollection:
+    """
+
+    :param center_direction:
+    :param tilt_dec:
+    :param focal_length:
+    :param image_width:
+    :param image_height:
+    :param grid_step_dec:
+    :param grid_step_ra:
+    :return:
+    """
+    num_points = 100
+    gap_threshold = np.pi / num_points
+
+    fov_rad = 2 * np.arctan(np.sqrt(image_width**2 + image_height**2) / (2*focal_length))
+
+    polar_distances = np.arange(0, 180, grid_step_dec, dtype=np.float64)
+    right_ascensions = np.arange(0, 180, grid_step_ra, dtype=np.float64)
+    array_grid = []
+
+    # Draw azimuthal great circles
+    for ra in right_ascensions:
+        circle = generate_small_circle(
+            spheric_normal_deg=np.array([90.0, ra + 90.0]),
+            alpha_deg=90.0,
+            num_points=num_points,
+        )
+        good_circle = clean_far_points(
+            circle=circle,
+            fov_rad=fov_rad,
+            center_direction=center_direction,
+            gap_threshold=gap_threshold
+        )
+        _, projection = make_pinhole_projection(
+            center_direction=center_direction,
+            tilt_dec=tilt_dec,
+            image_width=image_width,
+            image_height=image_height,
+            focal_length=focal_length,
+            data=good_circle
+        )
+        array_grid.append(
+            np.column_stack(
+                [
+                    projection['x_pix'].astype(np.float64),
+                    projection['y_pix'].astype(np.float64),
+                ]
+            )
+        )
+    # Draw zenith small circles
+    for p in polar_distances:
+        circle = generate_small_circle(
+            spheric_normal_deg=np.array([0.0, 0.0]),
+            alpha_deg=p,
+            num_points=num_points,
+        )
+        good_circle = clean_far_points(
+            circle=circle,
+            fov_rad=fov_rad,
+            center_direction=center_direction,
+            gap_threshold=gap_threshold
+        )
+        _, projection = make_pinhole_projection(
+            center_direction=center_direction,
+            tilt_dec=tilt_dec,
+            image_width=image_width,
+            image_height=image_height,
+            focal_length=focal_length,
+            data=good_circle
+        )
+
+        array_grid.append(
+            np.column_stack(
+                [
+                    projection['x_pix'].astype(np.float64),
+                    projection['y_pix'].astype(np.float64),
+                ]
+            )
+        )
+
+    grid = LineCollection(
+        segments=array_grid,
+        label='Equatorial grid',
+        colors='magenta',
+        alpha=0.25,
+        linewidth=0.5
+    )
+    array_grid = None
+
+    return grid
+
+
+def clean_far_points(
+        circle: NDArray,
+        fov_rad: float,
+        center_direction: NDArray,
+        gap_threshold: float
+) -> NDArray:
+    """
+    Removes points further than FOV from center direction out of circle
+
+    :param circle: initial points
+    :param fov_rad: FOV
+    :param center_direction: center direction
+    :param gap_threshold: threshold to consider distance a large gap between points
+    :return: cleaned points
+    """
+
+    max_distance = fov_rad / 2
+
+    points = np.column_stack([circle['x'], circle['y'], circle['z']])
+    distances = angular_distance(center_direction, points)
+    mask = distances <= max_distance
+    filtered_circle = circle[mask]
+
+    if len(filtered_circle) <= 2:
+        return filtered_circle
+
+    filtered_points = np.column_stack([
+        filtered_circle['x'],
+        filtered_circle['y'],
+        filtered_circle['z']
+    ])
+
+
+    # Sort points
+    azimuth = np.arctan2(filtered_points[:, 1], filtered_points[:, 0])
+    if np.isclose(np.std(azimuth), 0.0):
+        # For meridians sort by zenith distance
+        zenith = np.arccos(filtered_points[:, 2])
+        sort_indices = np.argsort(zenith)
+    else:
+        # For parallels sort by azimuth
+        sort_indices = np.argsort(azimuth)
+
+    filtered_circle_sorted = filtered_circle[sort_indices]
+    filtered_points_sorted = filtered_points[sort_indices]
+
+    n = len(filtered_points_sorted)
+    if n <= 2:
+        return filtered_circle_sorted
+
+    # Векторизованное вычисление угловых расстояний между соседними точками
+    # Создаем массивы сдвинутых точек
+    points_i = filtered_points_sorted
+    points_j = np.roll(filtered_points_sorted, -1, axis=0)
+
+    # Скалярные произведения между соседними точками
+    dot_products = np.sum(points_i * points_j, axis=1)
+    dot_products = np.clip(dot_products, -1.0, 1.0)
+
+    # Углы между соседними точками
+    angles = np.arccos(dot_products)
+
+    # Находим большие разрывы
+    large_gap_mask = angles > gap_threshold
+
+    if not np.any(large_gap_mask):
+        # Нет больших разрывов
+        return filtered_circle_sorted
+
+    # Находим самый большой разрыв
+    max_gap_idx = np.argmax(angles)
+
+    # Если самый большой разрыв все же меньше порога, оставляем как есть
+    if angles[max_gap_idx] <= gap_threshold:
+        return filtered_circle_sorted
+
+    # Сдвигаем массив
+    shift_amount = - (max_gap_idx + 1)
+    rolled_circle = np.roll(filtered_circle_sorted, shift_amount, axis=0)
+
+    return rolled_circle

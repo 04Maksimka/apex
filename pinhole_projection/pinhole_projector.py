@@ -7,7 +7,8 @@ from matplotlib.collections import LineCollection
 from numpy.typing import NDArray
 from matplotlib import pyplot as plt
 
-from helpers.geometry.geometry import make_pinhole_projection, mag_to_radius, generate_small_circle
+from helpers.geometry.geometry import make_pinhole_projection, mag_to_radius, generate_small_circle, \
+    make_equatorial_grid_pinhole
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from planets_catalog.planet_catalog import PlanetCatalog, Planets
 
@@ -15,20 +16,20 @@ from planets_catalog.planet_catalog import PlanetCatalog, Planets
 @dataclass
 class ShotConditions:
     """Class of the shot conditions."""
-    center_dir: NDArray  # direction in ECI (unit vector)
+    center_direction: NDArray  # direction in ECI (unit vector)
     tilt_angle: float  # angle in degrees on which we rotate a camera
 
     def __post_init__(self):
         # Normalize direction vector
-        self.center_dir /= np.linalg.norm(self.center_dir)
+        self.center_direction /= np.linalg.norm(self.center_direction)
 
 
 @dataclass
-class CameraCfg:
+class CameraConfig:
     """Camera configurations."""
     width: int  # pix
     height: int  # pix
-    foc_len: float  # pix (focal length)
+    focal_length: float  # pix (focal length)
 
     @classmethod
     def from_fov_and_aspect(
@@ -38,18 +39,20 @@ class CameraCfg:
             height_pix: int,
     ):
         """
-        Create CameraCfg from field of view and aspect ratio.
+        Create CameraConfig from field of view and aspect ratio.
 
         :param fov_deg: Horizontal field of view in degrees
         :param aspect_ratio: Width/height ratio
         :param height_pix: Height in pixels
         """
         width_pix = int(height_pix * aspect_ratio)
+
         # Calculate focal length from FOV
         fov_rad = np.deg2rad(fov_deg)
-        foc_len_pix = (width_pix / 2) / np.tan(fov_rad / 2)
+        diagonal = np.sqrt(width_pix**2 + height_pix**2)
+        focal_length_pix = (diagonal / 2) / np.tan(fov_rad / 2)
 
-        return cls(width=width_pix, height=height_pix, foc_len=foc_len_pix)
+        return cls(width=width_pix, height=height_pix, focal_length=focal_length_pix)
 
 @dataclass
 class PinholeConfig:
@@ -85,7 +88,7 @@ class Pinhole(object):
     def __init__(
             self,
             shot_cond: ShotConditions,
-            camera_cfg: CameraCfg,
+            camera_cfg: CameraConfig,
             config: PinholeConfig,
             catalog: Catalog,
             planet_catalog: PlanetCatalog
@@ -126,8 +129,11 @@ class Pinhole(object):
         ])
 
         valid_mask, picture_coords = make_pinhole_projection(
-            shot_condition=self.shot_cond.__dict__,
-            camera_config=self.camera_config.__dict__,
+            center_direction=self.shot_cond.center_direction,
+            tilt_dec=self.shot_cond.tilt_angle,
+            image_width=self.camera_config.width,
+            image_height=self.camera_config.height,
+            focal_length=self.camera_config.focal_length,
             data=data
         )
 
@@ -249,8 +255,11 @@ class Pinhole(object):
             num_points=1000
         )
         valid_mask, picture_coords = make_pinhole_projection(
-            shot_condition=self.shot_cond.__dict__,
-            camera_config=self.camera_config.__dict__,
+            center_direction=self.shot_cond.center_direction,
+            tilt_dec=self.shot_cond.tilt_angle,
+            image_width=self.camera_config.width,
+            image_height=self.camera_config.height,
+            focal_length=self.camera_config.focal_length,
             data=ecliptic_eci_coords
         )
         line, = self._ax.plot(
@@ -273,14 +282,17 @@ class Pinhole(object):
             num_points=1000
         )
         valid_mask, picture_coords = make_pinhole_projection(
-            shot_condition=self.shot_cond.__dict__,
-            camera_config=self.camera_config.__dict__,
+            center_direction=self.shot_cond.center_direction,
+            tilt_dec=self.shot_cond.tilt_angle,
+            image_width=self.camera_config.width,
+            image_height=self.camera_config.height,
+            focal_length=self.camera_config.focal_length,
             data=equator_eci_coords
         )
         line, = self._ax.plot(
             picture_coords['x_pix'][valid_mask],
             picture_coords['y_pix'][valid_mask],
-            c='green',
+            c='red',
             linewidth=1,
         )
         # Add to the legend groups
@@ -301,80 +313,39 @@ class Pinhole(object):
             num_points=1000
         )
         valid_mask, picture_coords = make_pinhole_projection(
-            shot_condition=self.shot_cond.__dict__,
-            camera_config=self.camera_config.__dict__,
+            center_direction=self.shot_cond.center_direction,
+            tilt_dec=self.shot_cond.tilt_angle,
+            image_width=self.camera_config.width,
+            image_height=self.camera_config.height,
+            focal_length=self.camera_config.focal_length,
             data=galactic_eci_coords
         )
         line, = self._ax.plot(
             picture_coords['x_pix'][valid_mask],
             picture_coords['y_pix'][valid_mask],
-            c='green',
+            c='blue',
             linewidth=1,
         )
         # Add to the legend groups
         self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Galactic equator')]
 
-    def _add_horizontal_grid(self):
+    def _add_equatorial_grid(self):
         """
-                Add horizontal grid to skychart
-                """
-        zeniths = np.arange(-89.99, 89.99, self.config.grid_theta_step, dtype=np.float64)
-        azimuths = np.arange(0.01, 179.99, self.config.grid_phi_step, dtype=np.float64)
-
-        array_grid = []
-
-        # Draw azimuthal great circles
-        for azimuth in azimuths:
-            circle = generate_small_circle(
-                spheric_normal_deg=np.array([90.0, azimuth + 90.0]),
-                alpha_deg=90.0,
-                num_points=250,
-            )
-            valid_mask, projection = make_pinhole_projection(
-                shot_condition=self.shot_cond.__dict__,
-                camera_config=self.camera_config.__dict__,
-                data=circle
-            )
-            array_grid.append(
-                np.column_stack(
-                    [
-                        projection['x_pix'].astype(np.float64),
-                        projection['y_pix'].astype(np.float64),
-                    ]
-                )
-            )
-        # Draw zenith small circles
-        for zenith in zeniths:
-            circle = generate_small_circle(
-                spheric_normal_deg=np.array([0.0, 0.0]),
-                alpha_deg=zenith,
-                num_points=250,
-            )
-            valid_mask, projection = make_pinhole_projection(
-                shot_condition=self.shot_cond.__dict__,
-                camera_config=self.camera_config.__dict__,
-                data=circle
-            )
-            array_grid.append(
-                np.column_stack(
-                    [
-                        projection['x_pix'].astype(np.float64),
-                        projection['y_pix'].astype(np.float64),
-                    ]
-                )
-            )
-
-        grid = LineCollection(
-            segments=array_grid,
-            label='Azimuthal grid',
-            colors='olive',
-            alpha=0.25,
-            linewidth=0.5
+        Add equatorial grid to skychart
+        """
+        grid = make_equatorial_grid_pinhole(
+            center_direction=self.shot_cond.center_direction,
+            tilt_dec=self.shot_cond.tilt_angle,
+            image_width=self.camera_config.width,
+            image_height=self.camera_config.height,
+            focal_length=self.camera_config.focal_length,
+            grid_step_ra=self.config.grid_phi_step,
+            grid_step_dec=self.config.grid_theta_step,
         )
         self._ax.add_collection(grid)
-        self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Azimuthal grid')]
+        self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Equatorial grid')]
 
-    def _add_equatorial_grid(self):
+    def _add_horizontal_grid(self):
         pass
 
     def _create_grouped_legend(self):

@@ -19,7 +19,7 @@ def add_logo_to_figure(
     fig: plt.Figure,
     logo_path: str | None = None,
     position: tuple[float, float] = (0.02, 0.95),
-    size: float = 0.2,
+    size: float = 0.1,
 ) -> None:
     """Add a logo to the figure.
 
@@ -52,7 +52,7 @@ def add_logo_to_figure(
 def add_footer_text(
     fig: plt.Figure,
     text: str,
-    position: tuple[float, float] = (0.5, 0.02),
+    position: tuple[float, float] = (0.5, 0.15),
     fontsize: int = 9 ,
     color: str = 'gray',
 ):
@@ -103,6 +103,69 @@ def save_figure(
 
     fig.savefig(filename, dpi=dpi, bbox_inches='tight', pad_inches=0.1)
     logger.info(f"Figure saved as '{filename}'")
+
+def save_figure_pinhole(
+    fig: plt.Figure,
+    filename: str,
+    logo_path: str | None = None,
+    footer_text: str | None = None,
+    dpi: int = 300,
+    logo_position: tuple[float, float] = (0.02, 0.95),
+    text_position: tuple[float, float] = (0.5, 0.02),
+    page_size: tuple[float, float] = (11.69, 8.27),
+    chart_margins: tuple[float, float, float, float] = (0.15, 0.2, 0.15, 0.125),
+):
+    if not filename.endswith('.pdf'):
+        filename += '.pdf'
+
+    resolved_logo_path: str | None = None
+    if logo_path is None:
+        default_logo = Path(__file__).resolve().parent / 'logo_astrageek.png'
+        if default_logo.exists():
+            resolved_logo_path = str(default_logo)
+    else:
+        p = Path(logo_path)
+        if p.is_absolute():
+            if p.exists():
+                resolved_logo_path = str(p)
+        else:
+            candidates = [
+                (Path(__file__).resolve().parent / p),
+                (Path(__file__).resolve().parents[2] / p),
+            ]
+            for c in candidates:
+                if c.exists():
+                    resolved_logo_path = str(c)
+                    break
+
+    with PdfPages(filename) as pdf:
+        plt.rcParams['font.family'] = 'monospace'
+        plt.rcParams['figure.figsize'] = [4, 8]
+
+        original_size = fig.get_size_inches().copy()
+        original_ax_positions = [ax.get_position().frozen() for ax in fig.axes]
+        fig.set_size_inches(page_size, forward=False)
+        fig.patch.set_facecolor('white')
+
+        left, bottom, right, top = chart_margins
+        width = 1 - left - right
+        height = 1 - bottom - top
+        if width > 0 and height > 0:
+            for ax in fig.axes:
+                ax.set_position((left, bottom, width, height))
+
+        if resolved_logo_path:
+            add_logo_to_figure(fig, resolved_logo_path, logo_position)
+        if footer_text:
+            add_footer_text(fig, footer_text, text_position)
+
+        pdf.savefig(fig, pad_inches=0.5, dpi=dpi, orientation='landscape')
+
+        for ax, pos in zip(fig.axes, original_ax_positions):
+            ax.set_position(pos)
+        fig.set_size_inches(original_size, forward=False)
+
+    logger.info(f"Skychart saved as PDF '{filename}'")
 
 
 def save_figure_skychart(

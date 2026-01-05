@@ -143,7 +143,12 @@ class StereoProjector(object):
             ('id', np.int32),
         ])
 
-        valid_mask, horizontal_coords = get_horizontal_coords(self.config.__dict__, data=data)
+        valid_mask, horizontal_coords = get_horizontal_coords(
+            longitude=self.config.longitude,
+            latitude=self.config.latitude,
+            local_time=self.config.local_time,
+            data=data
+        )
 
         view_data = np.zeros(np.sum(valid_mask), dtype=VIEW_DTYPE)
         view_data['v_mag'] = data['v_mag'][valid_mask]
@@ -181,7 +186,9 @@ class StereoProjector(object):
         south_pole = np.array([(0, 0, -1)], dtype=POINT_DTYPE)
 
         _, north_horizontal = get_horizontal_coords(
-            config=self.config.__dict__,
+            longitude=self.config.longitude,
+            latitude=self.config.latitude,
+            local_time=self.config.local_time,
             data=north_pole
         )
         if north_horizontal['zenith'] < np.pi / 2:
@@ -207,7 +214,9 @@ class StereoProjector(object):
             self._groups['Points'] = self._groups.get('Points', []) + [(north, 'North Pole')]
 
         _, south_horizontal = get_horizontal_coords(
-            config=self.config.__dict__,
+            longitude=self.config.longitude,
+            latitude=self.config.latitude,
+            local_time=self.config.local_time,
             data=south_pole
         )
 
@@ -246,7 +255,9 @@ class StereoProjector(object):
             num_points=1000
         )
         _, horizontal_coords = get_horizontal_coords(
-            config=self.config.__dict__,
+            longitude=self.config.longitude,
+            latitude=self.config.latitude,
+            local_time=self.config.local_time,
             data=ecliptic_eci_coords
         )
         projection_coords = make_points_stereo_projection(
@@ -272,7 +283,9 @@ class StereoProjector(object):
             num_points=1000
         )
         _, horizontal_coords = get_horizontal_coords(
-            config=self.config.__dict__,
+            longitude=self.config.longitude,
+            latitude=self.config.latitude,
+            local_time=self.config.local_time,
             data=equator_eci_coords
         )
         projection_coords = make_points_stereo_projection(
@@ -302,7 +315,9 @@ class StereoProjector(object):
             num_points=1000
         )
         _, horizontal_coords = get_horizontal_coords(
-            config=self.config.__dict__,
+            longitude=self.config.longitude,
+            latitude=self.config.latitude,
+            local_time=self.config.local_time,
             data=galactic_eci_coords
         )
         projection_coords = make_points_stereo_projection(
@@ -412,7 +427,9 @@ class StereoProjector(object):
                 num_points=250,
             )
             _, horizontal_coords = get_horizontal_coords(
-                config=self.config.__dict__,
+                longitude=self.config.longitude,
+                latitude=self.config.latitude,
+                local_time=self.config.local_time,
                 data=eq_circle,
             )
             projection = make_points_stereo_projection(
@@ -433,8 +450,10 @@ class StereoProjector(object):
                 alpha_deg=(90.0 - dec),
                 num_points=250,
             )
-            _, horizontal_coords = get_horizontal_coords(
-                config=self.config.__dict__,
+            _, horizontal_coords =get_horizontal_coords(
+                longitude=self.config.longitude,
+                latitude=self.config.latitude,
+                local_time=self.config.local_time,
                 data=eq_circle,
             )
             projection = make_points_stereo_projection(
@@ -449,8 +468,13 @@ class StereoProjector(object):
                 )
             )
 
-        grid = LineCollection(array_grid, label='Equatorial grid',
-                              colors='magenta', alpha=0.25, linewidth=0.5)
+        grid = LineCollection(
+            array_grid,
+            label='Equatorial grid',
+            colors='magenta',
+            alpha=0.25,
+            linewidth=0.5
+        )
         self._ax.add_collection(grid)
         self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Equatorial grid')]
 

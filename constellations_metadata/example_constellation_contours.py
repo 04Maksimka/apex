@@ -16,7 +16,7 @@ from pinhole_projection.constellation_renderer import ConstellationRenderer, \
     draw_constellation_lines, draw_multiple_constellations
 from pinhole_projection.pinhole_projector import (
     ShotConditions, 
-    CameraCfg, 
+    CameraCfg,
     Pinhole
 )
 from planets_catalog.planet_catalog import PlanetCatalog
@@ -62,7 +62,7 @@ def visualize_constellation_with_contours(
     planet_catalog = PlanetCatalog()
     
     # Setup camera
-    camera_cfg = CameraCfg.from_fov_and_aspect(
+    camera_cfg = CameraConfig.from_fov_and_aspect(
         fov_deg=fov_deg,
         aspect_ratio=aspect_ratio,
         height_pix=height
@@ -74,7 +74,7 @@ def visualize_constellation_with_contours(
     
     # Setup shot conditions
     shot_cond = ShotConditions(
-        center_dir=get_constellation_dir(constellation),
+        center_direction=get_constellation_dir(constellation),
         tilt_angle=tilt_angle,
     )
     
@@ -208,7 +208,7 @@ def visualize_multiple_constellations(
     catalog = Catalog(catalog_name='hip_data.tsv', use_cache=False)
     planet_catalog = PlanetCatalog()
     
-    camera_cfg = CameraCfg.from_fov_and_aspect(
+    camera_cfg = CameraConfig.from_fov_and_aspect(
         fov_deg=fov_deg,
         aspect_ratio=aspect_ratio,
         height_pix=height
@@ -222,7 +222,7 @@ def visualize_multiple_constellations(
         center_constellation = constellations[0]
     
     shot_cond = ShotConditions(
-        center_dir=get_constellation_dir(center_constellation),
+        center_direction=get_constellation_dir(center_constellation),
         tilt_angle=tilt_angle,
     )
     

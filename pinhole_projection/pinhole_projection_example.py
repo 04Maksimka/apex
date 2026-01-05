@@ -4,9 +4,9 @@ from matplotlib import pyplot as plt
 
 from constellations_metadata.contellations_centers import get_constellation_dir, \
     Constellation
-from helpers.geometry.geometry import mag_to_radius
+from helpers.pdf_helpers.figure2pdf import save_figure, save_figure_pinhole
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from pinhole_projection.pinhole_projector import ShotConditions, CameraCfg, \
+from pinhole_projection.pinhole_projector import ShotConditions, CameraConfig, \
     Pinhole, PinholeConfig
 from planets_catalog.planet_catalog import PlanetCatalog
 from datetime import datetime
@@ -22,6 +22,7 @@ def example_pinhole_visualization(
         add_equator: bool = False,
         add_galactic_equator: bool = False,
         add_horizontal_grid: bool = False,
+        add_equatorial_grid: bool = False,
 ):
     """Create example visualization of pinhole projections."""
     # Create catalogs
@@ -35,11 +36,13 @@ def example_pinhole_visualization(
     fov_deg = 90
     aspect_ratio = 1.5
     height = 1000
-    camera_cfg = CameraCfg.from_fov_and_aspect(
+
+    camera_cfg = CameraConfig.from_fov_and_aspect(
         fov_deg=fov_deg,
         aspect_ratio=aspect_ratio,
         height_pix=height
     )
+
     config = PinholeConfig(
         add_ticks=add_ticks,
         use_dark_mode=use_dark_mode,
@@ -48,30 +51,45 @@ def example_pinhole_visualization(
         add_equator=add_equator,
         add_galactic_equator=add_galactic_equator,
         add_horizontal_grid=add_horizontal_grid,
+        add_equatorial_grid=add_equatorial_grid,
         local_time=time
     )
+
     # And shot conditions
     shot_cond = ShotConditions(
-        center_dir=get_constellation_dir(constellation),
+        center_direction=get_constellation_dir(constellation),
         tilt_angle=tilt_angle,
     )
+
     # Define pinhole camera with all the configurations
     pinhole = Pinhole(shot_cond, camera_cfg, config, catalog, planet_catalog)
     # Make a shot
-    pinhole.generate()
+    figure = pinhole.generate()
+
+    # Save skychart
+    save_figure_pinhole(
+        fig=figure,
+        filename="pinhole_local_logo.pdf",
+        logo_path="helpers/pdf_helpers/logo_astrageek.png",
+        footer_text="Generate more on skychart.astrageek.ru.",
+        logo_position=(0.12, 0.97),
+        text_position=(0.5, 0.01),
+    )
 
 
 if __name__ == '__main__':
     example_pinhole_visualization(
-        constellation=Constellation.LEO,
+        constellation=Constellation.SGR,
         tilt_angle=0.0,
         use_dark_mode=False,
-        add_ticks=True,
+        add_ticks=False,
         add_planets=True,
         add_ecliptic=True,
         add_equator=True,
         add_galactic_equator=True,
         add_horizontal_grid=True,
+        add_equatorial_grid=True,
     )
+
 
     plt.show()
