@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 
 from helpers.geometry.geometry import (
-    get_horizontal_coords, make_stereo_projection, make_points_stereo_projection, generate_small_circle,
+    get_horizontal_coords, make_stereo_projection, make_points_stereo_projection, generate_small_circle, mag_to_radius,
 )
 from hip_catalog.hip_catalog import CatalogConstraints, Catalog
 from planets_catalog.planet_catalog import PlanetCatalog, Planets
@@ -77,9 +77,8 @@ class StereoProjector(object):
             object_type='star'
         )
         # Make projections
-        points_data = make_stereo_projection(
-            view_data=star_view_data,
-            constraints=self.catalog.constraints,
+        points_data = self._make_stereo_views(
+            data=star_view_data,
         )
         # Make figure with projections
         self._create_polar_scatter(points_data)
@@ -117,9 +116,8 @@ class StereoProjector(object):
                 data=planet_data,
                 object_type='planet'
             )
-            planet_points_data = make_stereo_projection(
-                view_data=planet_view_data,
-                constraints=self.catalog.constraints,
+            planet_points_data = self._make_stereo_views(
+                data=planet_view_data,
             )
             self._add_planets(planet_points_data)
 
@@ -127,6 +125,38 @@ class StereoProjector(object):
         self._create_grouped_legend()
 
         return self._fig
+
+    def _make_stereo_views(self, data: NDArray) -> NDArray:
+        """
+        Returns a stereographic projection views to plot
+
+        :param data: horizontal coordinates data
+        :return: projection data to plot
+        """
+
+        VIEW_DTYPE = np.dtype([
+            ('size', np.float32),
+            ('v_mag', np.float32),
+            ('radius', np.float32),
+            ('angle', np.float32),
+            ('id', np.int32),
+        ])
+        projection_data = make_stereo_projection(
+            view_data=data
+        )
+
+        view_data = np.zeros(len(data), dtype=VIEW_DTYPE)
+        view_data['radius'] = projection_data['radius']
+        view_data['angle'] = projection_data['angle']
+        view_data['v_mag'] = projection_data['v_mag']
+        view_data['size'] = mag_to_radius(
+            magnitude=projection_data['v_mag'],
+            max_magnitude=self.catalog.constraints.max_magnitude,
+            min_magnitude=self.catalog.constraints.min_magnitude
+        )
+        view_data['id'] = projection_data['id']
+
+        return view_data
 
     def _make_horizontal_views(self, data: NDArray, object_type: str = 'star') -> NDArray:
         """
@@ -340,24 +370,26 @@ class StereoProjector(object):
         """
         # Draw each planet separately
         for planet_data in projection_data:
-            planet = Planets(planet_data['id'])
-            name = planet.name.capitalize()
-            color = self.planets_catalog.get_planet_color(planet)
-            scatter = self._ax.scatter(
-                planet_data['angle'],
-                planet_data['radius'],
-                c=color,
-                s=max(planet_data['size'] * 3, 0.5),  # make planets larger for visibility
-                alpha=0.8,
-                linewidth=0.5,
-            )
-            # Add to the legend groups
-            self._groups['Planets'] = self._groups.get('Planets', []) + [(scatter, name)]
+            if planet_data['v_mag'] < self.catalog.constraints.max_magnitude:
+                planet = Planets(planet_data['id'])
+                name = planet.name.capitalize()
+                color = self.planets_catalog.get_planet_color(planet)
+                scatter = self._ax.scatter(
+                    planet_data['angle'],
+                    planet_data['radius'],
+                    c=color,
+                    s=max(planet_data['size'] * 3, 0.5),  # make planets larger for visibility
+                    alpha=0.8,
+                    linewidth=0.5,
+                )
+                # Add to the legend groups
+                self._groups['Planets'] = self._groups.get('Planets', []) + [(scatter, name)]
 
     def _add_horizontal_grid(self):
         """
         Add horizontal grid to skychart
         """
+
         zeniths = np.arange(-90.0, 90.0, self.config.grid_theta_step, dtype=np.float64)
         azimuths = np.arange(0, 180.0, self.config.grid_phi_step, dtype=np.float64)
 
@@ -562,6 +594,7 @@ class StereoProjector(object):
         """
         Create legend split by groups
         """
+
         groups = {k: v for k, v in self._groups.items() if v}
         if not groups:
             return

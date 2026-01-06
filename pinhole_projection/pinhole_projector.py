@@ -15,9 +15,9 @@ from planets_catalog.planet_catalog import PlanetCatalog, Planets
 
 @dataclass
 class ShotConditions:
-    """Class of the shot conditions."""
-    center_direction: NDArray  # direction in ECI (unit vector)
-    tilt_angle: float  # angle in degrees on which we rotate a camera
+    """ Shooting conditions. """
+    center_direction: NDArray   # direction in ECI (unit vector)
+    tilt_angle: float           # angle in degrees on which we rotate a camera
 
     def __post_init__(self):
         # Normalize direction vector
@@ -26,10 +26,10 @@ class ShotConditions:
 
 @dataclass
 class CameraConfig:
-    """Camera configurations."""
-    width: int  # pix
-    height: int  # pix
-    focal_length: float  # pix (focal length)
+    """ Physical camera configurations."""
+    width: int          # frame width in pixels
+    height: int         # frame height in pixels
+    focal_length: float # camera focal length in pixels
 
     @classmethod
     def from_fov_and_aspect(
@@ -42,12 +42,14 @@ class CameraConfig:
         Create CameraConfig from field of view and aspect ratio.
 
         :param fov_deg: Horizontal field of view in degrees
-        :param aspect_ratio: Width/height ratio
-        :param height_pix: Height in pixels
+        :param aspect_ratio: width/height ratio
+        :param height_pix: height in pixels
         """
+
+        # Calculate frame width
         width_pix = int(height_pix * aspect_ratio)
 
-        # Calculate focal length from FOV
+        # Calculate focal length from FOV and diagonal
         fov_rad = np.deg2rad(fov_deg)
         diagonal = np.sqrt(width_pix**2 + height_pix**2)
         focal_length_pix = (diagonal / 2) / np.tan(fov_rad / 2)
@@ -56,7 +58,7 @@ class CameraConfig:
 
 @dataclass
 class PinholeConfig:
-    """Class of the pinhole projector config"""
+    """Class of the pinhole projector configurations. """
 
     local_time: datetime
     latitude: float = 0.0
@@ -78,8 +80,8 @@ class PinholeConfig:
 @dataclass
 class ProjectionResult:
     """Result of pinhole projection."""
-    stars: NDArray  # Structured array with star projections
-    planets: NDArray  # Structured array with planet projections
+    stars: NDArray      # Structured array with star projections
+    planets: NDArray    # Structured array with planet projections
 
 
 class Pinhole(object):
@@ -145,7 +147,8 @@ class Pinhole(object):
         view_data['dec'] = data['dec'][valid_mask]
         view_data['size'] = mag_to_radius(
             magnitude=view_data['v_mag'],
-            constraints=self.catalog.constraints
+            max_magnitude=self.catalog.constraints.max_magnitude,
+            min_magnitude=self.catalog.constraints.min_magnitude
         )
 
         if object_type == 'star':
@@ -227,19 +230,20 @@ class Pinhole(object):
 
     def _add_planets(self, planet_data):
         for planet_data in planet_data:
-            planet = Planets(planet_data['id'])
-            name = planet.name.capitalize()
-            color = self.planets_catalog.get_planet_color(planet)
-            scatter = self._ax.scatter(
-                planet_data['x_pix'],
-                planet_data['y_pix'],
-                c=color,
-                s=max(planet_data['size'] * 3, 0.5),  # make planets larger for visibility
-                alpha=0.8,
-                linewidth=0.5,
-            )
-            # Add to the legend groups
-            self._groups['Planets'] = self._groups.get('Planets', []) + [(scatter, name)]
+            if planet_data['v_mag'] < self.catalog.constraints.max_magnitude:
+                planet = Planets(planet_data['id'])
+                name = planet.name.capitalize()
+                color = self.planets_catalog.get_planet_color(planet)
+                scatter = self._ax.scatter(
+                    planet_data['x_pix'],
+                    planet_data['y_pix'],
+                    c=color,
+                    s=max(planet_data['size'] * 3, 0.5),  # make planets larger for visibility
+                    alpha=0.8,
+                    linewidth=0.5,
+                )
+                # Add to the legend groups
+                self._groups['Planets'] = self._groups.get('Planets', []) + [(scatter, name)]
 
     def _add_ecliptic(self):
         """

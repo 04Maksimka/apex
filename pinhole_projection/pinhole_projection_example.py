@@ -1,5 +1,4 @@
 """Usage example of pinhole projection."""
-import numpy as np
 from matplotlib import pyplot as plt
 
 from constellations_metadata.contellations_centers import get_constellation_dir, \
@@ -64,7 +63,7 @@ def example_pinhole_visualization(
     # Define pinhole camera with all the configurations
     pinhole = Pinhole(shot_cond, camera_cfg, config, catalog, planet_catalog)
     # Make a shot
-    figure = pinhole.generate()
+    figure = pinhole.generate(constraints=constraints)
 
     # Save skychart
     save_figure_pinhole(
@@ -79,7 +78,7 @@ def example_pinhole_visualization(
 
 if __name__ == '__main__':
     example_pinhole_visualization(
-        constellation=Constellation.SGR,
+        constellation=Constellation.TAU,
         tilt_angle=0.0,
         use_dark_mode=False,
         add_ticks=False,
@@ -90,6 +89,5 @@ if __name__ == '__main__':
         add_horizontal_grid=True,
         add_equatorial_grid=True,
     )
-
 
     plt.show()

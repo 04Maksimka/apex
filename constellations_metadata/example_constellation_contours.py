@@ -15,9 +15,9 @@ from hip_catalog.hip_catalog import Catalog
 from pinhole_projection.constellation_renderer import ConstellationRenderer, \
     draw_constellation_lines, draw_multiple_constellations
 from pinhole_projection.pinhole_projector import (
-    ShotConditions, 
+    ShotConditions,
     CameraCfg,
-    Pinhole
+    Pinhole, CameraConfig
 )
 from planets_catalog.planet_catalog import PlanetCatalog
 
