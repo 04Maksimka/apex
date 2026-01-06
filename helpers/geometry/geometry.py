@@ -116,7 +116,7 @@ def get_horizontal_coords(longitude: float, latitude: float, local_time: datetim
     horizontal_coords['azimuth'] = np.atan2(cartesian_hor_coords[0, :], cartesian_hor_coords[1, :])
     horizontal_coords['zenith'] = np.arccos(cartesian_hor_coords[2, :])
 
-    valid_mask = (horizontal_coords['zenith'] <= (np.pi / 1.5))
+    valid_mask = (horizontal_coords['zenith'] <= (np.pi / 1.9))
 
     return valid_mask, horizontal_coords
 
@@ -188,8 +188,11 @@ def make_pinhole_projection(
     picture_coords['y_pix'] = y_proj + image_height / 2
 
     # Check if points are within image bounds
-    in_bounds = ((picture_coords['x_pix'] >= 0) & (picture_coords['x_pix'] <= image_width) &
-                 (picture_coords['y_pix'] >= 0) & (picture_coords['y_pix'] <= image_height))
+    gap = 1/16
+    in_bounds = ((picture_coords['x_pix'] >= -image_width * gap) &
+                 (picture_coords['x_pix'] <= image_width * (1+gap)) &
+                 (picture_coords['y_pix'] >= -image_height * gap) &
+                 (picture_coords['y_pix'] <= image_height * (1+gap)))
     valid_mask = (points_cam[2, :] < 0) & in_bounds
 
     return valid_mask, picture_coords
@@ -310,6 +313,24 @@ def make_points_stereo_projection(points: NDArray) -> NDArray:
     points_data['angle'] = points['azimuth']
 
     return points_data
+
+def quick_from_eci_to_stereo_projection(
+        points: NDArray,
+        longitude: float,
+        latitude: float,
+        local_time: datetime,
+) -> NDArray:
+    _, points_horizontal = get_horizontal_coords(
+        longitude=longitude,
+        latitude=latitude,
+        local_time=local_time,
+        data=points
+    )
+    mask = points_horizontal['zenith'] < np.pi / 2
+    points_projection = make_points_stereo_projection(
+        points=points_horizontal[mask]
+    )
+    return points_projection
 
 
 def make_equatorial_grid_pinhole(

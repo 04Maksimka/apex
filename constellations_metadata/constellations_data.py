@@ -2173,10 +2173,10 @@ CONSTELLATIONS_DATA = {
   }
 }
 
-def get_constellation_center(constellation: str) -> NDArray | None:
+def get_constellation_center(constellation: str) -> List | None:
     try:
         query = CONSTELLATIONS_DATA[constellation]
-        return np.asarray(query['center'], dtype=np.float32)
+        return query['center']
     except Exception as e:
         print(f"Processing error: {e}")
         return None

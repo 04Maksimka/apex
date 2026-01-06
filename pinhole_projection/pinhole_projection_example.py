@@ -1,11 +1,12 @@
 """Usage example of pinhole projection."""
+import numpy as np
 from matplotlib import pyplot as plt
 
 from constellations_metadata.constellations_data import get_constellation_center
 from helpers.pdf_helpers.figure2pdf import save_figure_pinhole
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from pinhole_projection.pinhole_projector import ShotConditions, CameraConfig, \
-    Pinhole, PinholeConfig
+    Pinhole, PinholeConfig, ConstellationConfig
 from planets_catalog.planet_catalog import PlanetCatalog
 from datetime import datetime
 
@@ -19,8 +20,9 @@ def example_pinhole_visualization(
         add_ecliptic: bool = False,
         add_equator: bool = False,
         add_galactic_equator: bool = False,
-        add_horizontal_grid: bool = False,
         add_equatorial_grid: bool = False,
+        add_constellations: bool = False,
+        add_constellations_names: bool = False,
 ):
     """Create example visualization of pinhole projections."""
     # Create catalogs
@@ -32,7 +34,7 @@ def example_pinhole_visualization(
     time = datetime(2024, 1, 1, 0, 0, 0)
     # Define camera configuration
     fov_deg = 90
-    aspect_ratio = 1.5
+    aspect_ratio = 1.0
     height = 1000
 
     camera_cfg = CameraConfig.from_fov_and_aspect(
@@ -48,21 +50,46 @@ def example_pinhole_visualization(
         add_ecliptic=add_ecliptic,
         add_equator=add_equator,
         add_galactic_equator=add_galactic_equator,
-        add_horizontal_grid=add_horizontal_grid,
         add_equatorial_grid=add_equatorial_grid,
+        add_constellations=add_constellations,
+        add_constellations_names=add_constellations_names,
         local_time=time
     )
 
+    # Select constellations with custom colors
+    color_map = {
+        'UMA': 'brown',  # Big Dipper in yellow
+        'ORI': 'gray',  # Orion in red
+        'CYG': 'blue',  # Cygnus in cyan
+        'LEO': 'red',  # Leo in orange
+        'CAS': 'green',  # Cassiopeia in light green
+    }
+
+    # Constellation viewing configurations
+    constellation_config = ConstellationConfig(
+        constellations_list=list(color_map.keys()),
+        constellation_linewidth=1.5,
+        constellation_alpha=0.75,
+        constellation_color_map=color_map,
+    )
     # And shot conditions
     shot_cond = ShotConditions(
-        center_direction=get_constellation_center(constellation),
+        center_direction=np.asarray(get_constellation_center(constellation), dtype=np.float32),
         tilt_angle=tilt_angle,
     )
 
     # Define pinhole camera with all the configurations
-    pinhole = Pinhole(shot_cond, camera_cfg, config, catalog, planet_catalog)
+    pinhole = Pinhole(
+        shot_cond=shot_cond,
+        camera_cfg=camera_cfg,
+        config=config,
+        constellation_config=constellation_config,
+        catalog=catalog,
+        planet_catalog=planet_catalog
+    )
     # Make a shot
     fig, ax = pinhole.generate(constraints=constraints)
+    ax.set_aspect('equal')
 
     # Save skychart
     save_figure_pinhole(
@@ -77,16 +104,17 @@ def example_pinhole_visualization(
 
 if __name__ == '__main__':
     example_pinhole_visualization(
-        constellation='TAU',
-        tilt_angle=0.0,
+        constellation='CYG',
+        tilt_angle=45.0,
         use_dark_mode=False,
         add_ticks=False,
         add_planets=True,
         add_ecliptic=True,
         add_equator=True,
         add_galactic_equator=True,
-        add_horizontal_grid=True,
         add_equatorial_grid=True,
+        add_constellations=True,
+        add_constellations_names=True
     )
 
     plt.show()

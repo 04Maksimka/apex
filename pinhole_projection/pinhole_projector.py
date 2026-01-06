@@ -1,15 +1,16 @@
 """Module with pinhole projector."""
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List, Dict
 import numpy as np
-from matplotlib.collections import LineCollection
 from numpy.typing import NDArray
 from matplotlib import pyplot as plt
 
+from constellations_metadata.constellations_data import get_available_constellations, get_constellation_center
 from helpers.geometry.geometry import make_pinhole_projection, mag_to_radius, generate_small_circle, \
     make_equatorial_grid_pinhole
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from pinhole_projection.constellation_renderer import ConstellationRenderer, draw_multiple_constellations
 from planets_catalog.planet_catalog import PlanetCatalog, Planets
 
 
@@ -72,9 +73,10 @@ class PinholeConfig:
     add_galactic_equator: bool = False
     add_planets: bool = False
     add_ticks: bool = False
-    add_horizontal_grid: bool = False
     add_equatorial_grid: bool = False
     use_dark_mode: bool = False
+    add_constellations: bool = False
+    add_constellations_names: bool = False
 
 
 @dataclass
@@ -82,6 +84,16 @@ class ProjectionResult:
     """Result of pinhole projection."""
     stars: NDArray      # Structured array with star projections
     planets: NDArray    # Structured array with planet projections
+
+
+@dataclass
+class ConstellationConfig(object):
+    constellations_list: Optional[
+        List[str]] = None  # If None, render all available
+    constellation_color: str = 'gray'
+    constellation_linewidth: float = 0.8
+    constellation_alpha: float = 0.7
+    constellation_color_map: Optional[Dict[str, str]] = None
 
 
 class Pinhole(object):
@@ -93,7 +105,9 @@ class Pinhole(object):
             camera_cfg: CameraConfig,
             config: PinholeConfig,
             catalog: Catalog,
-            planet_catalog: PlanetCatalog
+            planet_catalog: PlanetCatalog,
+            constellation_config: Optional[ConstellationConfig] = None,
+            constellations_renderer: Optional[ConstellationRenderer] = ConstellationRenderer(),
     ):
         """
         Initialize pinhole projector.
@@ -107,6 +121,8 @@ class Pinhole(object):
 
         self.shot_cond = shot_cond
         self.camera_config = camera_cfg
+        self.constellation_config = constellation_config
+        self.constellations_renderer = constellations_renderer
         self.config = config
         self.catalog = catalog
         self.planets_catalog = planet_catalog
@@ -182,13 +198,17 @@ class Pinhole(object):
         if self.config.add_galactic_equator:
             self._add_galactic_equator()
 
-        # Add horizontal grid
-        if self.config.add_horizontal_grid:
-            self._add_horizontal_grid()
-
         # Add equatorial grid
         if self.config.add_equatorial_grid:
             self._add_equatorial_grid()
+
+        # Add constellation lines
+        if self.config.add_constellations:
+            self._add_constellations()
+
+        # Add constellation names
+        if self.config.add_constellations_names:
+            self._add_constellations_names()
 
         # Put a legend to the bottom of the current axis
         self._create_grouped_legend()
@@ -228,6 +248,10 @@ class Pinhole(object):
         return ProjectionResult(stars=self._star_projections, planets=self._planets_projections)
 
     def _create_picture_plane(self):
+        """
+        Creates the figure and axes.
+        """
+
         self._fig = plt.figure()
         self._ax = self._fig.add_subplot(111)
 
@@ -252,6 +276,10 @@ class Pinhole(object):
             self._ax.set_yticks([])
 
     def _add_planets(self):
+        """
+        Add planets to image.
+        """
+
         for planet_data in self._planets_projections:
             if planet_data['v_mag'] < self.catalog.constraints.max_magnitude:
                 planet = Planets(planet_data['id'])
@@ -270,7 +298,7 @@ class Pinhole(object):
 
     def _add_ecliptic(self):
         """
-        Add ecliptic on skychart
+        Add ecliptic on image
         """
 
         RA = 270.0
@@ -295,12 +323,13 @@ class Pinhole(object):
             c='green',
             linewidth=1,
         )
-        # Add to the legend groups
-        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Ecliptic')]
+        # Add to the legend groups if at leat one point on image
+        if np.sum(valid_mask) > 0:
+            self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Ecliptic')]
 
     def _add_equator(self):
         """
-        Add equator on skychart
+        Add equator on image
         """
 
         equator_eci_coords = generate_small_circle(
@@ -322,12 +351,13 @@ class Pinhole(object):
             c='red',
             linewidth=1,
         )
-        # Add to the legend groups
-        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Celestial equator')]
+        # Add to the legend groups if at leat one point on image
+        if np.sum(valid_mask) > 0:
+            self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Celestial equator')]
 
     def _add_galactic_equator(self):
         """
-        Add galactic equator on skychart
+        Add galactic equator on image
         """
 
         # Galactical center
@@ -353,13 +383,15 @@ class Pinhole(object):
             c='blue',
             linewidth=1,
         )
-        # Add to the legend groups
-        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Galactic equator')]
+        # Add to the legend groups if at leat one point on image
+        if np.sum(valid_mask) > 0:
+            self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Galactic equator')]
 
     def _add_equatorial_grid(self):
         """
-        Add equatorial grid to skychart
+        Add equatorial grid on image
         """
+
         grid = make_equatorial_grid_pinhole(
             center_direction=self.shot_cond.center_direction,
             tilt_dec=self.shot_cond.tilt_angle,
@@ -372,49 +404,153 @@ class Pinhole(object):
         self._ax.add_collection(grid)
         self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Equatorial grid')]
 
-    def _add_horizontal_grid(self):
-        pass
+    def _add_constellations(self):
+        """Adds constellation line patterns to the projection."""
+
+        if self.constellation_config.constellations_list is not None:
+            separate = True
+            constellations_to_render = self.constellation_config.constellations_list
+        else:
+            separate = False
+            constellations_to_render = get_available_constellations()
+
+        # Get constellation segments
+        constellation_segments = self.constellations_renderer.get_multiple_constellation_segments(
+            constellations=constellations_to_render,
+            stars=self._star_projections
+        )
+
+        if not constellation_segments:
+            return
+
+        # Draw constellations
+        lcs = draw_multiple_constellations(
+            ax=self._ax,
+            constellation_segments=constellation_segments,
+            color=self.constellation_config.constellation_color,
+            linewidth=self.constellation_config.constellation_linewidth,
+            alpha=self.constellation_config.constellation_alpha,
+            color_map=self.constellation_config.constellation_color_map,
+            use_collection=True
+        )
+
+        # Add to legend groups
+        if lcs:
+            if separate:
+                for name, params in lcs.items():
+                    self._groups['Constellations'] = self._groups.get('Constellations', []) +\
+                                                     [(params['lc'], f'{params['name']}')]
+            else:
+                # Get first line collection for legend
+                first_lc = list(lcs.values())[0]['lc']
+                self._groups['Constellations'] = self._groups.get('Constellations', []) + \
+                                                 [(first_lc, f'Constellation segments ({len(lcs)})')]
+
+    def _add_constellations_names(self):
+        """
+        Adds constellation names on skychart.
+        """
+
+        POINT_DTYPE = np.dtype([('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
+
+        if self.constellation_config.constellations_list is not None:
+            constellations_to_render = self.constellation_config.constellations_list
+        else:
+            constellations_to_render = get_available_constellations()
+
+        for constellation in constellations_to_render:
+            eci_center = np.array(
+                [tuple(get_constellation_center(constellation))],
+                dtype=POINT_DTYPE
+            )
+
+            if np.dot(get_constellation_center(constellation), self.shot_cond.center_direction) > 0:
+                _, center_projection = make_pinhole_projection(
+                    center_direction=self.shot_cond.center_direction,
+                    tilt_dec=self.shot_cond.tilt_angle,
+                    image_width=self.camera_config.width,
+                    image_height=self.camera_config.height,
+                    focal_length=self.camera_config.focal_length,
+                    data=eci_center,
+                )
+                self._ax.annotate(
+                    text=constellation,
+                    xy=(center_projection['x_pix'][0], center_projection['y_pix'][0]),
+                    xytext=(0, 0),
+                    fontsize=10,
+                    textcoords='offset points',
+                    color='gray',
+                    ha = 'center',
+                    va = 'center',
+                )
 
     def _create_grouped_legend(self):
         """
-        Create legend split by groups
+        Create legend below the plot for landscape orientation
         """
         groups = {k: v for k, v in self._groups.items() if v}
         if not groups:
             return
 
+        # Sort groups by number of items (largest first)
+        groups = dict(sorted(groups.items(), key=lambda x: len(x[1]), reverse=True))
+
         n_groups = len(groups)
+        group_items = list(groups.items())
+
+        # For landscape, we can fit more groups in a row
+        # Calculate optimal number of columns
         n_columns = n_groups
         n_rows = 1
-        group_items = list(groups.items())
-        legend_height = 0.25 / n_rows
-        vertical_spacing = 0.05
 
+        # Calculate positions for each legend
+        # We'll place legends in a grid below the plot
+        total_height = 0.15 * n_rows  # Adjust based on number of rows
+        vertical_spacing = 0.02
+
+        # Adjust axis position to make room for legend below
+        ax_pos = self._ax.get_position()
+
+        # For landscape, we reduce height and shift up
+        new_height = ax_pos.height # Reduce height by 15%
+        new_y0 = ax_pos.y0 + (ax_pos.height - new_height)
+        self._ax.set_position([ax_pos.x0, new_y0, ax_pos.width, new_height])
+
+        # Create legends in a grid
         for i, (title, items) in enumerate(group_items):
             row = i // n_columns
             col = i % n_columns
 
             handles, labels = zip(*items)
 
-            if n_columns == 1:
-                bbox_x = 0.5
-            else:
-                bbox_x = 0.1 + col * (0.8 / (n_columns - 1))
+            # Calculate position in figure coordinates
+            # Distribute evenly horizontally
+            col_width = 0.8 / n_columns  # Use 90% of width
+            x_pos = 0.075 + col * col_width + col_width / 2  # Center of column
 
-            bbox_y = -0.05 - row * (legend_height + vertical_spacing)
+            # Position below the plot
+            y_pos = 0.15 + (n_rows - row - 1) * 0.08  # Start from bottom
 
+            # Create legend
             legend = self._ax.legend(
                 handles, labels,
                 title=title,
                 loc='upper center',
-                bbox_to_anchor=(bbox_x, bbox_y),
+                bbox_to_anchor=(x_pos, y_pos),
+                bbox_transform=self._fig.transFigure,  # Use figure coordinates
                 ncol=1,
                 frameon=True,
                 fancybox=True,
-                borderaxespad=0.3
+                borderaxespad=0.3,
+                fontsize=8,
+                handlelength=1.5
             )
 
+            # Make title bold
             legend.get_title().set_fontweight('bold')
+            legend.get_title().set_fontsize(10)
+
+            # Add legend to figure (outside axis)
             self._ax.add_artist(legend)
 
 

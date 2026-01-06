@@ -113,7 +113,7 @@ def save_figure_pinhole(
     logo_position: tuple[float, float] = (0.02, 0.95),
     text_position: tuple[float, float] = (0.5, 0.02),
     page_size: tuple[float, float] = (11.69, 8.27),
-    chart_margins: tuple[float, float, float, float] = (0.15, 0.2, 0.15, 0.125),
+    chart_margins: tuple[float, float, float, float] = (0.1, 0.2, 0.1, 0.1),
 ):
     if not filename.endswith('.pdf'):
         filename += '.pdf'

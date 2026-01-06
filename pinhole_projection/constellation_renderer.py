@@ -5,6 +5,7 @@ line patterns by connecting projected stars with their HIP catalog IDs.
 """
 
 import numpy as np
+from matplotlib.collections import LineCollection
 from numpy.typing import NDArray
 from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass
@@ -12,8 +13,6 @@ from dataclasses import dataclass
 from constellations_metadata.constellations_data import get_constellation_center,\
     get_constellation_name, get_constellation_lines
 from hip_catalog.hip_catalog import CatalogConstraints
-from pinhole_projection.pinhole_projector import Pinhole
-from constellations_metadata.contellations_centers import Constellation
 
 
 @dataclass
@@ -35,13 +34,11 @@ class ConstellationLineSegment:
 class ConstellationRenderer:
     """Renderer for constellation line patterns in pinhole projection."""
 
-    def __init__(self, pinhole: Pinhole):
+    def __init__(self):
         """
         Initialize constellation renderer.
-
-        :param pinhole: Pinhole projector instance
         """
-        self.pinhole = pinhole
+
         self._star_positions_cache: Optional[
             Dict[int, Tuple[float, float]]] = None
 
@@ -84,11 +81,6 @@ class ConstellationRenderer:
         if not lines:
             return []
 
-        # Get or use provided star projections
-        if stars is None:
-            projection_result = self.pinhole.project(constraints=constraints)
-            stars = projection_result.stars
-
         # Build position cache if not already cached or if stars changed
         if self._star_positions_cache is None:
             self._star_positions_cache = self._build_star_positions_cache(stars)
@@ -120,7 +112,7 @@ class ConstellationRenderer:
             constellations: List[str],
             stars: Optional[NDArray] = None,
             constraints: CatalogConstraints = None
-    ) -> Dict[Constellation, List[ConstellationLineSegment]]:
+    ) -> Dict[str, List[ConstellationLineSegment]]:
         """
         Get projected line segments for multiple constellations.
 
@@ -130,11 +122,6 @@ class ConstellationRenderer:
 
         :return: Dictionary mapping each constellation to its line segments
         """
-
-        # Get or compute star projections once
-        if stars is None:
-            projection_result = self.pinhole.project(constraints=constraints)
-            stars = projection_result.stars
 
         # Build cache once for all constellations
         self._star_positions_cache = self._build_star_positions_cache(stars)
@@ -187,17 +174,60 @@ def draw_constellation_lines(
             zorder=1  # Draw lines below stars
         )
 
+def draw_constellation_lines_collection(
+        ax,
+        segments: List[ConstellationLineSegment],
+        color: str = 'cyan',
+        linewidth: float = 0.8,
+        alpha: float = 0.7,
+        linestyle: str = '-'
+):
+    """
+    Draw constellation line segments using LineCollection for better performance.
+
+    :param ax: Matplotlib polar axis object
+    :param segments: List of ConstellationLineSegmentPolar objects
+    :param color: Line color
+    :param linewidth: Line width
+    :param alpha: Line transparency (0-1)
+    :param linestyle: Line style ('-', '--', '-.', ':')
+    """
+    if not segments:
+        return
+
+    # Convert segments to line collection format
+    lines = []
+    for segment in segments:
+        lines.append(
+            np.column_stack([
+                [segment.x1, segment.x2],
+                [segment.y1, segment.y2]
+            ])
+        )
+
+    # Create and add line collection
+    lc = LineCollection(
+        lines,
+        colors=color,
+        linewidths=linewidth,
+        alpha=alpha,
+        linestyles=linestyle,
+        zorder=0  # Draw lines below stars
+    )
+    ax.add_collection(lc)
+    return lc
 
 def draw_multiple_constellations(
         ax,
         constellation_segments: Dict[
-            Constellation, List[ConstellationLineSegment]],
+            str, List[ConstellationLineSegment]],
         color: str = 'cyan',
         linewidth: float = 0.8,
         alpha: float = 0.7,
         linestyle: str = '-',
-        color_map: Optional[Dict[Constellation, str]] = None
-):
+        color_map: Optional[Dict[str, str]] = None,
+        use_collection: bool = False
+) -> Dict:
     """
     Draw multiple constellation line patterns on a matplotlib axis.
 
@@ -208,17 +238,33 @@ def draw_multiple_constellations(
     :param alpha: Line transparency
     :param linestyle: Line style
     :param color_map: Optional dictionary mapping constellations to specific colors
+
+    :return: Dictionary of constellation lines drawn on a matplotlib axis
     """
+
+    result = {}
     for constellation, segments in constellation_segments.items():
         line_color = color
         if color_map and constellation in color_map:
             line_color = color_map[constellation]
 
-        draw_constellation_lines(
-            ax, segments,
-            color=line_color,
-            linewidth=linewidth,
-            alpha=alpha,
-            linestyle=linestyle
-        )
+        if use_collection:
+            lc = draw_constellation_lines_collection(
+                ax, segments,
+                color=line_color,
+                linewidth=linewidth,
+                alpha=alpha,
+                linestyle=linestyle
+            )
+            result[constellation] = {'name': get_constellation_name(constellation), 'lc': lc}
+        else:
+            draw_constellation_lines(
+                ax, segments,
+                color=line_color,
+                linewidth=linewidth,
+                alpha=alpha,
+                linestyle=linestyle
+            )
+
+    return result
 
