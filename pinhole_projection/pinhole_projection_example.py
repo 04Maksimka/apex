@@ -1,9 +1,8 @@
 """Usage example of pinhole projection."""
 from matplotlib import pyplot as plt
 
-from constellations_metadata.contellations_centers import get_constellation_dir, \
-    Constellation
-from helpers.pdf_helpers.figure2pdf import save_figure, save_figure_pinhole
+from constellations_metadata.constellations_data import get_constellation_center
+from helpers.pdf_helpers.figure2pdf import save_figure_pinhole
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from pinhole_projection.pinhole_projector import ShotConditions, CameraConfig, \
     Pinhole, PinholeConfig
@@ -12,7 +11,7 @@ from datetime import datetime
 
 
 def example_pinhole_visualization(
-        constellation: Constellation,
+        constellation: str,
         tilt_angle: float = 0,
         use_dark_mode: bool = True,
         add_ticks: bool = False,
@@ -56,18 +55,18 @@ def example_pinhole_visualization(
 
     # And shot conditions
     shot_cond = ShotConditions(
-        center_direction=get_constellation_dir(constellation),
+        center_direction=get_constellation_center(constellation),
         tilt_angle=tilt_angle,
     )
 
     # Define pinhole camera with all the configurations
     pinhole = Pinhole(shot_cond, camera_cfg, config, catalog, planet_catalog)
     # Make a shot
-    figure = pinhole.generate(constraints=constraints)
+    fig, ax = pinhole.generate(constraints=constraints)
 
     # Save skychart
     save_figure_pinhole(
-        fig=figure,
+        fig=fig,
         filename="pinhole_local_logo.pdf",
         logo_path="helpers/pdf_helpers/logo_astrageek.png",
         footer_text="Generate more on skychart.astrageek.ru.",
@@ -78,7 +77,7 @@ def example_pinhole_visualization(
 
 if __name__ == '__main__':
     example_pinhole_visualization(
-        constellation=Constellation.TAU,
+        constellation='TAU',
         tilt_angle=0.0,
         use_dark_mode=False,
         add_ticks=False,

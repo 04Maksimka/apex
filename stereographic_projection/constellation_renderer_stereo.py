@@ -9,8 +9,7 @@ from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass
 from matplotlib.collections import LineCollection
 
-from constellations_metadata.constellation_lines import get_constellation_lines
-from constellations_metadata.contellations_centers import Constellation
+from constellations_metadata.constellations_data import get_constellation_lines
 
 
 @dataclass
@@ -58,7 +57,7 @@ class ConstellationRendererStereo:
 
     def get_constellation_segments(
             self,
-            constellation: Constellation,
+            constellation: str,
             projection_data: NDArray
     ) -> List[ConstellationLineSegmentPolar]:
         """
@@ -83,27 +82,31 @@ class ConstellationRendererStereo:
 
         # Convert lines to segments
         segments = []
-        for hip_id1, hip_id2 in lines:
-            # Check if both stars are visible in the projection
-            if hip_id1 in self._star_positions_cache and hip_id2 in self._star_positions_cache:
-                angle1, radius1 = self._star_positions_cache[hip_id1]
-                angle2, radius2 = self._star_positions_cache[hip_id2]
+        for line in lines:
+            for idx1 in range(len(line) - 1):
+                idx2 = idx1 + 1
+                hip_id1 = line[idx1]
+                hip_id2 = line[idx2]
+                # Check if both stars are visible in the projection
+                if hip_id1 in self._star_positions_cache and hip_id2 in self._star_positions_cache:
+                    angle1, radius1 = self._star_positions_cache[hip_id1]
+                    angle2, radius2 = self._star_positions_cache[hip_id2]
 
-                segment = ConstellationLineSegmentPolar(
-                    angle1=angle1, radius1=radius1,
-                    angle2=angle2, radius2=radius2,
-                    hip_id1=hip_id1,
-                    hip_id2=hip_id2
-                )
-                segments.append(segment)
+                    segment = ConstellationLineSegmentPolar(
+                        angle1=angle1, radius1=radius1,
+                        angle2=angle2, radius2=radius2,
+                        hip_id1=hip_id1,
+                        hip_id2=hip_id2
+                    )
+                    segments.append(segment)
 
         return segments
 
     def get_multiple_constellation_segments(
             self,
-            constellations: List[Constellation],
+            constellations: List[str],
             projection_data: NDArray
-    ) -> Dict[Constellation, List[ConstellationLineSegmentPolar]]:
+    ) -> Dict[str, List[ConstellationLineSegmentPolar]]:
         """
         Get projected line segments for multiple constellations.
 
@@ -212,12 +215,12 @@ def draw_constellation_lines_collection(
 def draw_multiple_constellations(
         ax,
         constellation_segments: Dict[
-            Constellation, List[ConstellationLineSegmentPolar]],
+            str, List[ConstellationLineSegmentPolar]],
         color: str = 'cyan',
         linewidth: float = 0.8,
         alpha: float = 0.7,
         linestyle: str = '-',
-        color_map: Optional[Dict[Constellation, str]] = None,
+        color_map: Optional[Dict[str, str]] = None,
         use_collection: bool = True
 ):
     """

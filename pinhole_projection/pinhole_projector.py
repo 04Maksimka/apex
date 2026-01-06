@@ -111,6 +111,8 @@ class Pinhole(object):
         self.catalog = catalog
         self.planets_catalog = planet_catalog
         self._groups = {}
+        self._star_projections = None
+        self._planets_projections = None
 
     def _make_pinhole_views(self, data: NDArray, object_type: str = 'star') -> NDArray:
         """
@@ -158,32 +160,15 @@ class Pinhole(object):
 
         return view_data
 
-    def generate(self, constraints: Optional[CatalogConstraints]=None) -> plt.Figure:
+    def generate(self, constraints: Optional[CatalogConstraints]=None) -> Tuple[plt.Figure, plt.Axes]:
         """
         Generate a pinhole projection image.
 
-        :param constraints: Catalog constraints
         :return: figure
         """
 
-        # Get stars data
-        stars_data = self.catalog.get_stars(constraints)
-        # From ECI to picture plane, make projection
-        points_data = self._make_pinhole_views(
-            data=stars_data,
-            object_type='star'
-        )
-        # Create picture plane to place stars and other objects
-        self._create_picture_plane(points_data)
-
-        # Add planets
-        if self.config.add_planets:
-            planet_data = self.planets_catalog.get_planets(self.config.local_time)
-            planet_view_data = self._make_pinhole_views(
-                data=planet_data,
-                object_type='planet'
-            )
-            self._add_planets(planet_view_data)
+        # Make objects projections
+        self.project(constraints=constraints)
 
         # Add ecliptic
         if self.config.add_ecliptic:
@@ -207,9 +192,42 @@ class Pinhole(object):
 
         # Put a legend to the bottom of the current axis
         self._create_grouped_legend()
-        return self._fig
+        return self._fig, self._ax
 
-    def _create_picture_plane(self, points_data):
+    def project(self, constraints: CatalogConstraints):
+        """
+        Objects projection maker
+
+        :param constraints: Catalog constraints
+        :return:
+        """
+
+        # Get stars data
+        stars_data = self.catalog.get_stars(constraints)
+        # From ECI to picture plane, make projection
+        star_view_data = self._make_pinhole_views(
+            data=stars_data,
+            object_type='star'
+        )
+        self._star_projections = star_view_data
+        # Create picture plane to place stars and other objects
+        self._create_picture_plane()
+
+        # Add planets
+        if self.config.add_planets:
+            planet_data = self.planets_catalog.get_planets(self.config.local_time)
+            planet_view_data = self._make_pinhole_views(
+                data=planet_data,
+                object_type='planet'
+            )
+            self._planets_projections = planet_view_data
+            self._add_planets()
+
+    @property
+    def projection_result(self) -> ProjectionResult:
+        return ProjectionResult(stars=self._star_projections, planets=self._planets_projections)
+
+    def _create_picture_plane(self):
         self._fig = plt.figure()
         self._ax = self._fig.add_subplot(111)
 
@@ -219,7 +237,12 @@ class Pinhole(object):
             color = 'white'
             plt.style.use('dark_background')
 
-        self._ax.scatter(points_data['x_pix'], points_data['y_pix'], s=points_data['size'], c=color)
+        self._ax.scatter(
+            self._star_projections['x_pix'],
+            self._star_projections['y_pix'],
+            s=self._star_projections['size'],
+            c=color
+        )
 
         self._ax.set_ylim(bottom=0, top=self.camera_config.height)
         self._ax.set_xlim(left=0, right=self.camera_config.width)
@@ -228,8 +251,8 @@ class Pinhole(object):
             self._ax.set_xticks([])
             self._ax.set_yticks([])
 
-    def _add_planets(self, planet_data):
-        for planet_data in planet_data:
+    def _add_planets(self):
+        for planet_data in self._planets_projections:
             if planet_data['v_mag'] < self.catalog.constraints.max_magnitude:
                 planet = Planets(planet_data['id'])
                 name = planet.name.capitalize()

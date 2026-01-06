@@ -116,7 +116,7 @@ def get_horizontal_coords(longitude: float, latitude: float, local_time: datetim
     horizontal_coords['azimuth'] = np.atan2(cartesian_hor_coords[0, :], cartesian_hor_coords[1, :])
     horizontal_coords['zenith'] = np.arccos(cartesian_hor_coords[2, :])
 
-    valid_mask = (horizontal_coords['zenith'] <= (np.pi / 2))
+    valid_mask = (horizontal_coords['zenith'] <= (np.pi / 1.5))
 
     return valid_mask, horizontal_coords
 

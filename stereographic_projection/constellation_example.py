@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from planets_catalog.planet_catalog import PlanetCatalog
 from constellations_metadata.contellations_centers import Constellation
-from stereo_projector_with_constellations import (
-    StereoProjectorWithConstellations,
-    StereoConstellationConfig
+from stereographic_projector import (
+    StereoProjector,
+    StereoProjConfig, ConstellationConfig
 )
 
 
-def example_all_constellations():
+'''def example_all_constellations():
     """Example 1: Show all available constellations."""
     print("Generating stereographic projection with all constellations...")
 
@@ -111,7 +111,7 @@ def example_specific_constellations():
     # Generate projection
     fig = projector.generate(constraints=constraints)
 
-    return fig
+    return fig'''
 
 
 def example_colored_constellations():
@@ -120,23 +120,26 @@ def example_colored_constellations():
 
     # Select constellations with custom colors
     color_map = {
-        Constellation.UMA: 'yellow',  # Big Dipper in yellow
-        Constellation.ORI: 'red',  # Orion in red
-        Constellation.CYG: 'cyan',  # Cygnus in cyan
-        Constellation.LEO: 'orange',  # Leo in orange
-        Constellation.CAS: 'lightgreen',  # Cassiopeia in light green
+        'UMA': 'lightyellow',  # Big Dipper in yellow
+        'ORI': 'lightgray',  # Orion in red
+        'CYG': 'lightblue',  # Cygnus in cyan
+        'LEO': 'lightpink',  # Leo in orange
+        'CAS': 'lightgreen',  # Cassiopeia in light green
     }
 
     # Configuration
-    config = StereoConstellationConfig(
+    config = StereoProjConfig(
         local_time=datetime(2024, 9, 22, 23, 0),  # Autumn equinox
         latitude=55.75,
         longitude=37.62,
         add_ticks=True,
         add_constellations=True,
+    )
+
+    constellation_config = ConstellationConfig(
         constellations_list=list(color_map.keys()),
         constellation_linewidth=1.5,
-        constellation_alpha=0.7,
+        constellation_alpha=1.0,
         constellation_color_map=color_map,
     )
 
@@ -154,16 +157,17 @@ def example_colored_constellations():
     planets_catalog = PlanetCatalog()
 
     # Create projector
-    projector = StereoProjectorWithConstellations(
+    projector = StereoProjector(
         config=config,
+        constellation_config=constellation_config,
         catalog=catalog,
         planets_catalog=planets_catalog
     )
 
     # Generate projection
-    fig = projector.generate(constraints=constraints)
+    fig, ax = projector.generate(constraints=constraints)
 
-    return fig
+    return fig, ax
 
 
 def example_with_planets_and_grids():
@@ -172,7 +176,7 @@ def example_with_planets_and_grids():
         "Generating complete sky chart with constellations, planets, and grids...")
 
     # Configuration with all features
-    config = StereoConstellationConfig(
+    config = StereoProjConfig(
         local_time=datetime(2024, 3, 20, 21, 0),  # Spring equinox evening
         latitude=55.75,
         longitude=37.62,
@@ -183,12 +187,15 @@ def example_with_planets_and_grids():
         add_galactic_equator=True,
         add_planets=True,
         add_ticks=True,
-        add_horizontal_grid=True,
+        add_horizontal_grid=False,
         add_equatorial_grid=True,
         add_constellations=True,
-        constellation_color='cyan',
+    )
+
+    constellation_config = ConstellationConfig(
+        constellation_color='lightgray',
         constellation_linewidth=0.8,
-        constellation_alpha=0.5,
+        constellation_alpha=1.0,
     )
 
     # Star catalog constraints
@@ -205,23 +212,24 @@ def example_with_planets_and_grids():
     planets_catalog = PlanetCatalog()
 
     # Create projector
-    projector = StereoProjectorWithConstellations(
+    projector = StereoProjector(
         config=config,
+        constellation_config=constellation_config,
         catalog=catalog,
         planets_catalog=planets_catalog
     )
 
     # Generate projection
-    fig = projector.generate(constraints=constraints)
+    fig, ax = projector.generate(constraints=constraints)
 
-    return fig
+    return fig, ax
 
 
 if __name__ == '__main__':
-    # Example 1: All constellations
+    '''# Example 1: All constellations
     example_all_constellations()
     # Example 2: Specific constellations
-    example_specific_constellations()
+    example_specific_constellations()'''
     # Example 3: Colored constellations
     example_colored_constellations()
     # Example 4: Complete chart

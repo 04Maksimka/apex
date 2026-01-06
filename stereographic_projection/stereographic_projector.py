@@ -1,19 +1,25 @@
 """Module implementing main stereographic projection."""
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Dict, Tuple
 
 from numpy.typing import NDArray
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 
+from constellations_metadata.constellations_data import get_available_constellations
 from helpers.geometry.geometry import (
     get_horizontal_coords, make_stereo_projection, make_points_stereo_projection, generate_small_circle, mag_to_radius,
 )
 from hip_catalog.hip_catalog import CatalogConstraints, Catalog
 from planets_catalog.planet_catalog import PlanetCatalog, Planets
 from matplotlib.collections import LineCollection
+
+from constellation_renderer_stereo import (
+    ConstellationRendererStereo,
+    draw_multiple_constellations
+)
 
 
 @dataclass
@@ -34,6 +40,7 @@ class StereoProjConfig(object):
     add_ticks: bool = False
     add_horizontal_grid: bool = False
     add_equatorial_grid: bool = False
+    add_constellations: bool = False
     add_zenith: bool = False
     add_poles: bool = False
     random_origin: bool = False
@@ -44,23 +51,46 @@ class StereoProjConfig(object):
         self.longitude = np.deg2rad(self.longitude)
 
 
+@dataclass
+class ConstellationConfig(object):
+    constellations_list: Optional[
+        List[str]] = None  # If None, render all available
+    constellation_color: str = 'cyan'
+    constellation_linewidth: float = 0.8
+    constellation_alpha: float = 0.7
+    constellation_color_map: Optional[Dict[str, str]] = None
+
+
+@dataclass
+class ProjectionResult:
+    """Result of pinhole projection."""
+    stars: NDArray      # Structured array with star projections
+    planets: NDArray    # Structured array with planet projections
+
+
 class StereoProjector(object):
     """Class of the stereographic projector."""
 
     def __init__(
         self,
         config: StereoProjConfig,
+        constellation_config: ConstellationConfig,
         catalog: Catalog,
         planets_catalog: PlanetCatalog,
+        constellations_renderer: Optional[ConstellationRendererStereo] = ConstellationRendererStereo(),
         random_angle: float = np.random.uniform(0.0, 2*np.pi)
     ):
         self.config = config
+        self.constellation_config = constellation_config
+        self.constellations_renderer = constellations_renderer
         self.catalog = catalog
         self.planets_catalog = planets_catalog
         self.random_angle = random_angle
         self._groups = {}  # Legend groups - initialize as instance variable
+        self._star_projections = None
+        self._planets_projections = None
 
-    def generate(self, constraints: Optional[CatalogConstraints]=None) -> plt.Figure:
+    def generate(self, constraints: Optional[CatalogConstraints]=None) -> Tuple[plt.Figure, plt.Axes]:
         """
         Generate a stereographic projection image.
 
@@ -68,20 +98,8 @@ class StereoProjector(object):
         :return: figure
         """
 
-        # Get catalog
-        _ = self.catalog.get_stars(constraints)
-
-        # From equatorial to horizontal
-        star_view_data = self._make_horizontal_views(
-            data=self.catalog.data,
-            object_type='star'
-        )
-        # Make projections
-        points_data = self._make_stereo_views(
-            data=star_view_data,
-        )
-        # Make figure with projections
-        self._create_polar_scatter(points_data)
+        # Make objects projections
+        self.project(constraints=constraints)
 
         # Add ecliptic
         if self.config.add_ecliptic:
@@ -109,22 +127,50 @@ class StereoProjector(object):
         if self.config.add_poles:
             self._add_poles()
 
-        # Add planets
-        if self.config.add_planets:
-            planet_data = self.planets_catalog.get_planets(self.config.local_time)
-            planet_view_data = self._make_horizontal_views(
-                data=planet_data,
-                object_type='planet'
-            )
-            planet_points_data = self._make_stereo_views(
-                data=planet_view_data,
-            )
-            self._add_planets(planet_points_data)
+        if self.config.add_constellations:
+            self._add_constellations()
 
         # Put a legend to the bottom of the current axis
         self._create_grouped_legend()
 
-        return self._fig
+        return self._fig, self._ax
+
+    def project(self, constraints: CatalogConstraints):
+        """
+        Objects projection maker
+
+        :param constraints: Catalog constraints
+        :return:
+        """
+        # Get catalog
+        stars_data = self.catalog.get_stars(constraints)
+
+        # From equatorial to horizontal
+        star_hor_view_data = self._make_horizontal_views(
+            data=stars_data,
+            object_type='star'
+        )
+        # Make projections
+        star_view_data = self._make_stereo_views(
+            data=star_hor_view_data,
+        )
+        self._star_projections = star_view_data
+
+        # Make figure with projections
+        self._create_polar_scatter(self._star_projections)
+
+        # Add planets
+        if self.config.add_planets:
+            planet_data = self.planets_catalog.get_planets(self.config.local_time)
+            planet_hor_view_data = self._make_horizontal_views(
+                data=planet_data,
+                object_type='planet'
+            )
+            planet_view_data = self._make_stereo_views(
+                data=planet_hor_view_data,
+            )
+            self._add_planets(planet_view_data)
+            self._planets_projections = planet_view_data
 
     def _make_stereo_views(self, data: NDArray) -> NDArray:
         """
@@ -509,6 +555,44 @@ class StereoProjector(object):
         )
         self._ax.add_collection(grid)
         self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Equatorial grid')]
+
+    def _add_constellations(self):
+        """Add constellation line patterns to the projection."""
+
+        if self.constellation_config.constellations_list is not None:
+            constellations_to_render = self.constellation_config.constellations_list
+        else:
+            constellations_to_render = get_available_constellations()
+
+        # Get constellation segments
+        constellation_segments = self.constellations_renderer.get_multiple_constellation_segments(
+            constellations=constellations_to_render,
+            projection_data=self._star_projections
+        )
+
+        if not constellation_segments:
+            return
+
+        # Draw constellations
+        lcs = draw_multiple_constellations(
+            ax=self._ax,
+            constellation_segments=constellation_segments,
+            color=self.constellation_config.constellation_color,
+            linewidth=self.constellation_config.constellation_linewidth,
+            alpha=self.constellation_config.constellation_alpha,
+            color_map=self.constellation_config.constellation_color_map,
+            use_collection=True
+        )
+
+        # Add to legend groups
+        if lcs:
+            # Get first line collection for legend
+            first_lc = next(iter(lcs.values()))
+            self._groups['Constellations'] = self._groups.get('Constellations', []) + \
+                                             [
+                                                 (first_lc,
+                                                  f'Constellation segments ({len(lcs.values())})')
+                                             ]
 
     def _create_polar_scatter(self, projection_data: NDArray):
         """

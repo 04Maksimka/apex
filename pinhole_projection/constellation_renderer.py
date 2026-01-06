@@ -6,11 +6,13 @@ line patterns by connecting projected stars with their HIP catalog IDs.
 
 import numpy as np
 from numpy.typing import NDArray
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass
 
-from constellations_metadata.constellation_lines import get_constellation_lines
-from pinhole_projection.pinhole_projector import Pinhole, ProjectionResult
+from constellations_metadata.constellations_data import get_constellation_center,\
+    get_constellation_name, get_constellation_lines
+from hip_catalog.hip_catalog import CatalogConstraints
+from pinhole_projection.pinhole_projector import Pinhole
 from constellations_metadata.contellations_centers import Constellation
 
 
@@ -43,7 +45,9 @@ class ConstellationRenderer:
         self._star_positions_cache: Optional[
             Dict[int, Tuple[float, float]]] = None
 
-    def _build_star_positions_cache(self, stars: NDArray) -> Dict[int, Tuple[float, float]]:
+
+    @staticmethod
+    def _build_star_positions_cache(stars: NDArray) -> Dict[int, Tuple[float, float]]:
         """
         Build a lookup dictionary from HIP ID to pixel coordinates.
 
@@ -53,7 +57,7 @@ class ConstellationRenderer:
         """
         cache = {}
         for star in stars:
-            hip_id = int(star['hip_id'])
+            hip_id = int(star['id'])
             x_pix = float(star['x_pix'])
             y_pix = float(star['y_pix'])
             cache[hip_id] = (x_pix, y_pix)
@@ -61,12 +65,14 @@ class ConstellationRenderer:
 
     def get_constellation_segments(
             self,
-            constellation: Constellation,
-            stars: Optional[NDArray] = None
+            constellation: str,
+            stars: Optional[NDArray] = None,
+            constraints: CatalogConstraints = None
     ) -> List[ConstellationLineSegment]:
         """
         Get projected line segments for a constellation.
 
+        :param constraints:
         :param constellation: The constellation to render
         :param stars: pre-computed star projections. If None, will compute.
 
@@ -80,7 +86,7 @@ class ConstellationRenderer:
 
         # Get or use provided star projections
         if stars is None:
-            projection_result = self.pinhole.project()
+            projection_result = self.pinhole.project(constraints=constraints)
             stars = projection_result.stars
 
         # Build position cache if not already cached or if stars changed
@@ -89,30 +95,36 @@ class ConstellationRenderer:
 
         # Convert lines to segments
         segments = []
-        for hip_id1, hip_id2 in lines:
-            # Check if both stars are visible in the projection
-            if hip_id1 in self._star_positions_cache and hip_id2 in self._star_positions_cache:
-                x1, y1 = self._star_positions_cache[hip_id1]
-                x2, y2 = self._star_positions_cache[hip_id2]
+        for line in lines:
+            for idx1 in range(len(line) - 1):
+                idx2 = idx1 + 1
+                hip_id1 = line[idx1]
+                hip_id2 = line[idx2]
+                # Check if both stars are visible in the projection
+                if hip_id1 in self._star_positions_cache and hip_id2 in self._star_positions_cache:
+                    x1, y1 = self._star_positions_cache[hip_id1]
+                    x2, y2 = self._star_positions_cache[hip_id2]
 
-                segment = ConstellationLineSegment(
-                    x1=x1, y1=y1,
-                    x2=x2, y2=y2,
-                    hip_id1=hip_id1,
-                    hip_id2=hip_id2
-                )
-                segments.append(segment)
+                    segment = ConstellationLineSegment(
+                        x1=x1, y1=y1,
+                        x2=x2, y2=y2,
+                        hip_id1=hip_id1,
+                        hip_id2=hip_id2
+                    )
+                    segments.append(segment)
 
         return segments
 
     def get_multiple_constellation_segments(
             self,
-            constellations: List[Constellation],
-            stars: Optional[NDArray] = None
+            constellations: List[str],
+            stars: Optional[NDArray] = None,
+            constraints: CatalogConstraints = None
     ) -> Dict[Constellation, List[ConstellationLineSegment]]:
         """
         Get projected line segments for multiple constellations.
 
+        :param constraints:
         :param constellations: List of constellations to render
         :param stars: Optional pre-computed star projections
 
@@ -121,7 +133,7 @@ class ConstellationRenderer:
 
         # Get or compute star projections once
         if stars is None:
-            projection_result = self.pinhole.project()
+            projection_result = self.pinhole.project(constraints=constraints)
             stars = projection_result.stars
 
         # Build cache once for all constellations
@@ -209,3 +221,4 @@ def draw_multiple_constellations(
             alpha=alpha,
             linestyle=linestyle
         )
+
