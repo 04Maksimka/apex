@@ -82,7 +82,7 @@ Each map consists of two pages: on the first there are tasks for the map, on the
 
 ---
 
-But if use want to generate new maps by yourself, do this:
+But if use want to generate new maps by yourself, do this (it is in the process of being developed):
 
 1.  Choose your type of required projection:
 
