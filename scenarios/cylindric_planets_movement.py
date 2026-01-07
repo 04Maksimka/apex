@@ -251,11 +251,11 @@ def example_planets():
     """Example: Track planets over a few months."""
     config = CylindricProjectionConfig(
         start_time=datetime(2024, 1, 1),
-        end_time=datetime(2024, 3, 31),
+        end_time=datetime(2026, 12, 31),
         time_step=timedelta(days=2),
-        output_filename="planets_2024.gif",
+        output_filename="planets_2024-2026.gif",
         fps=20,
-        star_max_magnitude=5.0,
+        star_max_magnitude=5.5,
         show_ecliptic=True,
         show_grid=True,
         dark_mode=True,

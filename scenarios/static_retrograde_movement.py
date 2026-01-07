@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 
 from pinhole_projection.pinhole_projector import Pinhole, ShotConditions, \
-    CameraCfg
+    CameraConfig, PinholeConfig
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from planets_catalog.planet_catalog import PlanetCatalog, Planets
 from constellations_metadata.contellations_centers import Constellation, \
@@ -57,7 +57,7 @@ class StaticRetrogradeMovement:
         self.planet_catalog = PlanetCatalog()
 
         # Create camera configuration
-        self.camera_cfg = CameraCfg.from_fov_and_aspect(
+        self.camera_cfg = CameraConfig.from_fov_and_aspect(
             fov_deg=config.fov_deg,
             aspect_ratio=config.aspect_ratio,
             height_pix=config.height_pix
@@ -84,10 +84,15 @@ class StaticRetrogradeMovement:
             tilt_angle=self.config.tilt_angle
         )
 
+        pinhole_config = PinholeConfig(
+            local_time=time,
+            add_planets=True
+        )
+
         return Pinhole(
             shot_cond=shot_cond,
             camera_cfg=self.camera_cfg,
-            time=time,
+            config=pinhole_config,
             catalog=self.catalog,
             planet_catalog=self.planet_catalog
         )

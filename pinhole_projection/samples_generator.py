@@ -139,7 +139,7 @@ def generate_constellation_samples(
         time: datetime,
         fov_deg: float = 90.0,
         tilt_angle: float = 0.0,
-        max_magnitude: float = 6.0,
+        max_magnitude: float = 5.5,
 ):
     """
     Generate sample PDFs for all constellations.
@@ -379,7 +379,7 @@ if __name__ == '__main__':
         time=observation_time,
         fov_deg=90.0,
         tilt_angle=0.0,
-        max_magnitude=6.0,
+        max_magnitude=5.5,
     )
 
     # Generate random sky area samples
@@ -394,7 +394,7 @@ if __name__ == '__main__':
         num_samples=10,
         time_interval=(start_time, end_time),
         fov_deg=90.0,
-        max_magnitude=6.0,
+        max_magnitude=5.5,
     )
 
     print("\n" + "=" * 70)

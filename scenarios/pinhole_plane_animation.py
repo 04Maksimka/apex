@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 from dataclasses import dataclass
 
-from pinhole_projection.pinhole_projector import Pinhole, ShotConditions, CameraCfg
+from pinhole_projection.pinhole_projector import Pinhole, ShotConditions, CameraConfig, PinholeConfig
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from planets_catalog.planet_catalog import PlanetCatalog, Planets
 from constellations_metadata.contellations_centers import Constellation, get_constellation_dir
@@ -58,7 +58,7 @@ class PinholePlaneAnimation:
         self.planet_catalog = PlanetCatalog()
 
         # Create camera configuration
-        self.camera_cfg = CameraCfg.from_fov_and_aspect(
+        self.camera_cfg = CameraConfig.from_fov_and_aspect(
             fov_deg=config.fov_deg,
             aspect_ratio=config.aspect_ratio,
             height_pix=config.height_pix
@@ -84,14 +84,19 @@ class PinholePlaneAnimation:
     def _create_pinhole_at_time(self, time: datetime) -> Pinhole:
         """Create a Pinhole projector for a specific time."""
         shot_cond = ShotConditions(
-            center_dir=self.config.center_direction,
+            center_direction=self.config.center_direction,
             tilt_angle=self.config.tilt_angle
+        )
+
+        pinhole_config = PinholeConfig(
+            local_time=time,
+            add_planets=True
         )
 
         return Pinhole(
             shot_cond=shot_cond,
             camera_cfg=self.camera_cfg,
-            time=time,
+            config=pinhole_config,
             catalog=self.catalog,
             planet_catalog=self.planet_catalog
         )
@@ -278,6 +283,7 @@ class PinholePlaneAnimation:
         print(f"Saving animation to {self.config.output_filename}...")
         anim.save(self.config.output_filename, writer=writer, dpi=self.config.dpi)
         print(f"Animation saved successfully!")
+        plt.close(fig)
 
         return fig, anim
 
@@ -337,7 +343,7 @@ def example_ursa_major_with_planets():
     config = PinholeAnimationConfig(
         start_time=datetime(2024, 1, 1),
         end_time=datetime(2024, 12, 31),
-        time_step=timedelta(days=1),
+        time_step=timedelta(days=7),
         center_direction=center_dir,
         tilt_angle=180,
         fov_deg=70,
