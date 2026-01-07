@@ -28,6 +28,23 @@ On the [website](https://skychart.astrageek.ru/) of this AstraGeek project you w
 
 ---
 
+## 👍 Examples
+
+Pinhole projection example (without a legend) with parameters: ...
+
+<img width="1246" height="838" alt="image" src="https://github.com/user-attachments/assets/c73f3266-20ec-4617-b763-e1647df4d081" />
+
+Full: [pinhole_local_logo.pdf](https://github.com/user-attachments/files/24474532/pinhole_local_logo.pdf)
+
+
+Stereographic projection example (without a legend) with parameters: ...
+
+<img width="1086" height="1065" alt="image" src="https://github.com/user-attachments/assets/dfd66621-1e12-43cb-b6c1-06ad275bdd12" />
+
+Full: [polar_scatter_local_logo.pdf](https://github.com/user-attachments/files/24474544/polar_scatter_local_logo.pdf)
+
+---
+
 ## 📘 How to use
 
 1.  Choose your type of required projection:
@@ -38,7 +55,7 @@ On the [website](https://skychart.astrageek.ru/) of this AstraGeek project you w
 2. Configure your catalog and projector:
 
     1. 🌏 Set position (latitude and longitude) and local observation time.
-    2. 💫 Set the magnitude limits
+    2. 💫 Set the visual magnitude limits
     3. ☑️ Use flags to set the additional functions and properties you want to display. Or, for educational purposes, you can use ready-made teacher and student sets (see the section below) 
 
 3. Get the resulting star maps
