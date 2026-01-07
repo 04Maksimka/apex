@@ -1,3 +1,8 @@
+Switch language
+
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/04Maksimka/AstraGeek/blob/main/README.md)
+[![ru](https://img.shields.io/badge/lang-ru-green.svg)](https://github.com/04Maksimka/AstraGeek/blob/main/README.ru.md)
+
 # 🌌 AstraGeek. Star maps
 
 This is a project for AstraGeek astronomy online school.
@@ -8,6 +13,8 @@ On the [website](https://skychart.astrageek.ru/) of this AstraGeek project you w
 ---
 
 ## 🚩 Release plan. **Current release 0.2**
+
+During the development process, the interface uses software to generate maps via the command line. While it is being developed, you can use ready-made generated maps of random areas of the sky or use the source code yourself under a license.
 
 0.1 Stereographic projection of the starry sky (skychart) according to a given geographical position and time. Also available is the representation of planets, great circles (ecliptic, celestial equator and galactic equator). Available to display horizontal and equatorial coordinate grid, cardinal directions. [Example here](https://skyatlas.app/star-charts/)
 
@@ -77,4 +84,3 @@ Example of usage:
 | Submit Issue     | [🐛 Report](https://github.com/04Maksimka/AstraGeek/issues/new)                          |
 
 ---
-
