@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from planets_catalog.planet_catalog import PlanetCatalog
-from constellations_metadata.contellations_centers import Constellation
 from stereographic_projector import (
     StereoProjector,
     StereoProjConfig, ConstellationConfig

@@ -7,7 +7,7 @@ from helpers.pdf_helpers.figure2pdf import save_figure_skychart
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from planets_catalog.planet_catalog import PlanetCatalog
 from stereographic_projection.stereographic_projector import StereoProjConfig, \
-    StereoProjector
+    StereoProjector, ConstellationConfig
 
 
 def get_teacher_cfg(
@@ -30,6 +30,8 @@ def get_teacher_cfg(
         local_time=time,
         latitude=latitude,
         longitude=longitude,
+        add_constellations=True,  # Отрисовка линий созвездий
+        add_constellations_names=True,  # Отрисовка названий созвездий
     )
 
 
@@ -129,17 +131,31 @@ def generate_stereo_samples(
             )
 
             # Create projector object with configuration
+            constellation_cfg = None
+            if teacher:
+                constellation_cfg = ConstellationConfig(
+                    constellations_list=None,
+                    # Render all available constellations
+                    constellation_color='gray',
+                    constellation_linewidth=0.8,
+                    constellation_alpha=0.7,
+                    constellation_color_map=None,
+                )
+
+            # Create projector object with configuration
             projector = StereoProjector(
                 config=cfg,
                 catalog=catalog,
                 planets_catalog=PlanetCatalog(),
+                constellation_config=constellation_cfg,
+                # Передаем конфигурацию созвездий
                 random_angle=random_angle,
             )
             constraints = CatalogConstraints(
                 max_magnitude=5.5,
             )
 
-            fig = projector.generate(constraints=constraints)
+            fig, ax = projector.generate(constraints=constraints)
 
             save_figure_skychart(
                 fig=fig,
@@ -172,8 +188,8 @@ def generate_stereo_samples(
         )
 
 if __name__ == '__main__':
-    start_time = datetime(2024,1, 1)
-    end_time = datetime(2025,1, 1)
+    start_time = datetime(1984,1, 1)
+    end_time = datetime(2034,1, 1)
     generate_stereo_samples(
         number_of_samples=2,
         time_interval=(start_time, end_time),
