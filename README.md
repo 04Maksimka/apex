@@ -10,6 +10,7 @@ Here you can find some software for building star maps.
 
 On the [website](https://skychart.astrageek.ru/) of this AstraGeek project you will soon be able to create classic skycharts and star sky maps.
 
+Also visit [astrageek.ru](https://astrageek.ru/) for educational videos on astronomy and related topics.
 ---
 
 ## 🚩 Release plan. **Current release 0.2**
