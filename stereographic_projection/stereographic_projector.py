@@ -607,7 +607,7 @@ class StereoProjector(object):
             if separate:
                 for name, params in lcs.items():
                     self._groups['Constellations'] = self._groups.get('Constellations', []) +\
-                                                     [(params['lc'], f'{params['name']}')]
+                                                     [(params['lc'], f"{params['name']}")]
             else:
                 # Get first line collection for legend
                 first_lc = list(lcs.values())[0]['lc']
