@@ -191,7 +191,7 @@ if __name__ == '__main__':
     start_time = datetime(1984,1, 1)
     end_time = datetime(2034,1, 1)
     generate_stereo_samples(
-        number_of_samples=2,
+        number_of_samples=100,
         time_interval=(start_time, end_time),
         folder_name='samples'
     )
