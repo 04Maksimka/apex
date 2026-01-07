@@ -1,3 +1,8 @@
+Сменить язык
+
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/04Maksimka/AstraGeek/blob/main/README.md)
+[![ru](https://img.shields.io/badge/lang-ru-green.svg)](https://github.com/04Maksimka/AstraGeek/blob/main/README.ru.md)
+
 # 🌌 AstraGeek. Звездный атлас
 
 Проект онлайн-школы астрономии AstraGeek.
@@ -79,3 +84,4 @@
 | Обратная связь | [🐛 Issue](https://github.com/04Maksimka/AstraGeek/issues/new) |
 
 ---
+
