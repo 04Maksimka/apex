@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from planets_catalog.planet_catalog import PlanetCatalog
 from constellations_metadata.contellations_centers import Constellation
-from stereo_projector_with_constellations import (
-    StereoProjectorWithConstellations,
-    StereoConstellationConfig
+from stereographic_projector import (
+    StereoProjector,
+    StereoProjConfig, ConstellationConfig
 )
 
 
@@ -19,8 +19,8 @@ def example_all_constellations():
     """Example 1: Show all available constellations."""
     print("Generating stereographic projection with all constellations...")
 
-    # Configuration
-    config = StereoConstellationConfig(
+    # Projector configuration
+    config = StereoProjConfig(
         local_time=datetime(2024, 6, 21, 23, 0),
         latitude=55.75,  # Moscow
         longitude=37.62,
@@ -28,6 +28,11 @@ def example_all_constellations():
         add_equator=True,
         add_ticks=True,
         add_constellations=True,  # Enable constellations
+
+    )
+
+    # Constellation viewing configurations
+    constellation_config = ConstellationConfig(
         constellation_color='cyan',
         constellation_linewidth=1.0,
         constellation_alpha=0.6,
@@ -42,22 +47,22 @@ def example_all_constellations():
     # Create catalogs
     catalog = Catalog(
         catalog_name='hip_data.tsv',
-        cache_dir='cache',
         use_cache=True,
     )
     planets_catalog = PlanetCatalog()
 
     # Create projector with constellations
-    projector = StereoProjectorWithConstellations(
+    projector = StereoProjector(
         config=config,
         catalog=catalog,
+        constellation_config=constellation_config,
         planets_catalog=planets_catalog
     )
 
     # Generate projection
-    fig = projector.generate(constraints=constraints)
+    fig, ax = projector.generate(constraints=constraints)
 
-    return fig
+    return fig, ax
 
 
 def example_specific_constellations():
@@ -66,15 +71,23 @@ def example_specific_constellations():
 
     # Select specific constellations
     selected_constellations = [
-        Constellation.UMA,  # Ursa Major (Big Dipper)
-        Constellation.UMI,  # Ursa Minor (Little Dipper)
-        Constellation.CAS,  # Cassiopeia
-        Constellation.ORI,  # Orion
-        Constellation.LEO,  # Leo
+        'UMA',  # Ursa Major (Big Dipper)
+        'UMI',  # Ursa Minor (Little Dipper)
+        'CAS',  # Cassiopeia
+        'ORI',  # Orion
+        'LEO',  # Leo
     ]
 
+    # Constellation viewing configurations
+    constellation_config = ConstellationConfig(
+        constellations_list=selected_constellations,  # Only specific ones
+        constellation_color='yellow',
+        constellation_linewidth=1.2,
+        constellation_alpha=0.8,
+    )
+
     # Configuration
-    config = StereoConstellationConfig(
+    config = StereoProjConfig(
         local_time=datetime(2024, 12, 21, 23, 0),  # Winter solstice night
         latitude=55.75,  # Moscow
         longitude=37.62,
@@ -83,10 +96,6 @@ def example_specific_constellations():
         add_galactic_equator=True,
         add_ticks=True,
         add_constellations=True,
-        constellations_list=selected_constellations,  # Only specific ones
-        constellation_color='yellow',
-        constellation_linewidth=1.2,
-        constellation_alpha=0.8,
     )
 
     # Star catalog constraints
@@ -98,22 +107,22 @@ def example_specific_constellations():
     # Create catalogs
     catalog = Catalog(
         catalog_name='hip_data.tsv',
-        cache_dir='cache',
         use_cache=True,
     )
     planets_catalog = PlanetCatalog()
 
     # Create projector
-    projector = StereoProjectorWithConstellations(
+    projector = StereoProjector(
         config=config,
+        constellation_config=constellation_config,
         catalog=catalog,
         planets_catalog=planets_catalog
     )
 
     # Generate projection
-    fig = projector.generate(constraints=constraints)
+    fig, ax = projector.generate(constraints=constraints)
 
-    return fig
+    return fig, ax
 
 
 def example_colored_constellations():
@@ -122,51 +131,55 @@ def example_colored_constellations():
 
     # Select constellations with custom colors
     color_map = {
-        Constellation.UMA: 'yellow',  # Big Dipper in yellow
-        Constellation.ORI: 'red',  # Orion in red
-        Constellation.CYG: 'cyan',  # Cygnus in cyan
-        Constellation.LEO: 'orange',  # Leo in orange
-        Constellation.CAS: 'lightgreen',  # Cassiopeia in light green
+        'UMA': 'brown',  # Big Dipper in yellow
+        'ORI': 'gray',  # Orion in red
+        'CYG': 'blue',  # Cygnus in cyan
+        'LEO': 'red',  # Leo in orange
+        'CAS': 'green',  # Cassiopeia in light green
     }
 
-    # Configuration
-    config = StereoConstellationConfig(
+    # Constellation viewing configurations
+    constellation_config = ConstellationConfig(
+        constellations_list=list(color_map.keys()),
+        constellation_linewidth=1.5,
+        constellation_alpha=0.75,
+        constellation_color_map=color_map,
+    )
+
+    # Projector configuration
+    config = StereoProjConfig(
         local_time=datetime(2024, 9, 22, 23, 0),  # Autumn equinox
         latitude=55.75,
         longitude=37.62,
         add_ticks=True,
         add_constellations=True,
-        constellations_list=list(color_map.keys()),
-        constellation_linewidth=1.5,
-        constellation_alpha=0.7,
-        constellation_color_map=color_map,
+        add_constellations_names=True
     )
 
     # Star catalog constraints
     constraints = CatalogConstraints(
         max_magnitude=6.0,
-        min_magnitude=-2.0,
     )
 
     # Create catalogs
     catalog = Catalog(
         catalog_name='hip_data.tsv',
-        cache_dir='cache',
         use_cache=True,
     )
     planets_catalog = PlanetCatalog()
 
     # Create projector
-    projector = StereoProjectorWithConstellations(
+    projector = StereoProjector(
         config=config,
+        constellation_config=constellation_config,
         catalog=catalog,
         planets_catalog=planets_catalog
     )
 
     # Generate projection
-    fig = projector.generate(constraints=constraints)
+    fig, ax = projector.generate(constraints=constraints)
 
-    return fig
+    return fig, ax
 
 
 def example_with_planets_and_grids():
@@ -175,7 +188,7 @@ def example_with_planets_and_grids():
         "Generating complete sky chart with constellations, planets, and grids...")
 
     # Configuration with all features
-    config = StereoConstellationConfig(
+    config = StereoProjConfig(
         local_time=datetime(2024, 3, 20, 21, 0),  # Spring equinox evening
         latitude=55.75,
         longitude=37.62,
@@ -186,12 +199,16 @@ def example_with_planets_and_grids():
         add_galactic_equator=True,
         add_planets=True,
         add_ticks=True,
-        add_horizontal_grid=True,
+        add_horizontal_grid=False,
         add_equatorial_grid=True,
         add_constellations=True,
-        constellation_color='cyan',
+        add_constellations_names=True
+    )
+
+    constellation_config = ConstellationConfig(
+        constellation_color='lightgray',
         constellation_linewidth=0.8,
-        constellation_alpha=0.5,
+        constellation_alpha=1.0,
     )
 
     # Star catalog constraints
@@ -203,22 +220,22 @@ def example_with_planets_and_grids():
     # Create catalogs
     catalog = Catalog(
         catalog_name='hip_data.tsv',
-        cache_dir='cache',
         use_cache=True,
     )
     planets_catalog = PlanetCatalog()
 
     # Create projector
-    projector = StereoProjectorWithConstellations(
+    projector = StereoProjector(
         config=config,
+        constellation_config=constellation_config,
         catalog=catalog,
         planets_catalog=planets_catalog
     )
 
     # Generate projection
-    fig = projector.generate(constraints=constraints)
+    fig, ax = projector.generate(constraints=constraints)
 
-    return fig
+    return fig, ax
 
 
 if __name__ == '__main__':

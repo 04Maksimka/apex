@@ -66,8 +66,6 @@ from stereographic_projection.stereographic_projector import (
     StereoProjConfig,
 )
 
-
-
 def _random_time(start: datetime, end: datetime) -> datetime:
     """Random datetime in [start, end]."""
     delta = end - start
@@ -127,7 +125,6 @@ def generate_stereo_samples(
         def render_and_save(cfg: StereoProjConfig, filename: str, teacher: bool = False):
             catalog = Catalog(
                 catalog_name='hip_data.tsv',
-                cache_dir='cache',
                 use_cache=True,
             )
 
