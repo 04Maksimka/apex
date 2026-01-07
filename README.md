@@ -55,6 +55,35 @@ Full: [polar_scatter_local_logo.pdf](https://github.com/user-attachments/files/2
 
 ## 📘 How to use
 
+You can use the ready-made sets of starry sky maps that we have already generated. To do this, you need:
+
+1. 📁 Inside the project, go to the examples folder
+2. 📥 Download pinhole_samples archives.zip and samples.zip with pinhole camera mode maps and skycharts, respectively
+3. 🔓 Unpack the archives
+
+Inside each folder there are maps of the starry sky with tasks grouped by numbers. 
+
+There are two folders inside the pinhole_samples folder:
+
+1. **сonstellations** - maps with a specific central constellation, for each of the 88 constellations
+2. **random_sky** - maps with an arbitrary central constellation, 10 examples
+
+The 100 skycharts for random date and place are grouped inside the samples folder.
+
+Each group consists of three cards:
+
+1. 😶‍🌫️ For a student without planets
+2. 🪐 For a student with planets
+3. 🎓 For the teacher
+
+The student's file contains only assignments and a "bare" map. The file for the teacher contains all the answers and a completed map.
+
+Each map consists of two pages: on the first there are tasks for the map, on the second there is the map itself.
+
+---
+
+But if use want to generate new maps by yourself, do this:
+
 1.  Choose your type of required projection:
 
     1. 🌐 You want the view of the entire sky available at this location at this time - choose **stereographic projection mode**
