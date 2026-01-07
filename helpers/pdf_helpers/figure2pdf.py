@@ -142,6 +142,34 @@ def save_figure_pinhole(
         plt.rcParams['font.family'] = 'monospace'
         plt.rcParams['figure.figsize'] = [4, 8]
 
+        info_fig = plt.figure(figsize=page_size)
+        info_fig.patch.set_facecolor('white')
+        info_fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+        plt.rcParams['font.family'] = 'monospace'
+
+        tasks = [
+            '▢ 1. Обозначьте на снимке видимые созвездия их трехбуквенными\nлатинскими наименованиями, проведите контуры этих созвездий.',
+            '▢ 2. Проведите эклиптику, если она есть',
+            '▢ 3. Проведите небесный экватор, если он есть',
+            '▢ 4. Обозначьте точку весеннего\nравноденствия символом ♈'
+            ' или точку осеннего равноденствия символом ♎, если они есть'
+        ]
+
+        y = 0.85
+        line_step = 0.06
+        for t in tasks:
+            info_fig.text(0.08, y, t, fontsize=12, va='top')
+            y -= line_step
+
+        if resolved_logo_path:
+            add_logo_to_figure(info_fig, resolved_logo_path, logo_position)
+        if footer_text:
+            add_footer_text(info_fig, footer_text, text_position)
+
+        pdf.savefig(info_fig, pad_inches=0.25, dpi=dpi)
+        plt.close(info_fig)
+
         original_size = fig.get_size_inches().copy()
         original_ax_positions = [ax.get_position().frozen() for ax in fig.axes]
         fig.set_size_inches(page_size, forward=False)
@@ -226,12 +254,14 @@ def save_figure_skychart(
         tasks = [
             '▢ 1. Обозначьте зенит символом $Z$ и стороны света символами $N$, $E$, $S$, $W$.',
             '▢ 2. Обозначьте полюс мира символом $P$ и проведите небесный меридиан.',
-            '▢ 3. Проведите небесный экватор и обозначьте точку весеннего\nравноденствия символом ♈'
+            '▢ 3. Проведите эклиптику',
+            '▢ 4. Проведите небесный экватор',
+            '▢ 5. Обозначьте точку весеннего\nравноденствия символом ♈'
             ' или точку осеннего равноденствия символом ♎.',
-            '▢ 4. Вычислите звездное время $S$ на момент снимка: ' + '_' * 20,
-            '▢ 5. Учитывая, что снимок приведен в стереографической проекции,\nопределите широту $\\varphi$ '
+            '▢ 6. Вычислите звездное время $S$ на момент снимка: ' + '_' * 20,
+            '▢ 7. Учитывая, что снимок приведен в стереографической проекции,\nопределите широту $\\varphi$ '
             'места наблюдения: ' + '_' * 20,
-            '▢ 6. Обозначьте на снимке видимые созвездия их трехбуквенными\nлатинскими наименованиями, проведите контуры этих созвездий.',
+            '▢ 8. Обозначьте на снимке видимые созвездия их трехбуквенными\nлатинскими наименованиями, проведите контуры этих созвездий.',
         ]
 
         y = 0.85

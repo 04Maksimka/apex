@@ -71,21 +71,6 @@ def get_teacher_config(time: datetime) -> PinholeConfig:
         add_constellations_names=True,
     )
 
-def get_constellation_teacher_config(time: datetime) -> PinholeConfig:
-    """Get configuration for teacher mode (full features)."""
-    return PinholeConfig(
-        local_time=time,
-        add_ecliptic=False,
-        add_equator=False,
-        add_galactic_equator=False,
-        add_planets=False,
-        add_ticks=False,
-        add_equatorial_grid=True,
-        use_dark_mode=False,
-        add_constellations=True,
-        add_constellations_names=True,
-    )
-
 
 def generate_random_direction() -> np.ndarray:
     """Generate random unit vector for sky direction."""
@@ -226,13 +211,27 @@ def generate_constellation_samples(
             output_path=const_folder / "student.pdf",
         )
 
+        # Generate student version with planets
+        print(f"  - Generating student_with_planets.pdf...")
+        student_planets_config = get_student_with_planets_config(time)
+
+        render_and_save(
+            shot_cond=shot_cond,
+            camera_cfg=camera_cfg,
+            config=student_planets_config,
+            catalog=catalog,
+            planet_catalog=planet_catalog,
+            constraints=constraints,
+            output_path=const_folder / "student_with_planets.pdf",
+        )
+
         # Generate teacher version with all annotations
         print(f"  - Generating teacher.pdf...")
-        constellation_teacher_config = get_constellation_teacher_config(time)
+        constellation_teacher_config = get_teacher_config(time)
 
         # Create constellation config for teacher mode
         constellation_config = ConstellationConfig(
-            constellations_list=[const_abbr],  # Show all constellations
+            constellations_list=None,  # Show all constellations
             constellation_color='gray',
             constellation_linewidth=0.5,
             constellation_alpha=0.5,
