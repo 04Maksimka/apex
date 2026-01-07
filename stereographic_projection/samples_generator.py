@@ -32,6 +32,8 @@ def get_teacher_cfg(
         longitude=longitude,
         add_constellations=True,  # Отрисовка линий созвездий
         add_constellations_names=True,  # Отрисовка названий созвездий
+        add_zenith=True,
+        add_poles=True,
     )
 
 
@@ -56,6 +58,8 @@ def get_student_cfg(
         local_time=time,
         latitude=latitude,
         longitude=longitude,
+        add_zenith=False,
+        add_poles=False,
     )
 
 import random

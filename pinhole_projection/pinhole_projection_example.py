@@ -34,7 +34,7 @@ def example_pinhole_visualization(
     time = datetime(2024, 1, 1, 0, 0, 0)
     # Define camera configuration
     fov_deg = 90
-    aspect_ratio = 1.0
+    aspect_ratio = 1.5
     height = 1000
 
     camera_cfg = CameraConfig.from_fov_and_aspect(
@@ -56,21 +56,10 @@ def example_pinhole_visualization(
         local_time=time
     )
 
-    # Select constellations with custom colors
-    color_map = {
-        'UMA': 'brown',  # Big Dipper in yellow
-        'ORI': 'gray',  # Orion in red
-        'CYG': 'blue',  # Cygnus in cyan
-        'LEO': 'red',  # Leo in orange
-        'CAS': 'green',  # Cassiopeia in light green
-    }
-
     # Constellation viewing configurations
     constellation_config = ConstellationConfig(
-        constellations_list=list(color_map.keys()),
-        constellation_linewidth=1.5,
-        constellation_alpha=0.75,
-        constellation_color_map=color_map,
+        constellation_linewidth=0.5,
+        constellation_alpha=0.5
     )
     # And shot conditions
     shot_cond = ShotConditions(
@@ -104,8 +93,8 @@ def example_pinhole_visualization(
 
 if __name__ == '__main__':
     example_pinhole_visualization(
-        constellation='CYG',
-        tilt_angle=45.0,
+        constellation='TAU',
+        tilt_angle=0.0,
         use_dark_mode=False,
         add_ticks=False,
         add_planets=True,

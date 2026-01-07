@@ -612,7 +612,7 @@ class StereoProjector(object):
                 # Get first line collection for legend
                 first_lc = list(lcs.values())[0]['lc']
                 self._groups['Constellations'] = self._groups.get('Constellations', []) + \
-                                                 [(first_lc, f'Constellation segments ({len(lcs)})')]
+                                                 [(first_lc, f'Constellations ({len(lcs)})')]
 
     def _add_constellations_names(self):
         """

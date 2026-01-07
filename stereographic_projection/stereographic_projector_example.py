@@ -37,21 +37,10 @@ config = StereoProjConfig(
     longitude=180,
 )
 
-# Select constellations with custom colors
-color_map = {
-    'UMA': 'brown',  # Big Dipper in yellow
-    'ORI': 'gray',  # Orion in red
-    'CYG': 'blue',  # Cygnus in cyan
-    'LEO': 'red',  # Leo in orange
-    'CAS': 'green',  # Cassiopeia in light green
-}
-
 # Constellation viewing configurations
 constellation_config = ConstellationConfig(
-    constellations_list=list(color_map.keys()),
-    constellation_linewidth=1.5,
-    constellation_alpha=0.75,
-    constellation_color_map=color_map,
+    constellation_linewidth=0.5,
+    constellation_alpha=0.5,
 )
 
 # Create catalog object (without data)
