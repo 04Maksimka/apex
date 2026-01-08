@@ -70,15 +70,15 @@ There are two folders inside the pinhole_samples folder:
 
 The 100 skycharts for random date and place are grouped inside the samples folder.
 
-Each group consists of three cards:
+Each group consists of three files:
 
-1. 😶‍🌫️ For a student without planets
-2. 🪐 For a student with planets
-3. 🎓 For the teacher
+1. 😶‍🌫️ For a student without planets - _student.pdf_
+2. 🪐 For a student with planets - _student_with_planets.pdf_
+3. 🎓 For the teacher - _teacher.pdf_
+
+Each file consists of two pages: on the first there are tasks for the map, on the second there is the map itself.
 
 The student's file contains only assignments and a "bare" map. The file for the teacher contains all the answers and a completed map.
-
-Each map consists of two pages: on the first there are tasks for the map, on the second there is the map itself.
 
 ---
 
