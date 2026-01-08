@@ -17,7 +17,7 @@ Also visit [astrageek.ru](https://astrageek.ru/) for educational videos on astro
 
 During the development process, the interface uses software to generate maps via the command line. While it is being developed, you can use ready-made generated maps of random areas of the sky or use the source code yourself under a license.
 
-0.1 Stereographic projection of the starry sky (skychart) according to a given geographical position and time. Also available is the representation of planets, great circles (ecliptic, celestial equator and galactic equator). Available to display horizontal and equatorial coordinate grid, cardinal directions. [Example here](https://skyatlas.app/star-charts/)
+0.1 Stereographic projection of the starry sky (skychart) according to a given geographical position and time. Also available is the representation of planets, great circles (ecliptic, celestial equator and galactic equator). Available to display horizontal and equatorial coordinate grid, cardinal directions. For example, here the [site](https://skyatlas.app/star-charts/) we were targeting.
 
 0.2 Add plotting particular parts of the sky using pinhole projection mode. This mode provides all the same features listed in 0.1, but in a different sky projection. It's available to plot constellations by the name, set FOV, camera rotation angle and size of the resulting image.
 
