@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=75.3.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astrageek"
+version = "0.2.0"  # Согласно релиз-плану в README
+authors = [
+    {name = "Maksimka", email = "you@example.com"}, # Укажите свой email
+    {name = "Ilia", email = "ilia.bespyatyy@gmail.com"}
+]
+description = "Software for building astronomical star maps and skycharts"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
+keywords = ["astronomy", "starmap", "skychart", "CLI"]
+classifiers = [
+    "Development Status :: 3 - Alpha",  # Указывает на стадию 0.2
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",  # Из файла LICENSE
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+# ЗАВИСИМОСТИ (ВАЖНО: проверьте и дополните!)
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "astropy",
+    "dataclasses",
+    "pathlib",
+    "hashlib",
+    "json",
+    "typing",
+    "enum",
+    "datetime",
+    "loguru",
+    "PIL",
+    "random",
+    "astropy",
+]
+
+[project.urls]
+Repository = "https://github.com/04Maksimka/AstraGeek"
+"Issue Tracker" = "https://github.com/04Maksimka/AstraGeek/issues"
+
+# ТОЧКА ВХОДА. Здесь run.py - главный исполняемый скрипт.
+# Если функция для запуска называется иначе, измените `main`.
+[project.scripts]
+astrageek = "run:main"
+
+# Указывает, что пакеты ищутся в корне проекта
+[tool.setuptools.packages.find]
+where = ["."]
+# Включает все подпакеты, кроме служебных папок
+include = ["stereographic_projection", "pinhole_projection", "cylindric_projection", "helpers", "planets_catalog", "hip_catalog", "constellations_metadata", "scenarios", "messier"]
+exclude = ["examples", "*.tests", "*.tests.*", "tests.*", "tests"]
+
+# Опционально: настройки для форматирования кода
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.isort]
+profile = "black"
