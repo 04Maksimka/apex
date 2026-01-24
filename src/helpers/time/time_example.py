@@ -1,4 +1,4 @@
-from helpers.time.time import get_sidereal_time, julian_date
+from src.helpers.time.time import get_sidereal_time, julian_date
 from datetime import datetime
 import numpy as np
 

@@ -4,10 +4,9 @@ from typing import Tuple, Union
 
 from matplotlib.collections import LineCollection
 
-from helpers.time.time import vequinox_hour_angle
+from src.helpers.time.time import vequinox_hour_angle
 from numpy.typing import NDArray
 import numpy as np
-from hip_catalog.hip_catalog import CatalogConstraints
 
 
 def angular_distance(axis: NDArray, vectors: NDArray) -> float:

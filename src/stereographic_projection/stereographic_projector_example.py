@@ -1,7 +1,7 @@
-from hip_catalog.hip_catalog import CatalogConstraints, Catalog
-from planets_catalog.planet_catalog import PlanetCatalog
-from stereographic_projection.stereographic_projector import StereoProjector, StereoProjConfig, ConstellationConfig
-from helpers.pdf_helpers.figure2pdf import save_figure_skychart
+from src.hip_catalog.hip_catalog import CatalogConstraints, Catalog
+from src.planets_catalog.planet_catalog import PlanetCatalog
+from src.stereographic_projection.stereographic_projector import StereoProjector, StereoProjConfig, ConstellationConfig
+from src.helpers.pdf_helpers.figure2pdf import save_figure_skychart
 from datetime import datetime
 
 

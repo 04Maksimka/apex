@@ -7,12 +7,11 @@ line patterns by connecting projected stars with their HIP catalog IDs.
 import numpy as np
 from matplotlib.collections import LineCollection
 from numpy.typing import NDArray
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass
 
-from constellations_metadata.constellations_data import get_constellation_center,\
-    get_constellation_name, get_constellation_lines
-from hip_catalog.hip_catalog import CatalogConstraints
+from src.constellations_metadata.constellations_data import get_constellation_name, get_constellation_lines
+from src.hip_catalog.hip_catalog import CatalogConstraints
 
 
 @dataclass

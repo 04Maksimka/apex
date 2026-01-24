@@ -1,9 +1,9 @@
 from matplotlib import pyplot as plt
 
-from cylindric_projection.cylidric_projector import CylindricConfig, CylindricProjector
-from helpers.pdf_helpers.figure2pdf import save_figure
-from hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from planets_catalog.planet_catalog import PlanetCatalog
+from src.cylindric_projection.cylidric_projector import CylindricConfig, CylindricProjector
+from src.helpers.pdf_helpers.figure2pdf import save_figure
+from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from src.planets_catalog.planet_catalog import PlanetCatalog
 
 
 def example_basic_usage():

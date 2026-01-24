@@ -13,14 +13,13 @@ from numpy.typing import NDArray
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 
-from constellations_metadata.constellations_data import (
+from src.constellations_metadata.constellations_data import (
     get_available_constellations,
-    get_constellation_center,
-    get_constellation_name
+    get_constellation_center
 )
-from helpers.geometry.geometry import mag_to_radius, generate_small_circle
-from hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from planets_catalog.planet_catalog import PlanetCatalog, Planets
+from src.helpers.geometry.geometry import mag_to_radius
+from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 
 
 @dataclass

@@ -2,7 +2,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from helpers.pdf_helpers.figure2pdf import save_figure
+from src.helpers.pdf_helpers.figure2pdf import save_figure
 
 
 def example_with_local_logo(need_pdf=False):
