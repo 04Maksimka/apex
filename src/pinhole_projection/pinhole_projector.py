@@ -6,12 +6,12 @@ import numpy as np
 from numpy.typing import NDArray
 from matplotlib import pyplot as plt
 
-from src.constellations_metadata.constellations_data import get_available_constellations, get_constellation_center
-from src.helpers.geometry.geometry import make_pinhole_projection, mag_to_radius, generate_small_circle, \
+from ..constellations_metadata.constellations_data import get_available_constellations, get_constellation_center
+from ..helpers.geometry.geometry import make_pinhole_projection, mag_to_radius, generate_small_circle, \
     make_equatorial_grid_pinhole
-from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from src.pinhole_projection.constellation_renderer import ConstellationRenderer, draw_multiple_constellations
-from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
+from ..hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from .constellation_renderer import ConstellationRenderer, draw_multiple_constellations
+from ..planets_catalog.planet_catalog import PlanetCatalog, Planets
 
 
 @dataclass

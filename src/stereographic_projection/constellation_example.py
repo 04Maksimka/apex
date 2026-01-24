@@ -6,9 +6,9 @@ constellation patterns overlaid on top of the stars.
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from src.planets_catalog.planet_catalog import PlanetCatalog
-from stereographic_projector import (
+from ..hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from ..planets_catalog.planet_catalog import PlanetCatalog
+from .stereographic_projector import (
     StereoProjector,
     StereoProjConfig, ConstellationConfig
 )

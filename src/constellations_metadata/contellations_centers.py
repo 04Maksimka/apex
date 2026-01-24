@@ -7,7 +7,7 @@ from enum import Enum
 import numpy as np
 from typing import Optional
 
-from src.constellations_metadata.constellations_data import (
+from .constellations_data import (
     get_constellation_center
 )
 

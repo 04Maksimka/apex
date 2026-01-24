@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 from dataclasses import dataclass
 
-from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
-from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from ..planets_catalog.planet_catalog import PlanetCatalog, Planets
+from ..hip_catalog.hip_catalog import Catalog, CatalogConstraints
 
 
 @dataclass

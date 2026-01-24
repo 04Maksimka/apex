@@ -9,7 +9,7 @@ from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass
 from matplotlib.collections import LineCollection
 
-from src.constellations_metadata.constellations_data import get_constellation_lines, get_constellation_name
+from ..constellations_metadata.constellations_data import get_constellation_lines, get_constellation_name
 
 
 @dataclass

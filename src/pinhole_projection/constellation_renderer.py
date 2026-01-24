@@ -10,8 +10,8 @@ from numpy.typing import NDArray
 from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass
 
-from src.constellations_metadata.constellations_data import get_constellation_name, get_constellation_lines
-from src.hip_catalog.hip_catalog import CatalogConstraints
+from ..constellations_metadata.constellations_data import get_constellation_name, get_constellation_lines
+from ..hip_catalog.hip_catalog import CatalogConstraints
 
 
 @dataclass

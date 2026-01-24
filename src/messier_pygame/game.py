@@ -9,12 +9,12 @@ from datetime import datetime
 import random
 from typing import Tuple
 
-from src.messier.messier_catalog import MessierCatalog, MessierType
-from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from src.pinhole_projection.pinhole_projector import (
+from ..messier.messier_catalog import MessierCatalog, MessierType
+from ..hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from ..pinhole_projection.pinhole_projector import (
     ShotConditions, CameraConfig, Pinhole, PinholeConfig, ConstellationConfig
 )
-from src.planets_catalog.planet_catalog import PlanetCatalog
+from ..planets_catalog.planet_catalog import PlanetCatalog
 
 
 class MessierGame:

@@ -2,12 +2,12 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from src.constellations_metadata.constellations_data import get_constellation_center
-from src.helpers.pdf_helpers.figure2pdf import save_figure_pinhole
-from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from src.pinhole_projection.pinhole_projector import ShotConditions, CameraConfig, \
+from ..constellations_metadata.constellations_data import get_constellation_center
+from ..helpers.pdf_helpers.figure2pdf import save_figure_pinhole
+from ..hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from .pinhole_projector import ShotConditions, CameraConfig, \
     Pinhole, PinholeConfig, ConstellationConfig
-from src.planets_catalog.planet_catalog import PlanetCatalog
+from ..planets_catalog.planet_catalog import PlanetCatalog
 from datetime import datetime
 
 
