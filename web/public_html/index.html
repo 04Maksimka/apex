@@ -500,6 +500,24 @@
         .card-type .ct-title { font-weight: 700; color: var(--text); font-size: .95rem; }
         .card-type .ct-desc  { color: var(--text-dim); font-size: .85rem; }
 
+        a.card-type {
+            display: block;
+            text-decoration: none;
+            transition: border-color .3s, transform .3s, box-shadow .3s;
+            cursor: pointer;
+        }
+        a.card-type:hover {
+            border-color: var(--cyan);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 20px rgba(34,211,238,.15);
+        }
+        a.card-type .ct-title {
+            color: var(--cyan);
+        }
+        a.card-type:hover .ct-title {
+            color: var(--gold);
+        }
+
         @media (max-width: 768px) {
             .nav-links {
                 position: fixed;
@@ -672,10 +690,27 @@
                 <div class="acc-body">
                     <div class="acc-body-inner">
                         <ol>
-                            <li>📁 Перейдите в папку <strong>examples</strong> внутри проекта на GitHub.</li>
-                            <li>📥 Скачайте архивы <strong>pinhole_samples.zip</strong> (камера-обскура) и <strong>samples.zip</strong> (скайчарты).</li>
-                            <li>🔓 Распакуйте архивы.</li>
+                            <li>📥 Скачайте нужный архив по прямой ссылке:</li>
                         </ol>
+
+                        <div class="card-types" style="margin-top:12px; margin-bottom:20px;">
+                            <a href="https://github.com/04Maksimka/AstraGeek/raw/main/examples/pinhole_samples.zip" class="card-type" target="_blank" download>
+                                <div class="emoji-label">👁️</div>
+                                <div class="ct-title">⬇️ pinhole_samples.zip</div>
+                                <div class="ct-desc">Камера-обскура — карты участков неба</div>
+                            </a>
+                            <a href="https://github.com/04Maksimka/AstraGeek/raw/main/examples/samples.zip" class="card-type" target="_blank" download>
+                                <div class="emoji-label">🌐</div>
+                                <div class="ct-title">⬇️ samples.zip</div>
+                                <div class="ct-desc">Стереографические скайчарты всего неба</div>
+                            </a>
+                        </div>
+
+                        <ol start="2">
+                            <li>🔓 Распакуйте скачанный архив.</li>
+                            <li>📄 Откройте нужные PDF-файлы.</li>
+                        </ol>
+
                         <p style="margin-top:16px;"><strong>Структура папки pinhole_samples:</strong></p>
                         <div class="file-tree">
                             <span class="folder">📂 pinhole_samples/</span><br>
