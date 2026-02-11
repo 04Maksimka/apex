@@ -7,33 +7,34 @@ from datetime import datetime
 
 # Configure catalog
 constraints = CatalogConstraints(
-    max_magnitude=6.0,
+    max_magnitude=5.5,
 )
 
 # Configure projection: date, time and place
 config = StereoProjConfig(
     add_ecliptic=True,
     add_equator=True,
-    add_galactic_equator=True,
-    add_planets=True,
-    add_ticks=True,
+    add_galactic_equator=False,
+    add_planets=False,
+    add_ticks=False,
     add_horizontal_grid=False,
     add_equatorial_grid=True,
-    add_zenith=True,
-    add_poles=True,
+    add_zenith=False,
+    add_poles=False,
     add_constellations=True,
+    add_constellations_names=True,
     grid_theta_step=15.0,
     grid_phi_step=15.0,
-    random_origin=True,
+    random_origin=False,
     local_time=datetime(
-        year=2004,
-        month=6,
-        day=14,
-        hour=15,
-        minute=10,
+        year=2026,
+        month=2,
+        day=11,
+        hour=0,
+        minute=0,
         second=0,
     ),
-    latitude=45,
+    latitude=90,
     longitude=180,
 )
 

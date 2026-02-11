@@ -92,7 +92,6 @@ def visualize_constellation_with_contours(
         add_ecliptic=add_ecliptic,
         add_equator=add_equator,
         add_galactic_equator=add_galactic_equator,
-        add_horizontal_grid=add_horizontal_grid,
         add_equatorial_grid=add_equatorial_grid,
         local_time=time
     )
@@ -104,7 +103,7 @@ def visualize_constellation_with_contours(
 
     # Draw constellation lines
     if show_constellation_lines:
-        renderer = ConstellationRenderer(pinhole)
+        renderer = ConstellationRenderer()
         segments = renderer.get_constellation_segments(constellation, result.stars)
         print(segments)
         
@@ -209,7 +208,6 @@ def visualize_multiple_constellations(
         add_ecliptic=add_ecliptic,
         add_equator=add_equator,
         add_galactic_equator=add_galactic_equator,
-        add_horizontal_grid=add_horizontal_grid,
         add_equatorial_grid=add_equatorial_grid,
         local_time=time
     )
@@ -224,7 +222,7 @@ def visualize_multiple_constellations(
     result = pinhole.projection_result
 
     # Draw constellation lines
-    renderer = ConstellationRenderer(pinhole)
+    renderer = ConstellationRenderer()
     constellation_segments = renderer.get_multiple_constellation_segments(
         constellations, 
         result.stars

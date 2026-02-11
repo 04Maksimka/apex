@@ -74,7 +74,7 @@ class Catalog(object):
         self._data = None
         self._cache_key = None
         self._constraints = None
-
+    #FIXME:
     def _find_cache_root(self) -> pathlib.Path:
         """
         Search for cache directory

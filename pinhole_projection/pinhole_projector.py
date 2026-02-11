@@ -552,5 +552,3 @@ class Pinhole(object):
 
             # Add legend to figure (outside axis)
             self._ax.add_artist(legend)
-
-

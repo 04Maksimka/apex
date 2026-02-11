@@ -16,7 +16,8 @@ from matplotlib.collections import LineCollection
 from constellations_metadata.constellations_data import (
     get_available_constellations,
     get_constellation_center,
-    get_constellation_name
+    get_constellation_name,
+    get_constellation_lines
 )
 from helpers.geometry.geometry import mag_to_radius, generate_small_circle
 from hip_catalog.hip_catalog import Catalog, CatalogConstraints
@@ -68,6 +69,251 @@ class ConstellationConfig:
     constellation_color_map: Optional[Dict[str, str]] = None
 
 
+def _wrap_ra(ra_deg: float, ra_center: float) -> float:
+    """
+    Wrap RA value so that it is within [ra_center - 180, ra_center + 180).
+    This ensures continuity of lines that cross the RA boundary.
+
+    Args:
+        ra_deg: RA in degrees (can be any value)
+        ra_center: Center of the RA display range in degrees
+
+    Returns:
+        Wrapped RA value
+    """
+    diff = ra_deg - ra_center
+    diff = (diff + 180.0) % 360.0 - 180.0
+    return ra_center + diff
+
+
+def _split_segments_at_boundary(
+    ra_points: NDArray,
+    dec_points: NDArray,
+    ra_min: float,
+    ra_max: float,
+    dec_min: float,
+    dec_max: float,
+    ra_wrap_threshold: float = 180.0
+) -> List[NDArray]:
+    """
+    Split a continuous curve into segments, breaking at points where the curve
+    jumps across the RA wrap boundary or goes out of the dec range.
+    Also clips segments to the visible area, interpolating boundary crossings.
+
+    Args:
+        ra_points: Array of RA values in degrees
+        dec_points: Array of Dec values in degrees
+        ra_min: Minimum RA of display range
+        ra_max: Maximum RA of display range
+        dec_min: Minimum Dec of display range
+        dec_max: Maximum Dec of display range
+        ra_wrap_threshold: Maximum allowed RA jump before splitting
+
+    Returns:
+        List of Nx2 arrays, each representing a continuous segment [[ra, dec], ...]
+    """
+    if len(ra_points) < 2:
+        return []
+
+    segments = []
+    current_segment = []
+
+    for i in range(len(ra_points)):
+        ra = ra_points[i]
+        dec = dec_points[i]
+
+        # Check if point is within dec range
+        in_dec = dec_min <= dec <= dec_max
+        # Check if point is within ra range
+        in_ra = ra_min <= ra <= ra_max
+
+        if i > 0:
+            # Detect large RA jump (wrap-around)
+            ra_jump = abs(ra - ra_points[i - 1])
+            if ra_jump > ra_wrap_threshold:
+                # Break segment here — interpolate exit and entry points
+                if len(current_segment) >= 1:
+                    # Interpolate the boundary crossing
+                    prev_ra = ra_points[i - 1]
+                    prev_dec = dec_points[i - 1]
+                    curr_ra = ra
+                    curr_dec = dec
+
+                    # Determine which boundary was crossed
+                    boundary_points = _interpolate_ra_wrap(
+                        prev_ra, prev_dec, curr_ra, curr_dec,
+                        ra_min, ra_max
+                    )
+
+                    if boundary_points is not None:
+                        exit_ra, exit_dec, entry_ra, entry_dec = boundary_points
+
+                        # Add exit point to current segment
+                        if dec_min <= exit_dec <= dec_max:
+                            current_segment.append([exit_ra, exit_dec])
+
+                        # Finalize current segment
+                        if len(current_segment) >= 2:
+                            segments.append(np.array(current_segment))
+                        current_segment = []
+
+                        # Start new segment with entry point
+                        if dec_min <= entry_dec <= dec_max:
+                            current_segment.append([entry_ra, entry_dec])
+                    else:
+                        if len(current_segment) >= 2:
+                            segments.append(np.array(current_segment))
+                        current_segment = []
+                else:
+                    current_segment = []
+
+                # Add current point if in range
+                if in_dec and in_ra:
+                    current_segment.append([ra, dec])
+                continue
+
+        if in_dec and in_ra:
+            if len(current_segment) == 0 and i > 0:
+                # Interpolate entry from out-of-range to in-range
+                prev_ra = ra_points[i - 1]
+                prev_dec = dec_points[i - 1]
+                edge_point = _interpolate_dec_boundary(
+                    prev_ra, prev_dec, ra, dec, dec_min, dec_max
+                )
+                if edge_point is not None:
+                    current_segment.append(edge_point)
+
+            current_segment.append([ra, dec])
+        else:
+            if len(current_segment) >= 1:
+                # Interpolate exit point
+                prev_ra = ra_points[i - 1] if i > 0 else ra
+                prev_dec = dec_points[i - 1] if i > 0 else dec
+                if len(current_segment) > 0:
+                    prev_ra = current_segment[-1][0]
+                    prev_dec = current_segment[-1][1]
+                edge_point = _interpolate_dec_boundary(
+                    prev_ra, prev_dec, ra, dec, dec_min, dec_max
+                )
+                if edge_point is not None:
+                    current_segment.append(edge_point)
+
+                if len(current_segment) >= 2:
+                    segments.append(np.array(current_segment))
+                current_segment = []
+
+    # Finalize last segment
+    if len(current_segment) >= 2:
+        segments.append(np.array(current_segment))
+
+    return segments
+
+
+def _interpolate_ra_wrap(
+    ra1: float, dec1: float,
+    ra2: float, dec2: float,
+    ra_min: float, ra_max: float
+) -> Optional[Tuple[float, float, float, float]]:
+    """
+    Interpolate the point where a line segment crosses the RA wrap boundary.
+
+    Returns:
+        Tuple (exit_ra, exit_dec, entry_ra, entry_dec) or None
+    """
+    # Determine direction of wrap
+    if ra1 > ra2:
+        # Wrapping from high RA to low RA (crossing ra_max -> ra_min)
+        # The "real" ra2 is ra2 + 360
+        ra2_unwrapped = ra2 + 360.0
+        # Fraction along segment where RA = ra_max
+        if abs(ra2_unwrapped - ra1) < 1e-10:
+            return None
+        t = (ra_max - ra1) / (ra2_unwrapped - ra1)
+        t = np.clip(t, 0, 1)
+        dec_at_boundary = dec1 + t * (dec2 - dec1)
+        return (ra_max, dec_at_boundary, ra_min, dec_at_boundary)
+    else:
+        # Wrapping from low RA to high RA (crossing ra_min -> ra_max)
+        ra1_unwrapped = ra1 + 360.0
+        if abs(ra1_unwrapped - ra2) < 1e-10:
+            return None
+        t = (ra_max - ra2) / (ra1_unwrapped - ra2)
+        t = np.clip(t, 0, 1)
+        dec_at_boundary = dec2 + t * (dec1 - dec2)
+        return (ra_min, dec_at_boundary, ra_max, dec_at_boundary)
+
+
+def _interpolate_dec_boundary(
+    ra1: float, dec1: float,
+    ra2: float, dec2: float,
+    dec_min: float, dec_max: float
+) -> Optional[List[float]]:
+    """
+    Interpolate the point where a line crosses a dec boundary.
+
+    Args:
+        ra1, dec1: Start point (inside)
+        ra2, dec2: End point (outside or vice versa)
+        dec_min, dec_max: Dec boundaries
+
+    Returns:
+        [ra, dec] at boundary or None
+    """
+    if abs(dec2 - dec1) < 1e-10:
+        return None
+
+    # Check which boundary is crossed
+    for boundary in [dec_min, dec_max]:
+        t = (boundary - dec1) / (dec2 - dec1)
+        if 0.0 <= t <= 1.0:
+            ra_at_boundary = ra1 + t * (ra2 - ra1)
+            return [ra_at_boundary, boundary]
+
+    return None
+
+
+def _make_pair_segments_with_wrapping(
+    ra1: float, dec1: float,
+    ra2: float, dec2: float,
+    ra_min: float, ra_max: float,
+    ra_wrap_threshold: float = 180.0
+) -> List[NDArray]:
+    """
+    Create line segments for a pair of points, handling RA wrap-around.
+    If the RA difference is larger than the threshold, splits into two segments
+    that go to opposite edges of the frame.
+
+    Args:
+        ra1, dec1: First point
+        ra2, dec2: Second point
+        ra_min, ra_max: RA display range
+        ra_wrap_threshold: Maximum allowed RA difference
+
+    Returns:
+        List of Nx2 arrays representing line segments
+    """
+    ra_diff = abs(ra2 - ra1)
+
+    if ra_diff <= ra_wrap_threshold:
+        # No wrapping needed — single segment
+        return [np.array([[ra1, dec1], [ra2, dec2]])]
+
+    # Wrapping needed — split into two segments
+    boundary_points = _interpolate_ra_wrap(ra1, dec1, ra2, dec2, ra_min, ra_max)
+    if boundary_points is None:
+        return [np.array([[ra1, dec1], [ra2, dec2]])]
+
+    exit_ra, exit_dec, entry_ra, entry_dec = boundary_points
+
+    segments = []
+    # Segment from point1 to exit boundary
+    segments.append(np.array([[ra1, dec1], [exit_ra, exit_dec]]))
+    # Segment from entry boundary to point2
+    segments.append(np.array([[entry_ra, entry_dec], [ra2, dec2]]))
+
+    return segments
+
+
 class CylindricProjector:
     """Class for cylindrical (equirectangular) projection of the celestial sphere."""
 
@@ -96,6 +342,16 @@ class CylindricProjector:
         self._planets_projections = None
         self._fig = None
         self._ax = None
+
+    @property
+    def _ra_center(self) -> float:
+        """Center of the RA display range."""
+        return (self.config.ra_min + self.config.ra_max) / 2.0
+
+    @property
+    def _ra_span(self) -> float:
+        """Span of the RA display range."""
+        return self.config.ra_max - self.config.ra_min
 
     def generate(self, constraints: Optional[CatalogConstraints] = None) -> Tuple[plt.Figure, plt.Axes]:
         """
@@ -136,7 +392,7 @@ class CylindricProjector:
             self._add_constellations_names()
 
         # Create legend
-        self._create_grouped_legend()
+        # self._create_grouped_legend()
 
         return self._fig, self._ax
 
@@ -261,7 +517,7 @@ class CylindricProjector:
         self._fig.patch.set_facecolor(self._bg_color)
         self._ax.set_facecolor(self._bg_color)
 
-        #inverse x_axis
+        # Inverse x_axis
         self._ax.invert_xaxis()
 
     def _plot_stars(self, projection_data: NDArray):
@@ -276,7 +532,7 @@ class CylindricProjector:
 
         x = projection_data['x']
         y = projection_data['y']
-        sizes = projection_data['size'] * 3 # Scale for visibility
+        sizes = projection_data['size'] * 3  # Scale for visibility
 
         color = 'white' if self.config.use_dark_mode else 'black'
 
@@ -379,27 +635,67 @@ class CylindricProjector:
             (grid_collection, 'Coordinate Grid')
         ]
 
+    def _plot_curve_with_wrapping(
+        self,
+        ra_points: NDArray,
+        dec_points: NDArray,
+        color: str,
+        alpha: float = 0.7,
+        linewidth: float = 2.0,
+        linestyle: str = '--',
+        zorder: int = 3,
+        label: str = ''
+    ) -> Optional[LineCollection]:
+        """
+        Plot a curve on the cylindrical projection, correctly handling
+        RA wrap-around and dec boundary clipping.
+
+        Args:
+            ra_points: RA values in degrees (full 0..360 range)
+            dec_points: Dec values in degrees
+            color: Line color
+            alpha: Line transparency
+            linewidth: Line width
+            linestyle: Line style
+            zorder: Drawing order
+            label: Legend label
+
+        Returns:
+            LineCollection or None
+        """
+        segments = _split_segments_at_boundary(
+            ra_points, dec_points,
+            self.config.ra_min, self.config.ra_max,
+            self.config.dec_min, self.config.dec_max,
+            ra_wrap_threshold=self._ra_span * 0.5
+        )
+
+        if not segments:
+            return None
+
+        collection = LineCollection(
+            segments,
+            colors=color,
+            alpha=alpha,
+            linewidths=linewidth,
+            linestyle=linestyle,
+            zorder=zorder,
+            label=label
+        )
+        self._ax.add_collection(collection)
+        return collection
+
     def _add_ecliptic(self):
         """Add the ecliptic (path of the Sun) to the projection."""
-        # The ecliptic is tilted by ~23.44 degrees relative to the celestial equator
         obliquity = 23.44  # degrees
 
         ra_points = np.linspace(0, 360, 1000)
-        # Simplified ecliptic: dec = obliquity * sin(ra)
         dec_points = obliquity * np.sin(np.deg2rad(ra_points))
 
-        # Filter by display range
-        mask = (
-                (ra_points >= self.config.ra_min) &
-                (ra_points <= self.config.ra_max) &
-                (dec_points >= self.config.dec_min) &
-                (dec_points <= self.config.dec_max)
-        )
-
         color = 'yellow' if self.config.use_dark_mode else 'orange'
-        line, = self._ax.plot(
-            ra_points[mask],
-            dec_points[mask],
+
+        collection = self._plot_curve_with_wrapping(
+            ra_points, dec_points,
             color=color,
             alpha=0.7,
             linewidth=2,
@@ -408,9 +704,10 @@ class CylindricProjector:
             label='Ecliptic'
         )
 
-        self._groups['Reference Lines'] = self._groups.get('Reference Lines', []) + [
-            (line, 'Ecliptic')
-        ]
+        if collection:
+            self._groups['Reference Lines'] = self._groups.get('Reference Lines', []) + [
+                (collection, 'Ecliptic')
+            ]
 
     def _add_equator(self):
         """Add the celestial equator to the projection."""
@@ -418,9 +715,9 @@ class CylindricProjector:
         dec_points = np.zeros_like(ra_points)
 
         color = 'cyan' if self.config.use_dark_mode else 'blue'
-        line, = self._ax.plot(
-            ra_points,
-            dec_points,
+
+        collection = self._plot_curve_with_wrapping(
+            ra_points, dec_points,
             color=color,
             alpha=0.7,
             linewidth=2,
@@ -429,9 +726,10 @@ class CylindricProjector:
             label='Celestial Equator'
         )
 
-        self._groups['Reference Lines'] = self._groups.get('Reference Lines', []) + [
-            (line, 'Celestial Equator')
-        ]
+        if collection:
+            self._groups['Reference Lines'] = self._groups.get('Reference Lines', []) + [
+                (collection, 'Celestial Equator')
+            ]
 
     def _add_galactic_equator(self):
         """Add the galactic equator to the projection."""
@@ -469,16 +767,229 @@ class CylindricProjector:
 
     def _add_horizon(self):
         """Add the local horizon line to the projection."""
-        # This requires converting from horizontal to equatorial coordinates
-        # For now, we'll add a placeholder implementation
-        # TODO: Implement proper horizon calculation based on observer location and time
-        pass
+        from helpers.time.time import vequinox_hour_angle
+
+        # Calculate local sidereal time
+        sidereal_time = vequinox_hour_angle(
+            longitude=self.config.longitude,
+            local=self.config.local_time
+        )
+
+        # Generate azimuth points for horizon circle
+        num_points = 1000
+        azimuth_points = np.linspace(0, 2 * np.pi, num_points)
+
+        sin_lat = np.sin(self.config.latitude)
+        cos_lat = np.cos(self.config.latitude)
+
+        # Vectorized computation
+        sin_az = np.sin(azimuth_points)
+        cos_az = np.cos(azimuth_points)
+
+        # At horizon (altitude = 0):
+        # sin(dec) = cos(lat) * cos(az)
+        sin_dec = cos_lat * cos_az
+        dec = np.arcsin(np.clip(sin_dec, -1, 1))
+
+        # Hour angle: H = atan2(sin(az), cos(az) * sin(lat))
+        H = np.arctan2(sin_az, cos_az * sin_lat)
+
+        # RA = LST - H
+        ra = (sidereal_time - H) % (2 * np.pi)
+
+        ra_deg = np.rad2deg(ra) % 360.0
+        dec_deg = np.rad2deg(dec)
+
+        # Sort by RA for cleaner plotting
+        sort_idx = np.argsort(ra_deg)
+        ra_deg = ra_deg[sort_idx]
+        dec_deg = dec_deg[sort_idx]
+
+        color = 'lime' if self.config.use_dark_mode else 'green'
+
+        collection = self._plot_curve_with_wrapping(
+            ra_deg, dec_deg,
+            color=color,
+            alpha=0.6,
+            linewidth=2,
+            linestyle='-.',
+            zorder=3,
+            label='Horizon'
+        )
+
+        if collection:
+            self._groups['Reference Lines'] = self._groups.get('Reference Lines', []) + [
+                (collection, 'Horizon')
+            ]
 
     def _add_constellations(self):
         """Add constellation line patterns to the projection."""
-        # TODO: Implement constellation line rendering for cylindrical projection
-        # This requires adapting the constellation renderer from other projections
-        pass
+        # Determine which constellations to render
+        if self.constellation_config.constellations_list is not None:
+            constellations_to_render = self.constellation_config.constellations_list
+        else:
+            constellations_to_render = get_available_constellations()
+
+        # Get all star data for constellation line matching
+        stars_data = self.catalog.data
+
+        # Create a mapping from HIP ID to star coordinates in degrees
+        hip_to_star = {}
+        for star in stars_data:
+            hip_id = star['hip_id']
+            ra_deg = np.rad2deg(star['ra']) % 360.0
+            dec_deg = np.rad2deg(star['dec'])
+            hip_to_star[hip_id] = (ra_deg, dec_deg)
+
+        # Process each constellation
+        all_segments = []
+
+        for constellation in constellations_to_render:
+            try:
+                # Get constellation line data
+                lines = get_constellation_lines(constellation)
+
+                if not lines:
+                    continue
+
+                # Get color for this constellation
+                if (self.constellation_config.constellation_color_map and
+                        constellation in self.constellation_config.constellation_color_map):
+                    color = self.constellation_config.constellation_color_map[constellation]
+                else:
+                    color = self.constellation_config.constellation_color
+
+                # Process each line (chain of stars) in the constellation
+                for line in lines:
+                    # Get coordinates for each star in the chain
+                    chain_points = []
+                    for hip_id in line:
+                        if hip_id in hip_to_star:
+                            ra_deg, dec_deg = hip_to_star[hip_id]
+                            chain_points.append((ra_deg, dec_deg))
+                        else:
+                            # Star not found — break the chain
+                            if len(chain_points) >= 2:
+                                # Process the chain we have so far
+                                self._add_constellation_chain(chain_points, all_segments)
+                            chain_points = []
+
+                    # Process remaining chain
+                    if len(chain_points) >= 2:
+                        self._add_constellation_chain(chain_points, all_segments)
+
+            except Exception as e:
+                print(f"Warning: Could not render constellation {constellation}: {e}")
+                continue
+
+        # Create LineCollection for all constellation segments
+        if all_segments:
+            constellation_collection = LineCollection(
+                all_segments,
+                colors=self.constellation_config.constellation_color,
+                alpha=self.constellation_config.constellation_alpha,
+                linewidths=self.constellation_config.constellation_linewidth,
+                zorder=4,
+                label='Constellations'
+            )
+            self._ax.add_collection(constellation_collection)
+
+            self._groups['Constellations'] = self._groups.get('Constellations', []) + [
+                (constellation_collection, 'Constellation Lines')
+            ]
+
+    def _add_constellation_chain(
+        self,
+        chain_points: List[Tuple[float, float]],
+        all_segments: List[NDArray]
+    ):
+        """
+        Process a chain of constellation stars into line segments,
+        handling RA wrap-around correctly.
+
+        Args:
+            chain_points: List of (ra_deg, dec_deg) tuples
+            all_segments: List to append resulting segments to
+        """
+        for i in range(len(chain_points) - 1):
+            ra1, dec1 = chain_points[i]
+            ra2, dec2 = chain_points[i + 1]
+
+            # Check if both points are within dec range
+            # (we still want to draw partial segments if one point is outside)
+            dec_ok_1 = self.config.dec_min <= dec1 <= self.config.dec_max
+            dec_ok_2 = self.config.dec_min <= dec2 <= self.config.dec_max
+
+            if not dec_ok_1 and not dec_ok_2:
+                continue
+
+            # Handle RA wrap-around for this pair
+            pair_segments = _make_pair_segments_with_wrapping(
+                ra1, dec1, ra2, dec2,
+                self.config.ra_min, self.config.ra_max,
+                ra_wrap_threshold=self._ra_span * 0.5
+            )
+
+            for seg in pair_segments:
+                # Clip each segment to display range
+                clipped = self._clip_segment_to_range(seg)
+                if clipped is not None and len(clipped) >= 2:
+                    all_segments.append(clipped)
+
+    def _clip_segment_to_range(self, segment: NDArray) -> Optional[NDArray]:
+        """
+        Clip a 2-point segment to the display range, interpolating at boundaries.
+
+        Args:
+            segment: Nx2 array of [ra, dec] points
+
+        Returns:
+            Clipped segment or None if entirely outside
+        """
+        if len(segment) < 2:
+            return None
+
+        clipped_points = []
+
+        for i in range(len(segment)):
+            ra, dec = segment[i]
+            in_range = (
+                self.config.ra_min <= ra <= self.config.ra_max and
+                self.config.dec_min <= dec <= self.config.dec_max
+            )
+
+            if i > 0:
+                prev_ra, prev_dec = segment[i - 1]
+                prev_in_range = (
+                    self.config.ra_min <= prev_ra <= self.config.ra_max and
+                    self.config.dec_min <= prev_dec <= self.config.dec_max
+                )
+
+                # Handle transitions in/out of range
+                if in_range and not prev_in_range:
+                    # Entering the range — add boundary point
+                    edge = _interpolate_dec_boundary(
+                        prev_ra, prev_dec, ra, dec,
+                        self.config.dec_min, self.config.dec_max
+                    )
+                    if edge:
+                        clipped_points.append(edge)
+                elif not in_range and prev_in_range:
+                    # Leaving the range — add boundary point
+                    edge = _interpolate_dec_boundary(
+                        prev_ra, prev_dec, ra, dec,
+                        self.config.dec_min, self.config.dec_max
+                    )
+                    if edge:
+                        clipped_points.append(edge)
+                    continue
+
+            if in_range:
+                clipped_points.append([ra, dec])
+
+        if len(clipped_points) >= 2:
+            return np.array(clipped_points)
+        return None
 
     def _add_constellations_names(self):
         """Add constellation names to the projection."""
@@ -493,7 +1004,7 @@ class CylindricProjector:
             # Convert from unit vector to RA/Dec
             x, y, z = center
             ra = np.arctan2(y, x)
-            dec = np.arcsin(z)
+            dec = np.arcsin(np.clip(z, -1, 1))
 
             ra_deg = np.rad2deg(ra) % 360.0
             dec_deg = np.rad2deg(dec)

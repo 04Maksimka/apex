@@ -645,7 +645,7 @@ class StereoProjector(object):
                     text=constellation,
                     xy=(center_projection['angle'][0], center_projection['radius'][0]),
                     xytext=(0, 0),
-                    fontsize=10,
+                    fontsize=7,
                     textcoords='offset points',
                     color='gray',
                     ha = 'center',
@@ -733,50 +733,62 @@ class StereoProjector(object):
         self._ax.set_ylim((0.0, r_max))
 
     def _create_grouped_legend(self):
-        """
-        Create legend split by groups
-        """
-
+        """Create a grouped legend for the visualization."""
         groups = {k: v for k, v in self._groups.items() if v}
         if not groups:
             return
+
+        # Sort groups by size
         groups = dict(sorted(groups.items(), key=lambda x: len(x[1]), reverse=True))
 
+        # Determine layout
         n_groups = len(groups)
-        if n_groups > 3:
-            n_columns = np.ceil(n_groups / 2)
-            n_rows = 2
-        else:
+
+        # Calculate number of columns based on number of groups
+        if n_groups <= 2:
             n_columns = n_groups
-            n_rows = 1
+        elif n_groups <= 4:
+            n_columns = 2
+        else:
+            n_columns = min(3, n_groups)
+
         group_items = list(groups.items())
-        legend_height = 0.25 / n_rows
-        vertical_spacing = 0.1
+
+        # Calculate positions with proper spacing
+        column_width = 0.96 / n_columns
+        vertical_spacing = 0.12  # Increased spacing between rows
 
         for i, (title, items) in enumerate(group_items):
-            row = i // n_columns
-            col = i % n_columns
+            if not items:
+                continue
 
             handles, labels = zip(*items)
 
-            if n_rows == 1:
-                bbox_x = 0.5
-            else:
-                bbox_x = 0.25 + col * (0.5 / (n_columns - 1))
+            # Calculate column and row
+            col = i % n_columns
+            row = i // n_columns
 
-            bbox_y = -0.05 - row * (legend_height + vertical_spacing)
+            # Position legends with proper spacing
+            bbox_x = 0.02 + col * column_width
+            bbox_y = -0.05 - (row * vertical_spacing)
 
             legend = self._ax.legend(
                 handles, labels,
                 title=title,
-                loc='upper center',
+                loc='upper left',
                 fontsize=8,
                 bbox_to_anchor=(bbox_x, bbox_y),
                 frameon=True,
                 fancybox=True,
-                borderaxespad=0.2
+                borderaxespad=0.2,
+                ncol=1  # Single column per legend group
             )
 
             legend.get_title().set_fontweight('bold')
-            legend.get_title().set_fontsize(10)
+            legend.get_title().set_fontsize(9)
             self._ax.add_artist(legend)
+
+        # Adjust figure bottom margin to accommodate legends
+        max_rows = (n_groups + n_columns - 1) // n_columns
+        bottom_margin = 0.05 + (max_rows * vertical_spacing)
+        self._fig.subplots_adjust(bottom=bottom_margin)
