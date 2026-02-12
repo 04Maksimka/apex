@@ -169,5 +169,5 @@ Desktop.ini
 # temp_data/
 # output/
 
-stereographic_projection/samples/
-pinhole_projection/pinhole_samples
+src/stereographic_projection/samples/
+src/pinhole_projection/pinhole_samples

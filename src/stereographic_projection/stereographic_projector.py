@@ -8,16 +8,15 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 
-from constellations_metadata.constellations_data import get_available_constellations, get_constellation_name, \
-    get_constellation_center
-from helpers.geometry.geometry import (
+from src.constellations_metadata.constellations_data import get_available_constellations, get_constellation_center
+from src.helpers.geometry.geometry import (
     get_horizontal_coords, make_stereo_projection, make_points_stereo_projection, generate_small_circle, mag_to_radius,
 )
-from hip_catalog.hip_catalog import CatalogConstraints, Catalog
-from planets_catalog.planet_catalog import PlanetCatalog, Planets
+from src.hip_catalog.hip_catalog import CatalogConstraints, Catalog
+from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 from matplotlib.collections import LineCollection
 
-from stereographic_projection.constellation_renderer_stereo import ConstellationRendererStereo, \
+from src.stereographic_projection.constellation_renderer_stereo import ConstellationRendererStereo, \
     draw_multiple_constellations
 
 

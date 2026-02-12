@@ -7,16 +7,15 @@ from matplotlib import pyplot as plt
 from datetime import datetime
 from typing import List, Optional
 
-from hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from constellations_metadata.constellations_data import get_constellation_center
-from pinhole_projection.constellation_renderer import ConstellationRenderer, \
+from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from src.constellations_metadata.constellations_data import get_constellation_center
+from src.pinhole_projection.constellation_renderer import ConstellationRenderer, \
     draw_constellation_lines, draw_multiple_constellations
-from pinhole_projection.pinhole_projector import (
+from src.pinhole_projection.pinhole_projector import (
     ShotConditions,
-    CameraConfig,
     Pinhole, CameraConfig, PinholeConfig
 )
-from planets_catalog.planet_catalog import PlanetCatalog
+from src.planets_catalog.planet_catalog import PlanetCatalog
 
 
 def visualize_constellation_with_contours(

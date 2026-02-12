@@ -6,14 +6,14 @@ tracking planetary positions over time and visualizing their paths through the z
 On the visualisation there is a  scatter plot for each planet at each tic of time of given interval.
 """
 from datetime import datetime, timedelta
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 from dataclasses import dataclass
 
-from planets_catalog.planet_catalog import PlanetCatalog, Planets
-from hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
+from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
 
 
 @dataclass

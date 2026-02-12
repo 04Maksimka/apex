@@ -3,10 +3,10 @@ from datetime import datetime
 
 import numpy as np
 
-from helpers.pdf_helpers.figure2pdf import save_figure_skychart
-from hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from planets_catalog.planet_catalog import PlanetCatalog
-from stereographic_projection.stereographic_projector import StereoProjConfig, \
+from src.helpers.pdf_helpers.figure2pdf import save_figure_skychart
+from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from src.planets_catalog.planet_catalog import PlanetCatalog
+from src.stereographic_projection.stereographic_projector import StereoProjConfig, \
     StereoProjector, ConstellationConfig
 
 
@@ -68,7 +68,7 @@ from datetime import timedelta
 
 import matplotlib.pyplot as plt
 
-from stereographic_projection.stereographic_projector import (
+from src.stereographic_projection.stereographic_projector import (
     StereoProjConfig,
 )
 

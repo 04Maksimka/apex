@@ -9,10 +9,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from loguru import logger
 from PIL import Image
-from helpers.time.time import get_sidereal_time
+from src.helpers.time.time import get_sidereal_time
 
 if TYPE_CHECKING:
-    from stereographic_projection.stereographic_projector import StereoProjConfig
+    from src.stereographic_projection.stereographic_projector import StereoProjConfig
 
 
 def add_logo_to_figure(
