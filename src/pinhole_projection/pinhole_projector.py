@@ -62,8 +62,6 @@ class PinholeConfig:
     """Class of the pinhole projector configurations. """
 
     local_time: datetime
-    latitude: float = 0.0
-    longitude: float = 0.0
     grid_theta_step: float = 10.0
     grid_phi_step: float = 10.0
 

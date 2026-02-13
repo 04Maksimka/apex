@@ -9,6 +9,18 @@ from numpy.typing import NDArray
 import numpy as np
 
 
+def generate_random_direction() -> np.ndarray:
+    """Generate random unit vector for sky direction."""
+    # Generate random point on unit sphere using spherical coordinates
+    theta = np.random.uniform(0, 2 * np.pi)  # azimuth
+    phi = np.arccos(np.random.uniform(-1, 1))  # polar angle
+
+    x = np.sin(phi) * np.cos(theta)
+    y = np.sin(phi) * np.sin(theta)
+    z = np.cos(phi)
+
+    return np.array([x, y, z], dtype=np.float32)
+
 def angular_distance(axis: NDArray, vectors: NDArray) -> float:
     """
     Angular distance between vectors and axis
@@ -35,8 +47,6 @@ def angular_distance(axis: NDArray, vectors: NDArray) -> float:
     angular_dists = np.arccos(cos_theta)
 
     return angular_dists
-
-
 
 def mag_to_radius(
         magnitude: Union[float, NDArray],

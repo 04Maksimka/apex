@@ -7,6 +7,7 @@ from typing import Optional
 import numpy as np
 from matplotlib import pyplot as plt
 
+from src.helpers.geometry.geometry import generate_random_direction
 from src.constellations_metadata.constellations_data import (
     get_available_constellations,
     get_constellation_center,
@@ -70,20 +71,6 @@ def get_teacher_config(time: datetime) -> PinholeConfig:
         add_constellations=True,
         add_constellations_names=True,
     )
-
-
-def generate_random_direction() -> np.ndarray:
-    """Generate random unit vector for sky direction."""
-    # Generate random point on unit sphere using spherical coordinates
-    theta = np.random.uniform(0, 2 * np.pi)  # azimuth
-    phi = np.arccos(np.random.uniform(-1, 1))  # polar angle
-
-    x = np.sin(phi) * np.cos(theta)
-    y = np.sin(phi) * np.sin(theta)
-    z = np.cos(phi)
-
-    return np.array([x, y, z], dtype=np.float32)
-
 
 def render_and_save(
         shot_cond: ShotConditions,

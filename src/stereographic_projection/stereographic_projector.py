@@ -733,6 +733,7 @@ class StereoProjector(object):
 
     def _create_grouped_legend(self):
         """Create a grouped legend for the visualization."""
+
         groups = {k: v for k, v in self._groups.items() if v}
         if not groups:
             return
@@ -755,7 +756,7 @@ class StereoProjector(object):
 
         # Calculate positions with proper spacing
         column_width = 0.96 / n_columns
-        vertical_spacing = 0.12  # Increased spacing between rows
+        vertical_spacing = 0.25  # Increased spacing between rows
 
         for i, (title, items) in enumerate(group_items):
             if not items:

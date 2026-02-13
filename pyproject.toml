@@ -33,4 +33,4 @@ version = "0.2.0"
 where = ["."]
 
 [project.scripts]
-astrageek = "src.cli:cli"
+astrageek = "src.interface.cli:cli"
