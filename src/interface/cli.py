@@ -24,7 +24,7 @@ def resolve(preset, explicit, name):
 @click.group()
 @click.version_option(version="0.1.0", prog_name="AstraGeek")
 def cli():
-    """AstraGeek — генератор карт звёздного неба."""
+    """AstraGeek — star sky map generator."""
     pass
 
 
@@ -335,17 +335,20 @@ def pinhole(
         status = "+" if v else "-"
         click.echo(f"  {status} {k}")
 
+    # === Specify projector ===
+    # Specify catalog constraints
     constraints = CatalogConstraints(
         max_magnitude=mag_limit
     )
 
+    # Make catalogs
     catalog = Catalog(
         catalog_name='hip_data.tsv',
         use_cache=True
     )
-
     planet_catalog = PlanetCatalog()
 
+    # Configure projector
     config = PinholeConfig(
         local_time=dtime,
         grid_theta_step = grid_steps[0],
@@ -353,12 +356,14 @@ def pinhole(
         **flags
     )
 
+    # Configure frame
     camera_cfg = CameraConfig.from_fov_and_aspect(
         fov_deg=fov,
         aspect_ratio=aspect_ratio,
         height_pix=height_pix,
     )
 
+    # Configure direction and orientation
     shot_cond = ShotConditions(
         center_direction=center,
         tilt_angle=tilt_angle,
