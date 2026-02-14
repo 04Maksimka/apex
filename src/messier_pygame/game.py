@@ -47,10 +47,11 @@ class MessierGame:
         self.observation_time = datetime(2024, 1, 1, 0, 0, 0)
 
     def get_random_messier_object(self) -> Tuple[int, np.ndarray]:
-        """
-        Get a random Messier object that hasn't been used yet.
-
+        """Get a random Messier object that hasn't been used yet.
+        
         :return: Tuple of (M number, object data)
+
+
         """
         all_objects = self.messier_catalog.get_all_objects()
         available_objects = [
@@ -68,12 +69,28 @@ class MessierGame:
 
     def create_pinhole_view(self, messier_object: np.ndarray,
                             show_object_marker: bool = True) -> Tuple[plt.Figure, plt.Axes]:
-        """
-        Create a pinhole projection centered on a Messier object.
+        """Create a pinhole projection centered on a Messier object.
 
         :param messier_object: Messier object data
         :param show_object_marker: Whether to mark the Messier object location
-        :return: Figure and axes
+        :param messier_object: np.ndarray:
+        :param show_object_marker: bool:  (Default value = True)
+        :param messier_object: np.ndarray:
+        :param show_object_marker: bool:  (Default value = True)
+        :param messier_object: np.ndarray:
+        :param show_object_marker: bool:  (Default value = True)
+        :param messier_object: np.ndarray:
+        :param show_object_marker: bool:  (Default value = True)
+        :param messier_object: np.ndarray:
+        :param show_object_marker: bool:  (Default value = True)
+        :param messier_object: np.ndarray:
+        :param show_object_marker: bool:  (Default value = True)
+        :param messier_object: np.ndarray:
+        :param show_object_marker: bool:  (Default value = True)
+        :param messier_object: np.ndarray: 
+        :param show_object_marker: bool:  (Default value = True)
+        :returns: Figure and axes
+
         """
         # Get the ECI coordinates of the Messier object
         center_direction = np.array([
@@ -147,11 +164,27 @@ class MessierGame:
         return fig, ax
 
     def display_question(self, messier_object: np.ndarray, m_number: int):
-        """
-        Display the current question.
+        """Display the current question.
 
         :param messier_object: The Messier object data
         :param m_number: The Messier number
+        :param messier_object: np.ndarray:
+        :param m_number: int:
+        :param messier_object: np.ndarray:
+        :param m_number: int:
+        :param messier_object: np.ndarray:
+        :param m_number: int:
+        :param messier_object: np.ndarray:
+        :param m_number: int:
+        :param messier_object: np.ndarray:
+        :param m_number: int:
+        :param messier_object: np.ndarray:
+        :param m_number: int:
+        :param messier_object: np.ndarray:
+        :param m_number: int:
+        :param messier_object: np.ndarray: 
+        :param m_number: int: 
+
         """
         print("\n" + "="*60)
         print(f"Round {self.current_round + 1}/{self.num_rounds}")
@@ -178,13 +211,37 @@ class MessierGame:
 
     def check_answer(self, guess: int, correct_answer: int,
                      messier_object: np.ndarray) -> bool:
-        """
-        Check if the guess is correct and provide feedback.
+        """Check if the guess is correct and provide feedback.
 
         :param guess: Player's guess
         :param correct_answer: Correct Messier number
         :param messier_object: The Messier object data
-        :return: True if correct, False otherwise
+        :param guess: int:
+        :param correct_answer: int:
+        :param messier_object: np.ndarray:
+        :param guess: int:
+        :param correct_answer: int:
+        :param messier_object: np.ndarray:
+        :param guess: int:
+        :param correct_answer: int:
+        :param messier_object: np.ndarray:
+        :param guess: int:
+        :param correct_answer: int:
+        :param messier_object: np.ndarray:
+        :param guess: int:
+        :param correct_answer: int:
+        :param messier_object: np.ndarray:
+        :param guess: int:
+        :param correct_answer: int:
+        :param messier_object: np.ndarray:
+        :param guess: int:
+        :param correct_answer: int:
+        :param messier_object: np.ndarray:
+        :param guess: int: 
+        :param correct_answer: int: 
+        :param messier_object: np.ndarray: 
+        :returns: True if correct, False otherwise
+
         """
         is_correct = (guess == correct_answer)
 
@@ -278,8 +335,9 @@ class MessierGame:
         print("="*60 + "\n")
 
 
-def main():
+def messier_game():
     """Main function to run the game."""
+
     print("\n" + "="*60)
     print("MESSIER OBJECT GUESSING GAME")
     print("="*60)
@@ -306,4 +364,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    messier_game()

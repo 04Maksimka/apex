@@ -16,7 +16,7 @@ from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 
 @dataclass
 class ShotConditions:
-    """ Shooting conditions. """
+    """Shooting conditions."""
     center_direction: NDArray   # direction in ECI (unit vector)
     tilt_angle: float           # angle in degrees on which we rotate a camera
 
@@ -27,7 +27,7 @@ class ShotConditions:
 
 @dataclass
 class CameraConfig:
-    """ Physical camera configurations."""
+    """Physical camera configurations."""
     width: int          # frame width in pixels
     height: int         # frame height in pixels
     focal_length: float # camera focal length in pixels
@@ -39,12 +39,36 @@ class CameraConfig:
             aspect_ratio: float,
             height_pix: int,
     ):
-        """
-        Create CameraConfig from field of view and aspect ratio.
+        """Create CameraConfig from field of view and aspect ratio.
 
         :param fov_deg: Horizontal field of view in degrees
         :param aspect_ratio: width/height ratio
         :param height_pix: height in pixels
+        :param fov_deg: float:
+        :param aspect_ratio: float:
+        :param height_pix: int:
+        :param fov_deg: float:
+        :param aspect_ratio: float:
+        :param height_pix: int:
+        :param fov_deg: float:
+        :param aspect_ratio: float:
+        :param height_pix: int:
+        :param fov_deg: float:
+        :param aspect_ratio: float:
+        :param height_pix: int:
+        :param fov_deg: float:
+        :param aspect_ratio: float:
+        :param height_pix: int:
+        :param fov_deg: float:
+        :param aspect_ratio: float:
+        :param height_pix: int:
+        :param fov_deg: float:
+        :param aspect_ratio: float:
+        :param height_pix: int:
+        :param fov_deg: float: 
+        :param aspect_ratio: float: 
+        :param height_pix: int: 
+
         """
 
         # Calculate frame width
@@ -59,7 +83,7 @@ class CameraConfig:
 
 @dataclass
 class PinholeConfig:
-    """Class of the pinhole projector configurations. """
+    """Class of the pinhole projector configurations."""
 
     local_time: datetime
     grid_theta_step: float = 10.0
@@ -86,6 +110,7 @@ class ProjectionResult:
 
 @dataclass
 class ConstellationConfig(object):
+    """ """
     constellations_list: Optional[
         List[str]] = None  # If None, render all available
     constellation_color: str = 'gray'
@@ -129,12 +154,28 @@ class Pinhole(object):
         self._planets_projections = None
 
     def _make_pinhole_views(self, data: NDArray, object_type: str = 'star') -> NDArray:
-        """
-        Returns coordinates in picture plane (pinhole projection).
+        """Returns coordinates in picture plane (pinhole projection).
 
         :param data: objects equatorial coordinates
         :param object_type: star or planet
-        :return: view parameters
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray: 
+        :param object_type: str:  (Default value = 'star')
+        :returns: view parameters
+
         """
         VIEW_DTYPE = np.dtype([
             ('v_mag', np.float32),
@@ -175,10 +216,18 @@ class Pinhole(object):
         return view_data
 
     def generate(self, constraints: Optional[CatalogConstraints]=None) -> Tuple[plt.Figure, plt.Axes]:
-        """
-        Generate a pinhole projection image.
+        """Generate a pinhole projection image.
 
-        :return: figure
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :returns: figure
+
         """
 
         # Make objects projections
@@ -213,11 +262,18 @@ class Pinhole(object):
         return self._fig, self._ax
 
     def project(self, constraints: CatalogConstraints):
-        """
-        Objects projection maker
+        """Objects projection maker
 
         :param constraints: Catalog constraints
-        :return:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints: 
+
         """
 
         # Get stars data
@@ -243,12 +299,11 @@ class Pinhole(object):
 
     @property
     def projection_result(self) -> ProjectionResult:
+        """ """
         return ProjectionResult(stars=self._star_projections, planets=self._planets_projections)
 
     def _create_picture_plane(self):
-        """
-        Creates the figure and axes.
-        """
+        """Creates the figure and axes."""
 
         self._fig = plt.figure()
         self._ax = self._fig.add_subplot(111)
@@ -274,9 +329,7 @@ class Pinhole(object):
             self._ax.set_yticks([])
 
     def _add_planets(self):
-        """
-        Add planets to image.
-        """
+        """Add planets to image."""
 
         for planet_data in self._planets_projections:
             if planet_data['v_mag'] < self.catalog.constraints.max_magnitude:
@@ -295,9 +348,7 @@ class Pinhole(object):
                 self._groups['Planets'] = self._groups.get('Planets', []) + [(scatter, name)]
 
     def _add_ecliptic(self):
-        """
-        Add ecliptic on image
-        """
+        """Add ecliptic on image"""
 
         RA = 270.0
         DEC = 66.5607
@@ -326,9 +377,7 @@ class Pinhole(object):
             self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Ecliptic')]
 
     def _add_equator(self):
-        """
-        Add equator on image
-        """
+        """Add equator on image"""
 
         equator_eci_coords = generate_small_circle(
             spheric_normal_deg=np.array([0.0, 0.0]),
@@ -354,9 +403,7 @@ class Pinhole(object):
             self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Celestial equator')]
 
     def _add_galactic_equator(self):
-        """
-        Add galactic equator on image
-        """
+        """Add galactic equator on image"""
 
         # Galactical center
         RA = 192.85948
@@ -386,9 +433,7 @@ class Pinhole(object):
             self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Galactic equator')]
 
     def _add_equatorial_grid(self):
-        """
-        Add equatorial grid on image
-        """
+        """Add equatorial grid on image"""
 
         grid = make_equatorial_grid_pinhole(
             center_direction=self.shot_cond.center_direction,
@@ -445,9 +490,7 @@ class Pinhole(object):
                                                  [(first_lc, f'Constellation segments ({len(lcs)})')]
 
     def _add_constellations_names(self):
-        """
-        Adds constellation names on skychart.
-        """
+        """Adds constellation names on skychart."""
 
         POINT_DTYPE = np.dtype([('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
 
@@ -483,9 +526,7 @@ class Pinhole(object):
                 )
 
     def _create_grouped_legend(self):
-        """
-        Create legend below the plot for landscape orientation
-        """
+        """Create legend below the plot for landscape orientation"""
         groups = {k: v for k, v in self._groups.items() if v}
         if not groups:
             return

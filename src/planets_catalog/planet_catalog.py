@@ -38,6 +38,18 @@ class PlanetCatalog(object):
 
     @staticmethod
     def get_planet_color(planet: Planets) -> str:
+        """
+
+        :param planet: Planets:
+        :param planet: Planets:
+        :param planet: Planets:
+        :param planet: Planets:
+        :param planet: Planets:
+        :param planet: Planets:
+        :param planet: Planets:
+        :param planet: Planets: 
+
+        """
         color_dict = {
             Planets.SUN: 'yellow',
             Planets.MERCURY: 'gray',
@@ -52,6 +64,18 @@ class PlanetCatalog(object):
         return color_dict.get(planet, 'orange')
 
     def get_planets(self, time: datetime) -> NDArray:
+        """
+
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime: 
+
+        """
         t = Time(time)
 
         planet_values = np.array([p.value for p in Planets], dtype=np.int64)

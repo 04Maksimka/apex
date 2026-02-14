@@ -3,21 +3,25 @@
 from datetime import datetime, time, timedelta
 import numpy as np
 
+
 SECONDS_IN_HOUR = 3600.0
 MINUTES_IN_HOUR = 60.0
 SECONDS_IN_DAY = 86400.0
 
-def get_sidereal_time(longitude: float, local: datetime):
-    """
-    Calculate local sidereal time
+def get_sidereal_time(longitude: float, local: datetime) -> time:
+    """Calculate local sidereal time
     See in "Practical Astronomy with your Calculator", Peter Duffett-Smith, 1979
+
     :param longitude: place longitude in radians
+    :type longitude: float
     :param local: local time
+    :type local: datetime
+
     :return: LST (Local Sidereal Time)
+    :rtype: time
     """
 
     # Shift from UTC
-    timeshift = get_timeshift(longitude)
     gmt = local
 
     # From 0 January
@@ -43,11 +47,15 @@ def get_sidereal_time(longitude: float, local: datetime):
 
 
 def vequinox_hour_angle(longitude: float, local: datetime) -> float:
-    """
-    Calculate vernal equinox hour angle
+    """Calculate vernal equinox hour angle
+
     :param longitude: place longitude in radians
+    :type longitude: float
     :param local: local time
+    :type local: datetime
+
     :return: hour angle in radians
+    :rtype: float
     """
 
     sidereal_time = get_sidereal_time(longitude, local)
@@ -56,20 +64,26 @@ def vequinox_hour_angle(longitude: float, local: datetime) -> float:
 
 
 def get_total_hours(t: time) -> float:
-    """
-    Calculate time in hours (with floating point)
+    """Calculate time in hours (with floating point)
+
     :param t: time hh:mm:ss
+    :type t: time
+
     :return: hours
+    :rtype: float
     """
 
     return t.hour + t.minute / MINUTES_IN_HOUR + t.second / SECONDS_IN_HOUR
 
 
 def get_timeshift(longitude: float) -> timedelta:
-    """
-    Calculate timeshift between local time and UTC
+    """Calculate timeshift between local time and UTC
+
     :param longitude: longitude in radians
+    :type longitude: float
+
     :return: shift
+    :rtype: timedelta
     """
 
     total_hours = np.rad2deg(longitude) / 15.0
@@ -80,10 +94,13 @@ def get_timeshift(longitude: float) -> timedelta:
 
 
 def get_time(total_hours: float) -> time:
-    """
-    Calculate time object from total hours (with floating point)
+    """Calculate time object from total hours (with floating point)
+
     :param total_hours: hours with floating point
+    :type total_hours: float
+
     :return: corresponding time
+    :rtype: time
     """
 
     hours = int(total_hours % 24)
@@ -94,10 +111,13 @@ def get_time(total_hours: float) -> time:
 
 
 def julian_date(date_time: datetime):
-    """
-    Returns the Julian date, number of days since 1 January 4713 BC 12:00 UTC.
-    :param date_time: datetime object
+    """Returns the Julian date, number of days since 1 January 4713 BC 12:00 UTC.
+
+    :param date_time: time to convert
+    :type date_time: datetime
+
     :return: Julian date
+    :rtype: float
     """
 
     year = date_time.year

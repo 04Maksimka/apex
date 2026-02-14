@@ -1,7 +1,6 @@
 """Module with astronomical geometrical functions."""
 from datetime import datetime
 from typing import Tuple, Union
-
 from matplotlib.collections import LineCollection
 
 from src.helpers.time.time import vequinox_hour_angle
@@ -11,7 +10,7 @@ import numpy as np
 
 def generate_random_direction() -> np.ndarray:
     """Generate random unit vector for sky direction."""
-    # Generate random point on unit sphere using spherical coordinates
+
     theta = np.random.uniform(0, 2 * np.pi)  # azimuth
     phi = np.arccos(np.random.uniform(-1, 1))  # polar angle
 
@@ -26,8 +25,12 @@ def angular_distance(axis: NDArray, vectors: NDArray) -> float:
     Angular distance between vectors and axis
 
     :param axis: the vector from which the distance is being calculated
-    :param vectors: the vectors being calculated
-    :return: angular distances between vectors and axis
+    :type axis: NDArray
+    :param vectors: the vectors being calculated):
+    :type vectors: NDArray
+
+    :return: angular distance between vectors and axis
+    :rtype: float
     """
 
     axis = np.asarray(axis, dtype=np.float64)
@@ -55,10 +58,16 @@ def mag_to_radius(
 ) -> Union[float, NDArray]:
     """
     Returns radius of the point corresponds to given star magnitude.
-    :param max_magnitude: maximum magnitude
-    :param min_magnitude: minimum magnitude
+
     :param magnitude: star magnitude(s)
-    :return: radius: star image radius
+    :type magnitude: float or NDArray
+    :param max_magnitude: maximum magnitude
+    :type max_magnitude: float
+    :param min_magnitude: minimum magnitude
+    :type min_magnitude: float
+
+    :return: star image radius
+    :rtype: float or NDArray
     """
 
     if min_magnitude is None:
@@ -72,11 +81,18 @@ def get_horizontal_coords(longitude: float, latitude: float, local_time: datetim
     Get horizontal coordinates from catalog data.
 
     :param longitude: place longitude
+    :type longitude: float
     :param latitude: place latitude
+    :type latitude: float
     :param local_time: local time
+    :type local_time: datetime
     :param data: data to make conversion into horizontal coordinates
-    :return: tuple of mask and horizontal coordinates with zenith distances, azimuths
+    :type data: NDArray
+
+    :return: a pair of mask and horizontal coordinates with zenith distances, azimuths
+    :rtype: tuple
     """
+
     HORIZONTAL_DTYPE = np.dtype([
         ('x', np.float32),
         ('y', np.float32),
@@ -134,7 +150,10 @@ def make_stereo_projection(view_data: NDArray) -> NDArray:
     Returns point stereographic projections array.
 
     :param view_data: observed object parameters in horizontal coordinates
+    :type view_data: NDArray
+
     :return: image point parameters
+    :rtype: NDArray
     """
 
     PROJECTION_DTYPE = np.dtype([
@@ -165,12 +184,20 @@ def make_pinhole_projection(
     Returns point pinhole projections array.
 
     :param center_direction: ECI unit vector of view direction
+    :type center_direction: NDArray
     :param tilt_dec: frame tilt angle in degrees
+    :type tilt_dec: float
     :param focal_length: focal length in pixels
+    :type focal_length: float
     :param image_width: frame width in pixels
+    :type image_width: float
     :param image_height: frame height in pixels
+    :type image_height: float
     :param data: data to project
-    :return: projections
+    :type data: NDArray
+
+    :return: a pair of mask and coordinates in reference plane system
+    :rtype: tuple
     """
 
     PICTURE_PLANE_DTYPE = np.dtype([
@@ -212,8 +239,12 @@ def create_camera_frame_system(center_direction: NDArray, tilt_dec: float) -> ND
     Create camera coordinate system from shot conditions.
 
     :param center_direction: ECI unit vector of camera view direction
+    :type center_direction: NDArray
     :param tilt_dec: tilt angle of frame with respect to zenith direction
+    :type tilt_dec: float
+
     :return: camera frame system matrix
+    :rtype: NDArray
     """
 
     # Z-axis: pointing direction (negative because camera looks along negative Z)
@@ -250,9 +281,14 @@ def generate_small_circle(spheric_normal_deg: NDArray, alpha_deg: float, num_poi
     Generate a small circle on unit sphere in ECI coordinates.
 
     :param spheric_normal_deg: spherical coordinates on the normal to hte place of circle, angles in degrees
+    :type spheric_normal_deg: NDArray
     :param alpha_deg: angle between any radis vector of the point on small circle and normal
+    :type alpha_deg: float
     :param num_points: number of points to generate
+    :type num_points: int
+
     :return: array of points in cartesian ECI coordinates
+    :rtype: NDArray
     """
 
     POINTS_DTYPE = np.dtype([
@@ -309,7 +345,10 @@ def make_points_stereo_projection(points: NDArray) -> NDArray:
     Returns star point projections array.
 
     :param points: points to project, must contain azimuth and zenith args
+    :type points: NDArray
+
     :return: projection point polar coordinates
+    :rtype: NDArray
     """
 
     PROJECTION_DTYPE = np.dtype([
@@ -322,25 +361,6 @@ def make_points_stereo_projection(points: NDArray) -> NDArray:
     points_data['angle'] = points['azimuth']
 
     return points_data
-
-def quick_from_eci_to_stereo_projection(
-        points: NDArray,
-        longitude: float,
-        latitude: float,
-        local_time: datetime,
-) -> NDArray:
-    _, points_horizontal = get_horizontal_coords(
-        longitude=longitude,
-        latitude=latitude,
-        local_time=local_time,
-        data=points
-    )
-    mask = points_horizontal['zenith'] < np.pi / 2
-    points_projection = make_points_stereo_projection(
-        points=points_horizontal[mask]
-    )
-    return points_projection
-
 
 def make_equatorial_grid_pinhole(
         center_direction: NDArray,
@@ -355,13 +375,22 @@ def make_equatorial_grid_pinhole(
     Creates an equatorial grid for pinhole image/
 
     :param center_direction: ECI unit vector of camera view direction
+    :type center_direction: NDArray
     :param tilt_dec: tilt angle in degrees
+    :type tilt_dec: float
     :param focal_length: focal length in pixels
+    :type focal_length: float
     :param image_width: image width in pixels
+    :type image_width: float
     :param image_height: image height in pixels
+    :type image_height: float
     :param grid_step_dec: declination grid step in degrees
+    :type grid_step_dec: float
     :param grid_step_ra: right ascension grid step in degrees
+    :type grid_step_ra: float
+
     :return: grid as LineCollection object
+    :rtype: LineCollection
     """
 
     num_points = 100
@@ -454,10 +483,16 @@ def clean_far_points(
     Removes points further than FOV from center direction out of circle
 
     :param circle: circle initial points to clean
+    :type circle: NDArray
     :param fov_rad: camera field of view
+    :type fov_rad: float
     :param center_direction: ECI unit vector of camera view direction
+    :type center_direction: NDArray
     :param gap_threshold: threshold to consider distance a large gap between points
+    :type gap_threshold: float
+
     :return: cleaned points
+    :rtype: NDArray
     """
 
     max_distance = fov_rad / 2

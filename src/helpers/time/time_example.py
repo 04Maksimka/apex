@@ -16,7 +16,8 @@ print(
     )
 )
 
-print(julian_date(
+print(
+    julian_date(
     date_time=datetime(
         year=2025,
         month=12,

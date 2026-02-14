@@ -74,17 +74,29 @@ class CylindricPlanetsMovement:
 
     def _ra_dec_to_cylindric(self, ra: np.ndarray, dec: np.ndarray) -> Tuple[
         np.ndarray, np.ndarray]:
-        """
-        Convert RA/Dec to cylindrical projection coordinates.
+        """Convert RA/Dec to cylindrical projection coordinates.
 
-        Args:
-            ra: Right ascension in radians
-            dec: Declination in radians
+        :param ra: Right ascension in radians
+        :param dec: Declination in radians
+        :param ra: np.ndarray:
+        :param dec: np.ndarray:
+        :param ra: np.ndarray:
+        :param dec: np.ndarray:
+        :param ra: np.ndarray:
+        :param dec: np.ndarray:
+        :param ra: np.ndarray:
+        :param dec: np.ndarray:
+        :param ra: np.ndarray:
+        :param dec: np.ndarray:
+        :param ra: np.ndarray:
+        :param dec: np.ndarray:
+        :param ra: np.ndarray:
+        :param dec: np.ndarray:
+        :param ra: np.ndarray: 
+        :param dec: np.ndarray: 
+        :returns: Tuple of->
+        :rtype: x
 
-        Returns:
-            Tuple of (x, y) coordinates where:
-            - x is in range [0, 360] (degrees)
-            - y is in range [-90, 90] (degrees)
         """
         x = np.rad2deg(ra) % 360
         y = np.rad2deg(dec)
@@ -128,7 +140,18 @@ class CylindricPlanetsMovement:
         return fig, ax
 
     def _plot_stars(self, ax: plt.Axes):
-        """Plot background stars on the axes."""
+        """Plot background stars on the axes.
+
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes: 
+
+        """
         if self.stars is None:
             return
 
@@ -145,7 +168,18 @@ class CylindricPlanetsMovement:
         ax.scatter(x, y, s=sizes, c=color, alpha=0.6, zorder=1)
 
     def _plot_ecliptic(self, ax: plt.Axes):
-        """Plot the ecliptic line."""
+        """Plot the ecliptic line.
+
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes:
+        :param ax: plt.Axes: 
+
+        """
         # The ecliptic is at roughly 23.5 degrees inclination to the celestial equator
         # For simplicity, we'll draw a sinusoidal curve
         ra_points = np.linspace(0, 360, 1000)
@@ -160,7 +194,18 @@ class CylindricPlanetsMovement:
                 linewidth=1.5, linestyle='--', label='Ecliptic', zorder=2)
 
     def _get_planet_positions(self, time: datetime) -> dict:
-        """Get positions of all planets at given time."""
+        """Get positions of all planets at given time.
+
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime:
+        :param time: datetime: 
+
+        """
         planets_data = self.planet_catalog.get_planets(time)
 
         positions = {}
@@ -215,7 +260,11 @@ class CylindricPlanetsMovement:
             return list(planet_scatters.values()) + [time_text]
 
         def update(frame_idx):
-            """Update animation frame."""
+            """Update animation frame.
+
+            :param frame_idx: 
+
+            """
             time = self.times[frame_idx]
             positions = self._get_planet_positions(time)
 

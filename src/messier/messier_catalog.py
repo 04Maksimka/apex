@@ -5,13 +5,14 @@ nebulae, star clusters, and other astronomical objects compiled by
 Charles Messier in the 18th century.
 """
 from enum import IntEnum
-from typing import List, Optional, Tuple
+from typing import Optional
 import numpy as np
 from numpy.typing import NDArray
 
 
 class MessierType(IntEnum):
-    """Types of Messier objects."""
+    """ Types of Messier objects. """
+
     GALAXY = 1              # Galaxy
     GLOBULAR_CLUSTER = 2    # Globular star cluster
     OPEN_CLUSTER = 3        # Open star cluster
@@ -21,10 +22,12 @@ class MessierType(IntEnum):
 
 
 class MessierCatalog:
-    """Catalog of Messier deep-sky objects."""
+    """
+    Catalog of Messier deep-sky objects.
+    Complete Messier catalog data
+    Format: (M_number, name, RA_hours, RA_min, RA_sec, Dec_deg, Dec_min, Dec_sec, magnitude, size_arcmin, type, constellation)
+    """
 
-    # Complete Messier catalog data
-    # Format: (M_number, name, RA_hours, RA_min, RA_sec, Dec_deg, Dec_min, Dec_sec, magnitude, size_arcmin, type, constellation)
     MESSIER_DATA = [
         (1, "Crab Nebula", 5, 34, 31.94, 22, 0, 52.2, 8.4, 6.0, MessierType.SUPERNOVA_REMNANT, "Tau"),
         (2, "", 21, 33, 27.02, -0, 49, 23.7, 6.3, 16.0, MessierType.GLOBULAR_CLUSTER, "Aqr"),
@@ -139,12 +142,12 @@ class MessierCatalog:
     ]
 
     def __init__(self):
-        """Initialize the Messier catalog."""
+        """ Initialize the Messier catalog. """
         self._catalog_array = None
         self._build_catalog()
 
     def _build_catalog(self):
-        """Build the structured NumPy array from catalog data."""
+        """ Build the structured NumPy array from catalog data. """
         MESSIER_DTYPE = np.dtype([
             ('m_number', np.int32),
             ('name', 'U50'),
@@ -198,38 +201,123 @@ class MessierCatalog:
         return self._catalog_array.copy()
 
     def get_object_by_number(self, m_number: int) -> Optional[NDArray]:
-        """Get a specific Messier object by its M number."""
+        """Get a specific Messier object by its M number.
+
+        :param m_number: int:
+        :param m_number: int:
+        :param m_number: int:
+        :param m_number: int:
+        :param m_number: int:
+        :param m_number: int:
+        :param m_number: int:
+        :param m_number: int: 
+
+        """
         mask = self._catalog_array['m_number'] == m_number
         result = self._catalog_array[mask]
         return result[0] if len(result) > 0 else None
 
     def get_objects_by_type(self, obj_type: MessierType) -> NDArray:
-        """Get all Messier objects of a specific type."""
+        """Get all Messier objects of a specific type.
+
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType: 
+
+        """
         mask = self._catalog_array['obj_type'] == obj_type
         return self._catalog_array[mask].copy()
 
     def get_objects_by_constellation(self, constellation: str) -> NDArray:
-        """Get all Messier objects in a specific constellation."""
+        """Get all Messier objects in a specific constellation.
+
+        :param constellation: str:
+        :param constellation: str:
+        :param constellation: str:
+        :param constellation: str:
+        :param constellation: str:
+        :param constellation: str:
+        :param constellation: str:
+        :param constellation: str: 
+
+        """
         mask = self._catalog_array['constellation'] == constellation.upper()
         return self._catalog_array[mask].copy()
 
     def get_objects_by_magnitude(self, min_mag: float = -30.0, max_mag: float = 30.0) -> NDArray:
-        """Get Messier objects within a magnitude range."""
+        """Get Messier objects within a magnitude range.
+
+        :param min_mag: float:  (Default value = -30.0)
+        :param max_mag: float:  (Default value = 30.0)
+        :param min_mag: float:  (Default value = -30.0)
+        :param max_mag: float:  (Default value = 30.0)
+        :param min_mag: float:  (Default value = -30.0)
+        :param max_mag: float:  (Default value = 30.0)
+        :param min_mag: float:  (Default value = -30.0)
+        :param max_mag: float:  (Default value = 30.0)
+        :param min_mag: float:  (Default value = -30.0)
+        :param max_mag: float:  (Default value = 30.0)
+        :param min_mag: float:  (Default value = -30.0)
+        :param max_mag: float:  (Default value = 30.0)
+        :param min_mag: float:  (Default value = -30.0)
+        :param max_mag: float:  (Default value = 30.0)
+        :param min_mag: float:  (Default value = -30.0)
+        :param max_mag: float:  (Default value = 30.0)
+
+        """
         mask = (self._catalog_array['v_mag'] >= min_mag) & (self._catalog_array['v_mag'] <= max_mag)
         return self._catalog_array[mask].copy()
 
     def get_brightest_objects(self, n: int = 10) -> NDArray:
-        """Get the N brightest Messier objects."""
+        """Get the N brightest Messier objects.
+
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+
+        """
         sorted_indices = np.argsort(self._catalog_array['v_mag'])
         return self._catalog_array[sorted_indices[:n]].copy()
 
     def get_largest_objects(self, n: int = 10) -> NDArray:
-        """Get the N largest Messier objects by angular size."""
+        """Get the N largest Messier objects by angular size.
+
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+        :param n: int:  (Default value = 10)
+
+        """
         sorted_indices = np.argsort(self._catalog_array['size'])[::-1]
         return self._catalog_array[sorted_indices[:n]].copy()
 
     def search_by_name(self, name: str) -> NDArray:
-        """Search for Messier objects by name."""
+        """Search for Messier objects by name.
+
+        :param name: str:
+        :param name: str:
+        :param name: str:
+        :param name: str:
+        :param name: str:
+        :param name: str:
+        :param name: str:
+        :param name: str: 
+
+        """
         name_lower = name.lower()
         mask = np.array([
             name_lower in obj_name.lower()
@@ -255,7 +343,18 @@ class MessierCatalog:
 
     @staticmethod
     def get_type_name(obj_type: MessierType) -> str:
-        """Get the human-readable name for an object type."""
+        """Get the human-readable name for an object type.
+
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType: 
+
+        """
         type_names = {
             MessierType.GALAXY: "Galaxy",
             MessierType.GLOBULAR_CLUSTER: "Globular Cluster",
@@ -268,7 +367,18 @@ class MessierCatalog:
 
     @staticmethod
     def get_type_color(obj_type: MessierType) -> str:
-        """Get a suggested color for visualizing an object type."""
+        """Get a suggested color for visualizing an object type.
+
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType:
+        :param obj_type: MessierType: 
+
+        """
         type_colors = {
             MessierType.GALAXY: "#FF6B9D",
             MessierType.GLOBULAR_CLUSTER: "#FFD700",

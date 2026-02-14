@@ -5,8 +5,14 @@ from matplotlib import pyplot as plt
 from src.helpers.pdf_helpers.figure2pdf import save_figure
 
 
-def example_with_local_logo(need_pdf=False):
-    """Example with local logo file."""
+def example_with_local_logo(need_pdf: bool = False):
+    """
+    Example with local logo file.
+
+    :param need_pdf: enable flag if you need to save a pdf file with logo.
+    :type need_pdf: bool
+    """
+
     # Create polar scatter plot
     fig, ax = _create_polar_scatter()
 
@@ -27,6 +33,7 @@ def example_with_local_logo(need_pdf=False):
 
 def _create_polar_scatter():
     """Create a scatter plot in polar coordinates."""
+
     # Set up the figure with polar projection
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='polar')

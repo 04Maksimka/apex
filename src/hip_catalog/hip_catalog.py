@@ -10,9 +10,7 @@ from typing import Dict, Optional, Any
 
 @dataclass
 class CatalogConstraints(object):
-    """
-    Data class of user Hipparchus catalog constraints.
-    """
+    """Data class of user Hipparchus catalog constraints."""
 
     max_magnitude: float = 6.0                      # maximum magnitude of stars (dimmest)
     min_magnitude: Optional[float] = None           # minimum magnitude of stars (brightest)
@@ -27,9 +25,7 @@ class CatalogConstraints(object):
 
 
 class Catalog(object):
-    """
-    Hipparchus catalog optimized for fast numpy operating.
-    """
+    """Hipparchus catalog optimized for fast numpy operating."""
 
     catalog_name: str                           # catalog filename
     catalog_path: pathlib.Path                  # path to the catalog with catalog_name
@@ -53,8 +49,11 @@ class Catalog(object):
     def __init__(self, catalog_name: str, cache_dir: Optional[str] = None, use_cache: bool = False):
         """
         :param catalog_name: file star catalog name
+        :type catalog_name: str
         :param cache_dir: caching directory
+        :type cache_dir: str
         :param use_cache: flag enable/disable caching
+        :type use_cache: bool
         """
 
         self.catalog_name = catalog_name
@@ -74,28 +73,6 @@ class Catalog(object):
         self._data = None
         self._cache_key = None
         self._constraints = None
-    #FIXME:
-    def _find_cache_root(self) -> pathlib.Path:
-        """
-        Search for cache directory
-        :param project_name: Имя корневой папки проекта
-        :param start_path: Начальная точка поиска (по умолчанию - текущий файл)
-        :return: Абсолютный путь к корню проекта
-        """
-        if start_path is None:
-            start_path = pathlib.Path(__file__).resolve()
-        else:
-            start_path = pathlib.Path(start_path).resolve()
-
-        for parent in start_path.parents:
-            if parent.name == project_name:
-                return parent
-
-        # Если не нашли - падаем с понятной ошибкой
-        raise FileNotFoundError(
-            f"Project directory '{project_name}' not found in path hierarchy. "
-            f"Search started from: {start_path}"
-        )
 
     @staticmethod
     def _generate_cache_key(constraints: CatalogConstraints) -> str:
@@ -103,7 +80,10 @@ class Catalog(object):
         Unique cache key generator for chosen catalog constraints.
 
         :param constraints: catalog constraints
+        :type constraints: CatalogConstraints
+
         :return: sha256 key string
+        :rtype: str
         """
 
         hash_data = {
@@ -113,11 +93,28 @@ class Catalog(object):
         return hashlib.sha256(hash_json.encode()).hexdigest()
 
     def _get_cache_path(self, cache_key: str) -> pathlib.Path:
-        """ Get path to the cache file by cache key. """
+        """
+        Get path to the cache file by cache key.
+
+        :param cache_key: cache key
+        :type cache_key: str
+
+        :return: cache path
+        :rtype: pathlib.Path
+        """
+
         return self.cache_dir / f"{cache_key}.npy"
 
     def _get_metadata_path(self, cache_key: str) -> pathlib.Path:
-        """ Get path to the metadata by cache key. """
+        """
+        Get path to the metadata by cache key.
+
+        :param cache_key: cache key
+        :type cache_key: str
+
+        :return: path to metadata file
+        :rtype: pathlib.Path
+        """
         return self.cache_dir / f"{cache_key}_meta.npy"
 
     def _is_cached(self, constraints: CatalogConstraints) -> bool:
@@ -125,6 +122,10 @@ class Catalog(object):
         Checks if catalog with these constraints is cached or not.
 
         :param constraints: catalog constraints
+        :type constraints: CatalogConstraints
+
+        :return: True if catalog with these constraints is cached else False
+        :rtype: bool
         """
 
         if not self.use_cache:
@@ -141,6 +142,10 @@ class Catalog(object):
         Loads catalog from cache.
 
         :param constraints: catalog constraints
+        :type constraints: CatalogConstraints
+
+        :return: loaded catalog
+        :rtype: NDArray
         """
 
         if not self.use_cache:
@@ -160,7 +165,9 @@ class Catalog(object):
         Store data to cache
 
         :param data: data to be cached
+        :type data: NDArray
         :param constraints: constraints
+        :type constraints: CatalogConstraints
         """
 
         if not self.use_cache:
@@ -177,10 +184,9 @@ class Catalog(object):
         np.save(meta_file, metadata)
 
     def _load_raw_data(self) -> NDArray:
-        """
-        Loads raw data from file
-
-        :return: cleaned raw data
+        """Loads raw data from file
+        
+        :returns: cleaned raw data
         """
 
         raw_data = np.genfromtxt(
@@ -198,12 +204,28 @@ class Catalog(object):
 
     @staticmethod
     def _apply_constraints(data: NDArray, constraints: CatalogConstraints) -> NDArray:
-        """
-        Applies constraints to raw data
+        """Applies constraints to raw data
 
         :param data: data to constraint
         :param constraints: constraints
-        :return: filtered data
+        :param data: NDArray:
+        :param constraints: CatalogConstraints:
+        :param data: NDArray:
+        :param constraints: CatalogConstraints:
+        :param data: NDArray:
+        :param constraints: CatalogConstraints:
+        :param data: NDArray:
+        :param constraints: CatalogConstraints:
+        :param data: NDArray:
+        :param constraints: CatalogConstraints:
+        :param data: NDArray:
+        :param constraints: CatalogConstraints:
+        :param data: NDArray:
+        :param constraints: CatalogConstraints:
+        :param data: NDArray: 
+        :param constraints: CatalogConstraints: 
+        :returns: filtered data
+
         """
 
         masks = []
@@ -226,10 +248,18 @@ class Catalog(object):
         return filtered_data
 
     def _convert_to_structured_numpy(self, raw_data: NDArray):
-        """
-        Converts raw data to structured numpy array of STAR_DTYPEs
+        """Converts raw data to structured numpy array of STAR_DTYPEs
 
         :param raw_data: raw data
+        :param raw_data: NDArray:
+        :param raw_data: NDArray:
+        :param raw_data: NDArray:
+        :param raw_data: NDArray:
+        :param raw_data: NDArray:
+        :param raw_data: NDArray:
+        :param raw_data: NDArray:
+        :param raw_data: NDArray: 
+
         """
 
         number_of_stars = raw_data.shape[0]
@@ -255,10 +285,18 @@ class Catalog(object):
         return structured_data
 
     def get_stars(self, constraints: Optional[CatalogConstraints] = None) -> NDArray:
-        """
-        Main catalog generation method
+        """Main catalog generation method
 
         :param constraints: constraints, optional, defaults to None
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+
         """
         if constraints is None:
             constraints = CatalogConstraints()
@@ -281,26 +319,29 @@ class Catalog(object):
 
     @property
     def data(self) -> NDArray:
+        """ """
         if self._data is None:
             self.get_stars()
         return self._data
 
     @property
     def number_of_stars(self) -> int:
+        """ """
         return self._data.shape[0]
 
     @property
     def constraints(self) -> Optional[CatalogConstraints]:
+        """ """
         return self._constraints
 
     @staticmethod
     def _clean_raw_data(raw_data):
-        """
-        Removes units and rows with missing values
+        """Removes units and rows with missing values
         in right ascension and declinations columns
 
         :param raw_data: source catalog data
-        :return: cleaned catalog data
+        :returns: cleaned catalog data
+
         """
         raw_data = raw_data[1:]
         mask = (raw_data['_RAJ2000'] != '') & (raw_data['_DEJ2000'] != '')

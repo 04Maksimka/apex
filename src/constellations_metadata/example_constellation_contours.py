@@ -3,6 +3,8 @@
 This example demonstrates how to visualize star fields with constellation
 line patterns overlaid on the projection.
 """
+
+import numpy as np
 from matplotlib import pyplot as plt
 from datetime import datetime
 from typing import List, Optional
@@ -31,34 +33,192 @@ def visualize_constellation_with_contours(
     add_ecliptic: bool = False,
     add_equator: bool = False,
     add_galactic_equator: bool = False,
-    add_horizontal_grid: bool = False,
     add_equatorial_grid: bool = False,
     show_constellation_lines: bool = True,
     line_color: str = 'cyan',
     line_width: float = 1.2,
     line_alpha: float = 0.8,
-    show_planets: bool = False,
     title: Optional[str] = None,
 ):
+    """Create visualization of a constellation with contour lines.
+
+    :param add_equatorial_grid: type add_equatorial_grid: bool
+    :param add_equator: type add_equator: bool
+    :param add_ecliptic: type add_ecliptic: bool
+    :param add_planets: type add_planets: bool
+    :param add_ticks: type add_ticks: bool
+    :param add_galactic_equator: type add_galactic_equator: bool
+    :param constellation: Target constellation
+    :type constellation: str
+    :param tilt_angle: Camera tilt angle in degrees
+    :type tilt_angle: float
+    :param fov_deg: Horizontal field of view in degrees
+    :type fov_deg: float
+    :param aspect_ratio: Width/height ratio
+    :type aspect_ratio: float
+    :param height: Image height in pixels
+    :type height: int
+    :param time: Observation time (default: 2024-01-01 00:00:00)
+    :type time: Optional[datetime]
+    :param use_dark_mode: Use dark background
+    :type use_dark_mode: bool
+    :param show_constellation_lines: Draw constellation contour lines
+    :type show_constellation_lines: bool
+    :param line_color: Color for constellation lines
+    :type line_color: str
+    :param line_width: Width of constellation lines
+    :type line_width: float
+    :param line_alpha: Transparency of constellation lines
+    :type line_alpha: float
+    :param title: Custom plot title
+    :type title: Optional[str]
+    :param constellation: str:
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 60)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1000)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param show_constellation_lines: bool:  (Default value = True)
+    :param line_color: str:  (Default value = 'cyan')
+    :param line_width: float:  (Default value = 1.2)
+    :param line_alpha: float:  (Default value = 0.8)
+    :param title: Optional[str]:  (Default value = None)
+    :param constellation: str:
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 60)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1000)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param show_constellation_lines: bool:  (Default value = True)
+    :param line_color: str:  (Default value = 'cyan')
+    :param line_width: float:  (Default value = 1.2)
+    :param line_alpha: float:  (Default value = 0.8)
+    :param title: Optional[str]:  (Default value = None)
+    :param constellation: str:
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 60)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1000)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param show_constellation_lines: bool:  (Default value = True)
+    :param line_color: str:  (Default value = 'cyan')
+    :param line_width: float:  (Default value = 1.2)
+    :param line_alpha: float:  (Default value = 0.8)
+    :param title: Optional[str]:  (Default value = None)
+    :param constellation: str:
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 60)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1000)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param show_constellation_lines: bool:  (Default value = True)
+    :param line_color: str:  (Default value = 'cyan')
+    :param line_width: float:  (Default value = 1.2)
+    :param line_alpha: float:  (Default value = 0.8)
+    :param title: Optional[str]:  (Default value = None)
+    :param constellation: str:
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 60)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1000)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param show_constellation_lines: bool:  (Default value = True)
+    :param line_color: str:  (Default value = 'cyan')
+    :param line_width: float:  (Default value = 1.2)
+    :param line_alpha: float:  (Default value = 0.8)
+    :param title: Optional[str]:  (Default value = None)
+    :param constellation: str:
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 60)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1000)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param show_constellation_lines: bool:  (Default value = True)
+    :param line_color: str:  (Default value = 'cyan')
+    :param line_width: float:  (Default value = 1.2)
+    :param line_alpha: float:  (Default value = 0.8)
+    :param title: Optional[str]:  (Default value = None)
+    :param constellation: str:
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 60)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1000)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param show_constellation_lines: bool:  (Default value = True)
+    :param line_color: str:  (Default value = 'cyan')
+    :param line_width: float:  (Default value = 1.2)
+    :param line_alpha: float:  (Default value = 0.8)
+    :param title: Optional[str]:  (Default value = None)
+    :param constellation: str: 
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 60)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1000)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param show_constellation_lines: bool:  (Default value = True)
+    :param line_color: str:  (Default value = 'cyan')
+    :param line_width: float:  (Default value = 1.2)
+    :param line_alpha: float:  (Default value = 0.8)
+    :param title: Optional[str]:  (Default value = None)
+
     """
-    Create visualization of a constellation with contour lines.
-    
-    Args:
-        constellation: Target constellation
-        tilt_angle: Camera tilt angle in degrees
-        fov_deg: Horizontal field of view in degrees
-        aspect_ratio: Width/height ratio
-        height: Image height in pixels
-        time: Observation time (default: 2024-01-01 00:00:00)
-        use_dark_mode: Use dark background
-        remove_ticks: Remove axis ticks
-        show_constellation_lines: Draw constellation contour lines
-        line_color: Color for constellation lines
-        line_width: Width of constellation lines
-        line_alpha: Transparency of constellation lines
-        show_planets: Draw planets if visible
-        title: Custom plot title
-    """
+
     # Setup catalogs
     catalog = Catalog(catalog_name='hip_data.tsv', use_cache=False)
     planet_catalog = PlanetCatalog()
@@ -76,7 +236,7 @@ def visualize_constellation_with_contours(
     
     # Setup shot conditions
     shot_cond = ShotConditions(
-        center_direction=get_constellation_center(constellation),
+        center_direction=np.asarray(get_constellation_center(constellation)),
         tilt_angle=tilt_angle,
     )
 
@@ -154,30 +314,179 @@ def visualize_multiple_constellations(
     add_ecliptic: bool = False,
     add_equator: bool = False,
     add_galactic_equator: bool = False,
-    add_horizontal_grid: bool = False,
     add_equatorial_grid: bool = False,
-    remove_ticks: bool = True,
     constellation_colors: Optional[dict] = None,
     line_width: float = 1.0,
     line_alpha: float = 0.7,
 ):
+    """Visualize multiple constellation contours in a single view.
+
+    :param add_equatorial_grid: type add_equatorial_grid: bool
+    :param add_equator: type add_equator: bool
+    :param add_ecliptic: type add_ecliptic: bool
+    :param add_planets: type add_planets: bool
+    :param add_ticks: type add_ticks: bool
+    :param add_galactic_equator: type add_galactic_equator: bool
+    :param constellations: List of constellations to display
+    :type constellations: List[str]
+    :param center_constellation: Constellation to center on (default: first in list)
+    :type center_constellation: Optional[str]
+    :param tilt_angle: Camera tilt angle
+    :type tilt_angle: float
+    :param fov_deg: Field of view
+    :type fov_deg: float
+    :param aspect_ratio: Width/height ratio
+    :type aspect_ratio: float
+    :param height: Image height in pixels
+    :type height: int
+    :param time: Observation time
+    :type time: Optional[datetime]
+    :param use_dark_mode: Use dark background
+    :type use_dark_mode: bool
+    :param constellation_colors: Optional dict mapping constellations to colors
+    :type constellation_colors: Optional[dict]
+    :param line_width: Width of constellation lines
+    :type line_width: float
+    :param line_alpha: float: Transparency of constellation lines
+    :param constellations: List[str]:
+    :param center_constellation: Optional[str]:  (Default value = None)
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 90)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1200)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param constellation_colors: Optional[dict]:  (Default value = None)
+    :param line_width: float:  (Default value = 1.0)
+    :param line_alpha: float:  (Default value = 0.7)
+    :param constellations: List[str]:
+    :param center_constellation: Optional[str]:  (Default value = None)
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 90)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1200)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param constellation_colors: Optional[dict]:  (Default value = None)
+    :param line_width: float:  (Default value = 1.0)
+    :param line_alpha: float:  (Default value = 0.7)
+    :param constellations: List[str]:
+    :param center_constellation: Optional[str]:  (Default value = None)
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 90)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1200)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param constellation_colors: Optional[dict]:  (Default value = None)
+    :param line_width: float:  (Default value = 1.0)
+    :param line_alpha: float:  (Default value = 0.7)
+    :param constellations: List[str]:
+    :param center_constellation: Optional[str]:  (Default value = None)
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 90)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1200)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param constellation_colors: Optional[dict]:  (Default value = None)
+    :param line_width: float:  (Default value = 1.0)
+    :param line_alpha: float:  (Default value = 0.7)
+    :param constellations: List[str]:
+    :param center_constellation: Optional[str]:  (Default value = None)
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 90)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1200)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param constellation_colors: Optional[dict]:  (Default value = None)
+    :param line_width: float:  (Default value = 1.0)
+    :param line_alpha: float:  (Default value = 0.7)
+    :param constellations: List[str]:
+    :param center_constellation: Optional[str]:  (Default value = None)
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 90)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1200)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param constellation_colors: Optional[dict]:  (Default value = None)
+    :param line_width: float:  (Default value = 1.0)
+    :param line_alpha: float:  (Default value = 0.7)
+    :param constellations: List[str]:
+    :param center_constellation: Optional[str]:  (Default value = None)
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 90)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1200)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param constellation_colors: Optional[dict]:  (Default value = None)
+    :param line_width: float:  (Default value = 1.0)
+    :param line_alpha: float:  (Default value = 0.7)
+    :param constellations: List[str]: 
+    :param center_constellation: Optional[str]:  (Default value = None)
+    :param tilt_angle: float:  (Default value = 0)
+    :param fov_deg: float:  (Default value = 90)
+    :param aspect_ratio: float:  (Default value = 1.5)
+    :param height: int:  (Default value = 1200)
+    :param time: Optional[datetime]:  (Default value = None)
+    :param use_dark_mode: bool:  (Default value = True)
+    :param add_ticks: bool:  (Default value = False)
+    :param add_planets: bool:  (Default value = False)
+    :param add_ecliptic: bool:  (Default value = False)
+    :param add_equator: bool:  (Default value = False)
+    :param add_galactic_equator: bool:  (Default value = False)
+    :param add_equatorial_grid: bool:  (Default value = False)
+    :param constellation_colors: Optional[dict]:  (Default value = None)
+    :param line_width: float:  (Default value = 1.0)
+    :param line_alpha: float:  (Default value = 0.7)
+
     """
-    Visualize multiple constellation contours in a single view.
-    
-    Args:
-        constellations: List of constellations to display
-        center_constellation: Constellation to center on (default: first in list)
-        tilt_angle: Camera tilt angle
-        fov_deg: Field of view
-        aspect_ratio: Width/height ratio
-        height: Image height in pixels
-        time: Observation time
-        use_dark_mode: Use dark background
-        remove_ticks: Remove axis ticks
-        constellation_colors: Optional dict mapping constellations to colors
-        line_width: Width of constellation lines
-        line_alpha: Transparency of constellation lines
-    """
+
     # Setup
     catalog = Catalog(catalog_name='hip_data.tsv', use_cache=False)
     planet_catalog = PlanetCatalog()
@@ -196,7 +505,7 @@ def visualize_multiple_constellations(
         center_constellation = constellations[0]
     
     shot_cond = ShotConditions(
-        center_direction=get_constellation_center(center_constellation),
+        center_direction=np.asarray(get_constellation_center(center_constellation)),
         tilt_angle=tilt_angle,
     )
 
@@ -279,7 +588,6 @@ if __name__ == '__main__':
         add_ecliptic=True,
         add_equator=True,
         add_galactic_equator=True,
-        add_horizontal_grid=True,
         add_equatorial_grid=True,
     )
     
@@ -297,7 +605,6 @@ if __name__ == '__main__':
         add_ecliptic=True,
         add_equator=True,
         add_galactic_equator=True,
-        add_horizontal_grid=True,
         add_equatorial_grid=True,
     )
     
@@ -328,7 +635,6 @@ if __name__ == '__main__':
         add_ecliptic=True,
         add_equator=True,
         add_galactic_equator=True,
-        add_horizontal_grid=True,
         add_equatorial_grid=True,
     )
     

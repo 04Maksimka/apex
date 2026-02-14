@@ -3,6 +3,7 @@ import numpy as np
 import click
 from datetime import datetime
 
+from src.messier_pygame.game import messier_game
 from src.constellations_metadata.constellations_data import get_constellation_center
 from src.helpers.geometry.geometry import generate_random_direction
 from src.pinhole_projection.pinhole_projector import PinholeConfig, CameraConfig, ShotConditions, Pinhole
@@ -16,6 +17,13 @@ from src.helpers.cli.cli import DependentOption
 
 # Helper function
 def resolve(preset, explicit, name):
+    """
+
+    :param preset: param explicit:
+    :param name: param explicit:
+    :param explicit: 
+
+    """
     if explicit is not None:
         return explicit
     return preset.get(name, False)  # from preset or False
@@ -263,7 +271,7 @@ def pinhole(
         mag_limit: float,
         output: str
 ):
-    """Plot pinhole projection of the skymap."""
+    """ Plot pinhole projection of the skymap. """
 
     # Validation: constellation vs random-direction
     if constellation and random_direction:
@@ -397,3 +405,11 @@ def pinhole(
         logo_position=(0.12, 0.97),
         text_position=(0.5, 0.01),
     )
+
+
+@cli.command()
+def messier():
+    """ Messier game command. """
+
+    click.echo("=== Messier game ===")
+    messier_game()

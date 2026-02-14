@@ -44,12 +44,19 @@ class ConstellationRenderer:
 
     @staticmethod
     def _build_star_positions_cache(stars: NDArray) -> Dict[int, Tuple[float, float]]:
-        """
-        Build a lookup dictionary from HIP ID to pixel coordinates.
+        """Build a lookup dictionary from HIP ID to pixel coordinates.
 
         :param stars: Structured array of projected stars
+        :param stars: NDArray:
+        :param stars: NDArray:
+        :param stars: NDArray:
+        :param stars: NDArray:
+        :param stars: NDArray:
+        :param stars: NDArray:
+        :param stars: NDArray:
+        :param stars: NDArray: 
+        :returns: Dictionary mapping HIP_ID to (x_pix, y_pix) tuples
 
-        :return: Dictionary mapping HIP_ID to (x_pix, y_pix) tuples
         """
         cache = {}
         for star in stars:
@@ -65,14 +72,36 @@ class ConstellationRenderer:
             stars: Optional[NDArray] = None,
             constraints: CatalogConstraints = None
     ) -> List[ConstellationLineSegment]:
-        """
-        Get projected line segments for a constellation.
+        """Get projected line segments for a constellation.
 
-        :param constraints:
-        :param constellation: The constellation to render
+        :param constraints: param constellation: The constellation to render
         :param stars: pre-computed star projections. If None, will compute.
+        :param constellation: str:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellation: str:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellation: str:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellation: str:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellation: str:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellation: str:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellation: str:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellation: str: 
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :returns: List of ConstellationLineSegment objects representing visible lines
 
-        :return: List of ConstellationLineSegment objects representing visible lines
         """
 
         # Get constellation line data
@@ -112,14 +141,36 @@ class ConstellationRenderer:
             stars: Optional[NDArray] = None,
             constraints: CatalogConstraints = None
     ) -> Dict[str, List[ConstellationLineSegment]]:
-        """
-        Get projected line segments for multiple constellations.
+        """Get projected line segments for multiple constellations.
 
-        :param constraints:
-        :param constellations: List of constellations to render
+        :param constraints: param constellations: List of constellations to render
         :param stars: Optional pre-computed star projections
+        :param constellations: List[str]:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellations: List[str]:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellations: List[str]:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellations: List[str]:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellations: List[str]:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellations: List[str]:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellations: List[str]:
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :param constellations: List[str]: 
+        :param stars: Optional[NDArray]:  (Default value = None)
+        :param constraints: CatalogConstraints:  (Default value = None)
+        :returns: Dictionary mapping each constellation to its line segments
 
-        :return: Dictionary mapping each constellation to its line segments
         """
 
         # Build cache once for all constellations
@@ -147,9 +198,8 @@ def draw_constellation_lines(
         alpha: float = 0.7,
         linestyle: str = '-'
 ):
-    """
-    Draw constellation line segments on a matplotlib axis.
-
+    """Draw constellation line segments on a matplotlib axis.
+    
     This function correctly handles coordinate systems. If you use ax.invert_xaxis()
     in your plotting code (common for astronomical visualizations), the lines will
     automatically adapt to the inverted coordinates.
@@ -160,6 +210,47 @@ def draw_constellation_lines(
     :param linewidth: Line width
     :param alpha: Line transparency (0-1)
     :param linestyle: Line style ('-', '--', '-.', ':')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]: 
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+
     """
 
     for segment in segments:
@@ -181,8 +272,7 @@ def draw_constellation_lines_collection(
         alpha: float = 0.7,
         linestyle: str = '-'
 ):
-    """
-    Draw constellation line segments using LineCollection for better performance.
+    """Draw constellation line segments using LineCollection for better performance.
 
     :param ax: Matplotlib polar axis object
     :param segments: List of ConstellationLineSegmentPolar objects
@@ -190,6 +280,47 @@ def draw_constellation_lines_collection(
     :param linewidth: Line width
     :param alpha: Line transparency (0-1)
     :param linestyle: Line style ('-', '--', '-.', ':')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param segments: List[ConstellationLineSegment]: 
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+
     """
     if not segments:
         return
@@ -227,8 +358,7 @@ def draw_multiple_constellations(
         color_map: Optional[Dict[str, str]] = None,
         use_collection: bool = False
 ) -> Dict:
-    """
-    Draw multiple constellation line patterns on a matplotlib axis.
+    """Draw multiple constellation line patterns on a matplotlib axis.
 
     :param ax: Matplotlib axis object
     :param constellation_segments: Dictionary of constellation segments
@@ -237,8 +367,80 @@ def draw_multiple_constellations(
     :param alpha: Line transparency
     :param linestyle: Line style
     :param color_map: Optional dictionary mapping constellations to specific colors
+    :param constellation_segments: Dict[str:
+    :param List: ConstellationLineSegment]]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param color_map: Optional[Dict[str:
+    :param str: Default value = None)
+    :param use_collection: bool:  (Default value = False)
+    :param constellation_segments: Dict[str:
+    :param List: ConstellationLineSegment]]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param color_map: Optional[Dict[str:
+    :param str: Default value = None)
+    :param use_collection: bool:  (Default value = False)
+    :param constellation_segments: Dict[str:
+    :param List: ConstellationLineSegment]]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param color_map: Optional[Dict[str:
+    :param str: Default value = None)
+    :param use_collection: bool:  (Default value = False)
+    :param constellation_segments: Dict[str:
+    :param List: ConstellationLineSegment]]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param color_map: Optional[Dict[str:
+    :param str: Default value = None)
+    :param use_collection: bool:  (Default value = False)
+    :param constellation_segments: Dict[str:
+    :param List: ConstellationLineSegment]]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param color_map: Optional[Dict[str:
+    :param str: Default value = None)
+    :param use_collection: bool:  (Default value = False)
+    :param constellation_segments: Dict[str:
+    :param List: ConstellationLineSegment]]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param color_map: Optional[Dict[str:
+    :param str: Default value = None)
+    :param use_collection: bool:  (Default value = False)
+    :param constellation_segments: Dict[str:
+    :param List: ConstellationLineSegment]]:
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param color_map: Optional[Dict[str:
+    :param str: Default value = None)
+    :param use_collection: bool:  (Default value = False)
+    :param constellation_segments: Dict[str: 
+    :param List[ConstellationLineSegment]]: 
+    :param color: str:  (Default value = 'cyan')
+    :param linewidth: float:  (Default value = 0.8)
+    :param alpha: float:  (Default value = 0.7)
+    :param linestyle: str:  (Default value = '-')
+    :param color_map: Optional[Dict[str: 
+    :param str]]:  (Default value = None)
+    :param use_collection: bool:  (Default value = False)
+    :returns: Dictionary of constellation lines drawn on a matplotlib axis
 
-    :return: Dictionary of constellation lines drawn on a matplotlib axis
     """
 
     result = {}

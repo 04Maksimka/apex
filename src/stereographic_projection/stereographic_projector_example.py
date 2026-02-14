@@ -6,6 +6,7 @@ from datetime import datetime
 
 
 def main():
+    """ """
     # Configure catalog
     constraints = CatalogConstraints(
         max_magnitude=5.5,

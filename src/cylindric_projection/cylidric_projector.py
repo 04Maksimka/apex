@@ -1,10 +1,12 @@
-"""Module implementing cylindrical (equirectangular) projection.
+"""
+Module implementing cylindrical (equirectangular) projection.
 
 The cylindrical projection maps the celestial sphere onto a rectangular plane,
 where right ascension maps to x-coordinate and declination maps to y-coordinate.
 This is particularly useful for visualizing the entire sky at once and tracking
 object movements across the celestial sphere.
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List, Dict, Tuple
@@ -69,16 +71,29 @@ class ConstellationConfig:
 
 
 def _wrap_ra(ra_deg: float, ra_center: float) -> float:
-    """
-    Wrap RA value so that it is within [ra_center - 180, ra_center + 180).
+    """Wrap RA value so that it is within [ra_center - 180, ra_center + 180).
     This ensures continuity of lines that cross the RA boundary.
 
-    Args:
-        ra_deg: RA in degrees (can be any value)
-        ra_center: Center of the RA display range in degrees
+    :param ra_deg: RA in degrees (can be any value)
+    :param ra_center: Center of the RA display range in degrees
+    :param ra_deg: float:
+    :param ra_center: float:
+    :param ra_deg: float:
+    :param ra_center: float:
+    :param ra_deg: float:
+    :param ra_center: float:
+    :param ra_deg: float:
+    :param ra_center: float:
+    :param ra_deg: float:
+    :param ra_center: float:
+    :param ra_deg: float:
+    :param ra_center: float:
+    :param ra_deg: float:
+    :param ra_center: float:
+    :param ra_deg: float: 
+    :param ra_center: float: 
+    :returns: Wrapped RA value
 
-    Returns:
-        Wrapped RA value
     """
     diff = ra_deg - ra_center
     diff = (diff + 180.0) % 360.0 - 180.0
@@ -99,18 +114,25 @@ def _split_segments_at_boundary(
     jumps across the RA wrap boundary or goes out of the dec range.
     Also clips segments to the visible area, interpolating boundary crossings.
 
-    Args:
-        ra_points: Array of RA values in degrees
-        dec_points: Array of Dec values in degrees
-        ra_min: Minimum RA of display range
-        ra_max: Maximum RA of display range
-        dec_min: Minimum Dec of display range
-        dec_max: Maximum Dec of display range
-        ra_wrap_threshold: Maximum allowed RA jump before splitting
+    :param ra_points: Array of RA values in degrees
+    :type ra_points: NDArray
+    :param dec_points: Array of Dec values in degrees
+    :type dec_points: NDArray
+    :param ra_min: Minimum RA of display range
+    :type ra_min: float
+    :param ra_max: Maximum RA of display range
+    :type ra_max: float
+    :param dec_min: Minimum Dec of display range
+    :type dec_min: float
+    :param dec_max: Maximum Dec of display range
+    :type dec_max: float
+    :param ra_wrap_threshold: Maximum allowed RA jump before splitting
+    :type ra_wrap_threshold: float
 
-    Returns:
-        List of Nx2 arrays, each representing a continuous segment [[ra, dec], ...]
+    :return: List of Nx2 arrays, each representing a continuous segment [[ra, dec], ...]
+    :rtype: List[NDArray]
     """
+
     if len(ra_points) < 2:
         return []
 
@@ -213,11 +235,58 @@ def _interpolate_ra_wrap(
     ra2: float, dec2: float,
     ra_min: float, ra_max: float
 ) -> Optional[Tuple[float, float, float, float]]:
-    """
-    Interpolate the point where a line segment crosses the RA wrap boundary.
+    """Interpolate the point where a line segment crosses the RA wrap boundary.
 
-    Returns:
-        Tuple (exit_ra, exit_dec, entry_ra, entry_dec) or None
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra1: float: 
+    :param dec1: float: 
+    :param ra2: float: 
+    :param dec2: float: 
+    :param ra_min: float: 
+    :param ra_max: float: 
+    :returns: Tuple (exit_ra, exit_dec, entry_ra, entry_dec) or None
+
     """
     # Determine direction of wrap
     if ra1 > ra2:
@@ -247,16 +316,61 @@ def _interpolate_dec_boundary(
     ra2: float, dec2: float,
     dec_min: float, dec_max: float
 ) -> Optional[List[float]]:
-    """
-    Interpolate the point where a line crosses a dec boundary.
+    """Interpolate the point where a line crosses a dec boundary.
 
-    Args:
-        ra1, dec1: Start point (inside)
-        ra2, dec2: End point (outside or vice versa)
-        dec_min, dec_max: Dec boundaries
+    :param ra1: dec1: Start point (inside)
+    :param ra2: dec2: End point (outside or vice versa)
+    :param dec_min: dec_max: Dec boundaries
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param dec_min: float:
+    :param dec_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param dec_min: float:
+    :param dec_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param dec_min: float:
+    :param dec_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param dec_min: float:
+    :param dec_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param dec_min: float:
+    :param dec_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param dec_min: float:
+    :param dec_max: float:
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param dec_min: float:
+    :param dec_max: float:
+    :param ra1: float: 
+    :param dec1: float: 
+    :param ra2: float: 
+    :param dec2: float: 
+    :param dec_min: float: 
+    :param dec_max: float: 
+    :returns: ra, dec] at boundary or None
 
-    Returns:
-        [ra, dec] at boundary or None
     """
     if abs(dec2 - dec1) < 1e-10:
         return None
@@ -277,19 +391,72 @@ def _make_pair_segments_with_wrapping(
     ra_min: float, ra_max: float,
     ra_wrap_threshold: float = 180.0
 ) -> List[NDArray]:
-    """
-    Create line segments for a pair of points, handling RA wrap-around.
+    """Create line segments for a pair of points, handling RA wrap-around.
     If the RA difference is larger than the threshold, splits into two segments
     that go to opposite edges of the frame.
 
-    Args:
-        ra1, dec1: First point
-        ra2, dec2: Second point
-        ra_min, ra_max: RA display range
-        ra_wrap_threshold: Maximum allowed RA difference
+    :param ra1: dec1: First point
+    :param ra2: dec2: Second point
+    :param ra_min: ra_max: RA display range
+    :param ra_wrap_threshold: Maximum allowed RA difference
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra_wrap_threshold: float:  (Default value = 180.0)
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra_wrap_threshold: float:  (Default value = 180.0)
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra_wrap_threshold: float:  (Default value = 180.0)
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra_wrap_threshold: float:  (Default value = 180.0)
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra_wrap_threshold: float:  (Default value = 180.0)
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra_wrap_threshold: float:  (Default value = 180.0)
+    :param ra1: float:
+    :param dec1: float:
+    :param ra2: float:
+    :param dec2: float:
+    :param ra_min: float:
+    :param ra_max: float:
+    :param ra_wrap_threshold: float:  (Default value = 180.0)
+    :param ra1: float: 
+    :param dec1: float: 
+    :param ra2: float: 
+    :param dec2: float: 
+    :param ra_min: float: 
+    :param ra_max: float: 
+    :param ra_wrap_threshold: float:  (Default value = 180.0)
+    :returns: List of Nx2 arrays representing line segments
 
-    Returns:
-        List of Nx2 arrays representing line segments
     """
     ra_diff = abs(ra2 - ra1)
 
@@ -353,14 +520,19 @@ class CylindricProjector:
         return self.config.ra_max - self.config.ra_min
 
     def generate(self, constraints: Optional[CatalogConstraints] = None) -> Tuple[plt.Figure, plt.Axes]:
-        """
-        Generate a cylindrical projection visualization.
+        """Generate a cylindrical projection visualization.
 
-        Args:
-            constraints: Catalog constraints for star selection
+        :param constraints: Catalog constraints for star selection
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :returns: Tuple of (figure, axes)
 
-        Returns:
-            Tuple of (figure, axes)
         """
         # Create figure
         self._create_figure()
@@ -396,11 +568,18 @@ class CylindricProjector:
         return self._fig, self._ax
 
     def project(self, constraints: Optional[CatalogConstraints] = None):
-        """
-        Project astronomical objects onto the cylindrical plane.
+        """Project astronomical objects onto the cylindrical plane.
 
-        Args:
-            constraints: Catalog constraints for star selection
+        :param constraints: Catalog constraints for star selection
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+
         """
         # Get stars
         stars_data = self.catalog.get_stars(constraints)
@@ -424,15 +603,28 @@ class CylindricProjector:
             self._add_planets(self._planets_projections)
 
     def _make_cylindric_projection(self, data: NDArray, object_type: str = 'star') -> NDArray:
-        """
-        Convert equatorial coordinates to cylindrical projection coordinates.
+        """Convert equatorial coordinates to cylindrical projection coordinates.
 
-        Args:
-            data: Object data with RA/Dec coordinates
-            object_type: 'star' or 'planet'
+        :param data: Object data with RA/Dec coordinates
+        :param object_type: star' or 'planet'
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray: 
+        :param object_type: str:  (Default value = 'star')
+        :returns: Structured array with projection data
 
-        Returns:
-            Structured array with projection data
         """
         PROJECTION_DTYPE = np.dtype([
             ('x', np.float32),      # RA in degrees
@@ -520,11 +712,18 @@ class CylindricProjector:
         self._ax.invert_xaxis()
 
     def _plot_stars(self, projection_data: NDArray):
-        """
-        Plot stars on the cylindrical projection.
+        """Plot stars on the cylindrical projection.
 
-        Args:
-            projection_data: Star projection data
+        :param projection_data: Star projection data
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray: 
+
         """
         if len(projection_data) == 0:
             return
@@ -550,11 +749,18 @@ class CylindricProjector:
         ]
 
     def _add_planets(self, projection_data: NDArray):
-        """
-        Add planets to the projection.
+        """Add planets to the projection.
 
-        Args:
-            projection_data: Planet projection data
+        :param projection_data: Planet projection data
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray: 
+
         """
         if len(projection_data) == 0:
             return
@@ -645,22 +851,83 @@ class CylindricProjector:
         zorder: int = 3,
         label: str = ''
     ) -> Optional[LineCollection]:
-        """
-        Plot a curve on the cylindrical projection, correctly handling
+        """Plot a curve on the cylindrical projection, correctly handling
         RA wrap-around and dec boundary clipping.
 
-        Args:
-            ra_points: RA values in degrees (full 0..360 range)
-            dec_points: Dec values in degrees
-            color: Line color
-            alpha: Line transparency
-            linewidth: Line width
-            linestyle: Line style
-            zorder: Drawing order
-            label: Legend label
+        :param ra_points: RA values in degrees (full 0..360 range)
+        :param dec_points: Dec values in degrees
+        :param color: Line color
+        :param alpha: Line transparency
+        :param linewidth: Line width
+        :param linestyle: Line style
+        :param zorder: Drawing order
+        :param label: Legend label
+        :param ra_points: NDArray:
+        :param dec_points: NDArray:
+        :param color: str:
+        :param alpha: float:  (Default value = 0.7)
+        :param linewidth: float:  (Default value = 2.0)
+        :param linestyle: str:  (Default value = '--')
+        :param zorder: int:  (Default value = 3)
+        :param label: str:  (Default value = '')
+        :param ra_points: NDArray:
+        :param dec_points: NDArray:
+        :param color: str:
+        :param alpha: float:  (Default value = 0.7)
+        :param linewidth: float:  (Default value = 2.0)
+        :param linestyle: str:  (Default value = '--')
+        :param zorder: int:  (Default value = 3)
+        :param label: str:  (Default value = '')
+        :param ra_points: NDArray:
+        :param dec_points: NDArray:
+        :param color: str:
+        :param alpha: float:  (Default value = 0.7)
+        :param linewidth: float:  (Default value = 2.0)
+        :param linestyle: str:  (Default value = '--')
+        :param zorder: int:  (Default value = 3)
+        :param label: str:  (Default value = '')
+        :param ra_points: NDArray:
+        :param dec_points: NDArray:
+        :param color: str:
+        :param alpha: float:  (Default value = 0.7)
+        :param linewidth: float:  (Default value = 2.0)
+        :param linestyle: str:  (Default value = '--')
+        :param zorder: int:  (Default value = 3)
+        :param label: str:  (Default value = '')
+        :param ra_points: NDArray:
+        :param dec_points: NDArray:
+        :param color: str:
+        :param alpha: float:  (Default value = 0.7)
+        :param linewidth: float:  (Default value = 2.0)
+        :param linestyle: str:  (Default value = '--')
+        :param zorder: int:  (Default value = 3)
+        :param label: str:  (Default value = '')
+        :param ra_points: NDArray:
+        :param dec_points: NDArray:
+        :param color: str:
+        :param alpha: float:  (Default value = 0.7)
+        :param linewidth: float:  (Default value = 2.0)
+        :param linestyle: str:  (Default value = '--')
+        :param zorder: int:  (Default value = 3)
+        :param label: str:  (Default value = '')
+        :param ra_points: NDArray:
+        :param dec_points: NDArray:
+        :param color: str:
+        :param alpha: float:  (Default value = 0.7)
+        :param linewidth: float:  (Default value = 2.0)
+        :param linestyle: str:  (Default value = '--')
+        :param zorder: int:  (Default value = 3)
+        :param label: str:  (Default value = '')
+        :param ra_points: NDArray: 
+        :param dec_points: NDArray: 
+        :param color: str: 
+        :param alpha: float:  (Default value = 0.7)
+        :param linewidth: float:  (Default value = 2.0)
+        :param linestyle: str:  (Default value = '--')
+        :param zorder: int:  (Default value = 3)
+        :param label: str:  (Default value = '')
+        :returns: LineCollection or None
 
-        Returns:
-            LineCollection or None
         """
         segments = _split_segments_at_boundary(
             ra_points, dec_points,
@@ -902,13 +1169,29 @@ class CylindricProjector:
         chain_points: List[Tuple[float, float]],
         all_segments: List[NDArray]
     ):
-        """
-        Process a chain of constellation stars into line segments,
+        """Process a chain of constellation stars into line segments,
         handling RA wrap-around correctly.
 
-        Args:
-            chain_points: List of (ra_deg, dec_deg) tuples
-            all_segments: List to append resulting segments to
+        :param chain_points: List of (ra_deg, dec_deg) tuples
+        :param all_segments: List to append resulting segments to
+        :param chain_points: List[Tuple[float:
+        :param float: param all_segments: List[NDArray]:
+        :param chain_points: List[Tuple[float:
+        :param float: param all_segments: List[NDArray]:
+        :param chain_points: List[Tuple[float:
+        :param float: param all_segments: List[NDArray]:
+        :param chain_points: List[Tuple[float:
+        :param float: param all_segments: List[NDArray]:
+        :param chain_points: List[Tuple[float:
+        :param float: param all_segments: List[NDArray]:
+        :param chain_points: List[Tuple[float:
+        :param float: param all_segments: List[NDArray]:
+        :param chain_points: List[Tuple[float:
+        :param float: param all_segments: List[NDArray]:
+        :param chain_points: List[Tuple[float: 
+        :param float]]: 
+        :param all_segments: List[NDArray]: 
+
         """
         for i in range(len(chain_points) - 1):
             ra1, dec1 = chain_points[i]
@@ -936,14 +1219,19 @@ class CylindricProjector:
                     all_segments.append(clipped)
 
     def _clip_segment_to_range(self, segment: NDArray) -> Optional[NDArray]:
-        """
-        Clip a 2-point segment to the display range, interpolating at boundaries.
+        """Clip a 2-point segment to the display range, interpolating at boundaries.
 
-        Args:
-            segment: Nx2 array of [ra, dec] points
+        :param segment: Nx2 array of [ra, dec] points
+        :param segment: NDArray:
+        :param segment: NDArray:
+        :param segment: NDArray:
+        :param segment: NDArray:
+        :param segment: NDArray:
+        :param segment: NDArray:
+        :param segment: NDArray:
+        :param segment: NDArray: 
+        :returns: Clipped segment or None if entirely outside
 
-        Returns:
-            Clipped segment or None if entirely outside
         """
         if len(segment) < 2:
             return None

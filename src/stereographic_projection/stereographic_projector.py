@@ -52,6 +52,7 @@ class StereoProjConfig(object):
 
 @dataclass
 class ConstellationConfig(object):
+    """ """
     constellations_list: Optional[
         List[str]] = None  # If None, render all available
     constellation_color: str = 'gray'
@@ -90,11 +91,19 @@ class StereoProjector(object):
         self._planets_projections = None
 
     def generate(self, constraints: Optional[CatalogConstraints]=None) -> Tuple[plt.Figure, plt.Axes]:
-        """
-        Generate a stereographic projection image.
+        """Generate a stereographic projection image.
 
         :param constraints: Catalog constraints
-        :return: figure
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :returns: figure
+
         """
 
         # Make objects projections
@@ -142,11 +151,18 @@ class StereoProjector(object):
         return self._fig, self._ax
 
     def project(self, constraints: CatalogConstraints):
-        """
-        Objects projection maker
+        """Objects projection maker
 
         :param constraints: Catalog constraints
-        :return:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints:
+        :param constraints: CatalogConstraints: 
+
         """
         # Get catalog
         stars_data = self.catalog.get_stars(constraints)
@@ -179,11 +195,19 @@ class StereoProjector(object):
             self._planets_projections = planet_view_data
 
     def _make_stereo_views(self, data: NDArray) -> NDArray:
-        """
-        Returns a stereographic projection views to plot
+        """Returns a stereographic projection views to plot
 
         :param data: horizontal coordinates data
-        :return: projection data to plot
+        :param data: NDArray:
+        :param data: NDArray:
+        :param data: NDArray:
+        :param data: NDArray:
+        :param data: NDArray:
+        :param data: NDArray:
+        :param data: NDArray:
+        :param data: NDArray: 
+        :returns: projection data to plot
+
         """
 
         VIEW_DTYPE = np.dtype([
@@ -211,12 +235,28 @@ class StereoProjector(object):
         return view_data
 
     def _make_horizontal_views(self, data: NDArray, object_type: str = 'star') -> NDArray:
-        """
-        Returns horizontal coordinates.
+        """Returns horizontal coordinates.
 
         :param data: objects equatorial coordinates
         :param object_type: star or planet
-        :return: view parameters
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray:
+        :param object_type: str:  (Default value = 'star')
+        :param data: NDArray: 
+        :param object_type: str:  (Default value = 'star')
+        :returns: view parameters
+
         """
         VIEW_DTYPE = np.dtype([
             ('v_mag', np.float32),
@@ -245,9 +285,7 @@ class StereoProjector(object):
         return view_data
 
     def _add_zenith(self):
-        """
-        Adds zenith projection point on skychart.
-        """
+        """Adds zenith projection point on skychart."""
 
         point = self._ax.scatter(
             x=0,
@@ -267,9 +305,7 @@ class StereoProjector(object):
         self._groups['Points'] = self._groups.get('Points', []) + [(point, 'Zenith')]
 
     def _add_poles(self):
-        """
-        Adds pole projection point on skychart.
-        """
+        """Adds pole projection point on skychart."""
 
         POINT_DTYPE = np.dtype([('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
         north_pole = np.array([(0, 0, 1)], dtype=POINT_DTYPE)
@@ -331,9 +367,7 @@ class StereoProjector(object):
             self._groups['Points'] = self._groups.get('Points', []) + [(south, 'South Pole')]
 
     def _add_ecliptic(self):
-        """
-        Add ecliptic on skychart.
-        """
+        """Add ecliptic on skychart."""
 
         RA = 270.0
         DEC = 66.5607
@@ -362,9 +396,7 @@ class StereoProjector(object):
         self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Ecliptic')]
 
     def _add_equator(self):
-        """
-        Add celestial equator on skychart
-        """
+        """Add celestial equator on skychart"""
 
         equator_eci_coords = generate_small_circle(
             spheric_normal_deg=np.array([0.0, 0.0]),
@@ -390,9 +422,7 @@ class StereoProjector(object):
         self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Celestial equator')]
 
     def _add_galactic_equator(self):
-        """
-        Add galactic equator on skychart
-        """
+        """Add galactic equator on skychart"""
 
         # Galactical center
         RA = 192.85948
@@ -422,10 +452,18 @@ class StereoProjector(object):
         self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Galactic equator')]
 
     def _add_planets(self, projection_data: NDArray):
-        """
-        Add planets to the scatter plot.
+        """Add planets to the scatter plot.
 
         :param projection_data: projection points for planets
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray: 
+
         """
         # Draw each planet separately
         for planet_data in projection_data:
@@ -445,9 +483,7 @@ class StereoProjector(object):
                 self._groups['Planets'] = self._groups.get('Planets', []) + [(scatter, name)]
 
     def _add_horizontal_grid(self):
-        """
-        Add horizontal grid to skychart
-        """
+        """Add horizontal grid to skychart"""
 
         zeniths = np.arange(-90.0, 90.0, self.config.grid_theta_step, dtype=np.float64)
         azimuths = np.arange(0, 180.0, self.config.grid_phi_step, dtype=np.float64)
@@ -502,9 +538,7 @@ class StereoProjector(object):
         self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Azimuthal grid')]
 
     def _add_equatorial_grid(self):
-        """
-        Add equatorial grid to skychart
-        """
+        """Add equatorial grid to skychart"""
 
         declinations = np.arange(-90.0, 90.0, self.config.grid_theta_step, dtype=np.float64)
         right_ascensions = np.arange(0, 180.0, self.config.grid_phi_step, dtype=np.float64)
@@ -612,9 +646,7 @@ class StereoProjector(object):
                                                  [(first_lc, f'Constellations ({len(lcs)})')]
 
     def _add_constellations_names(self):
-        """
-        Adds constellation names on skychart.
-        """
+        """Adds constellation names on skychart."""
 
         POINT_DTYPE = np.dtype([('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
 
@@ -652,10 +684,18 @@ class StereoProjector(object):
                 )
 
     def _create_polar_scatter(self, projection_data: NDArray):
-        """
-        Create a scatter plot in polar coordinates for stars.
+        """Create a scatter plot in polar coordinates for stars.
 
         :param projection_data: projection points to place on figure
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray:
+        :param projection_data: NDArray: 
+
         """
 
         # Set up the figure with polar projection

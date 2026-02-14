@@ -1,7 +1,13 @@
+"""
+Constellation lines data and helper functions for constellation navigation.
+
+This module provides an dictionary of constellation abbreviations maps to their
+full names and lines (a list of sequentially connected stars) and helper functions
+to get constellation direction vectors in ECI (Earth-Centered Inertial) coordinates.
+"""
+
 from typing import List
 
-import numpy as np
-from numpy.typing import NDArray
 
 CONSTELLATIONS_DATA = {
   "AND": {
@@ -2174,6 +2180,24 @@ CONSTELLATIONS_DATA = {
 }
 
 def get_constellation_center(constellation: str) -> List | None:
+    """By the 3-letter designation of the constellation, the function returns
+    the direction to its center
+
+    :param constellation: constellation 3-letter code (e.g. ORI, UMA, CAS).
+    :type constellation: str
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str: 
+    :returns: direction  to the center of the constellation
+    :rtype: List or None
+
+    """
+
     try:
         query = CONSTELLATIONS_DATA[constellation]
         return query['center']
@@ -2182,10 +2206,51 @@ def get_constellation_center(constellation: str) -> List | None:
         return None
 
 def get_constellation_lines(constellation: str) -> List:
+    """By the 3-letter designation of the constellation, the function returns lines
+
+    :param constellation: constellation 3-letter code (e.g. ORI, UMA, CAS).
+    :type constellation: str
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str: 
+    :returns: list of sequentially connected stars corresponding to the constellation
+    :rtype: list
+
+    """
+
     return CONSTELLATIONS_DATA.get(constellation)['lines']
 
 def get_constellation_name(constellation: str) -> str:
+    """By the 3-letter designation of the constellation, the function returns name
+
+    :param constellation: constellation 3-letter code (e.g. ORI, UMA, CAS).
+    :type constellation: str
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str:
+    :param constellation: str: 
+    :returns: name of the constellation
+    :rtype: list
+
+    """
+
     return CONSTELLATIONS_DATA.get(constellation)['name']
 
 def get_available_constellations() -> List:
+    """All the available constellations to use
+
+
+    :returns: list) available constellation 3-letter codes
+
+    """
+
     return list(CONSTELLATIONS_DATA.keys())

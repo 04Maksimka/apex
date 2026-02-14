@@ -20,13 +20,18 @@ def add_logo_to_figure(
     logo_path: str | None = None,
     position: tuple[float, float] = (0.02, 0.95),
     size: float = 0.1,
-) -> None:
-    """Add a logo to the figure.
+):
+    """
+    Add a logo to the figure.
 
     :param fig: Figure to be saved
+    :type fig: plt.Figure
     :param logo_path: path to the logo
+    :type logo_path: str | None
     :param position: position, where to draw
+    :type position: tuple[float, float]
     :param size: relative size for the logo
+    :type size: float
     """
     try:
         logo = Image.open(logo_path)
@@ -56,13 +61,19 @@ def add_footer_text(
     fontsize: int = 9 ,
     color: str = 'gray',
 ):
-    """Add footer text to the figure.
+    """
+    Add footer text to the figure.
 
     :param fig: Figure to be saved
+    :type fig: plt.Figure
     :param text: text to be written
+    :type text: str
     :param position: position, where to draw
+    :type position: tuple[float, float]
     :param fontsize: fontsize of the text
+    :type fontsize: int
     :param color: color of the text
+    :type color: str
     """
     fig.text(
         position[0], position[1], text,
@@ -82,15 +93,23 @@ def save_figure(
     text_position: tuple[float, float] = (0.5, 0.02),
 
 ):
-    """Save figure as PDF with logo and footer text.
+    """
+    Save figure as PDF with logo and footer text.
 
     :param filename: Name of the file where to save a fig
+    :type filename: str
     :param fig: Figure to be saved
+    :type fig: plt.Figure
     :param logo_path: path to the logo
+    :type logo_path: str | None
     :param footer_text: text to be written
+    :type footer_text: str | None
     :param logo_position: position, where to draw logo
-    :param text_position: position, where to draw logo
+    :type logo_position: tuple[float, float]
+    :param text_position: position, where to write text
+    :type text_position: tuple[float, float]
     :param dpi: dots per inch
+    :type dpi: int
     """
     if logo_path:
         add_logo_to_figure(fig, logo_path, logo_position)
@@ -115,6 +134,28 @@ def save_figure_pinhole(
     page_size: tuple[float, float] = (11.69, 8.27),
     chart_margins: tuple[float, float, float, float] = (0.1, 0.2, 0.1, 0.1),
 ):
+    """
+    Save figure as PDF with logo and footer text (for pinhole projection result).
+
+    :param filename: Name of the file where to save a fig
+    :type filename: str
+    :param fig: Figure to be saved
+    :type fig: plt.Figure
+    :param logo_path: path to the logo
+    :type logo_path: str | None
+    :param footer_text: text to be written
+    :type footer_text: str | None
+    :param logo_position: position, where to draw logo
+    :type logo_position: tuple[float, float]
+    :param text_position: position, where to write text
+    :type text_position: tuple[float, float]
+    :param dpi: dots per inch
+    :type dpi: int
+    :param page_size: size of output page
+    :type page_size: tuple[float, float]
+    :param chart_margins: side margins
+    :type chart_margins: tuple[float, float, float, float]
+    """
     if not filename.endswith('.pdf'):
         filename += '.pdf'
 
@@ -213,6 +254,26 @@ def save_figure_skychart(
     chart_margins: tuple[float, float, float, float] = (0.075, 0.25, 0.075, 0.1),
     print_skychart_info=True,
 ):
+    """
+
+    :param fig:
+    :param filename:
+    :param config:
+    :param local_time:
+    :param latitude:
+    :param longitude:
+    :param location_name:
+    :param logo_path:
+    :param footer_text:
+    :param dpi:
+    :param logo_position:
+    :param text_position:
+    :param page_size:
+    :param chart_margins:
+    :param print_skychart_info:
+
+    :return:
+    """
     if not filename.endswith('.pdf'):
         filename += '.pdf'
 
