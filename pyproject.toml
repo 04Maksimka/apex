@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "astrageek"
+version = "0.2.0"
 authors = [
     {name = "Ilia Bespyatyy", email = "ilia.bespytatyy@gmail.com"},
     {name = "Maksim Ramenskyy", email = "maksim.ramenskyy@gmail.com"},
@@ -12,9 +13,10 @@ description = "Star maps maker"
 readme = "README.md"
 requires-python = ">=3.8"
 keywords = ["skychart", "python", "astronomy", "maps"]
-license = "MIT"
+license = {text = "MIT"}
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
 ]
 dependencies = [
     "numpy",
@@ -27,7 +29,13 @@ dependencies = [
     "loguru",
     "click>=8.0"
 ]
-version = "0.2.0"
+
+[project.optional-dependencies]
+docs = [
+    "sphinx",
+    "furo",
+    "sphinx-autodoc-typehints",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
