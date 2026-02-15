@@ -171,3 +171,4 @@ Desktop.ini
 
 src/stereographic_projection/samples/
 src/pinhole_projection/pinhole_samples
+/sphinx/_build/
