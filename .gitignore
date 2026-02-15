@@ -68,9 +68,6 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation
-docs/_build/
-
 # PyBuilder
 .pybuilder/
 target/
@@ -169,5 +166,6 @@ Desktop.ini
 # temp_data/
 # output/
 
-stereographic_projection/samples/
-pinhole_projection/pinhole_samples
+src/stereographic_projection/samples/
+src/pinhole_projection/pinhole_samples
+/sphinx/_build/

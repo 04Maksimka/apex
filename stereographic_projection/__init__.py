@@ -1,1 +1,0 @@
-"""This module is a stereographic projection maker."""
