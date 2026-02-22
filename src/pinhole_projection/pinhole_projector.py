@@ -85,7 +85,7 @@ class CameraConfig:
 class PinholeConfig:
     """Class of the pinhole projector configurations."""
 
-    local_time: datetime
+    local_time: datetime = datetime.now()
     grid_theta_step: float = 10.0
     grid_phi_step: float = 10.0
 
@@ -478,16 +478,18 @@ class Pinhole(object):
         )
 
         # Add to legend groups
-        if lcs:
-            if separate:
-                for name, params in lcs.items():
-                    self._groups['Constellations'] = self._groups.get('Constellations', []) +\
-                                                     [(params['lc'], f"{params['name']}")]
-            else:
-                # Get first line collection for legend
-                first_lc = list(lcs.values())[0]['lc']
-                self._groups['Constellations'] = self._groups.get('Constellations', []) + \
-                                                 [(first_lc, f'Constellation segments ({len(lcs)})')]
+        #FIXME: нужно сделать так чтобы в игре не было легенды пока костыльно замучено
+
+        # if lcs:
+        #     if separate:
+        #         for name, params in lcs.items():
+        #             self._groups['Constellations'] = self._groups.get('Constellations', []) +\
+        #                                              [(params['lc'], f"{params['name']}")]
+        #     else:
+        #         # Get first line collection for legend
+        #         first_lc = list(lcs.values())[0]['lc']
+        #         self._groups['Constellations'] = self._groups.get('Constellations', []) + \
+        #                                          [(first_lc, f'Constellation segments ({len(lcs)})')]
 
     def _add_constellations_names(self):
         """Adds constellation names on skychart."""

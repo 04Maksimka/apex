@@ -7,6 +7,7 @@ matplotlib.use('Agg')
 from flask import Flask, request, send_file, jsonify
 from datetime import datetime
 
+from src.web.messier_blueprint import messier_bp
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from src.planets_catalog.planet_catalog import PlanetCatalog
 from src.stereographic_projection.stereographic_projector import (
@@ -19,6 +20,7 @@ from src.helpers.pdf_helpers.figure2pdf import save_figure_skychart, save_figure
 from src.constellations_metadata.constellations_data import get_constellation_center
 
 app = Flask(__name__, static_folder="public_html", static_url_path="")
+app.register_blueprint(messier_bp)
 
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
