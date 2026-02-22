@@ -1,0 +1,109 @@
+import os
+import uuid
+import tempfile
+
+import matplotlib
+matplotlib.use('Agg')
+from flask import Flask, request, send_file, jsonify
+from datetime import datetime
+
+from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from src.planets_catalog.planet_catalog import PlanetCatalog
+from src.stereographic_projection.stereographic_projector import (
+    StereoProjector, StereoProjConfig, ConstellationConfig
+)
+from src.pinhole_projection.pinhole_projector import (
+    PinholeConfig, CameraConfig, ShotConditions, Pinhole
+)
+from src.helpers.pdf_helpers.figure2pdf import save_figure_skychart, save_figure_pinhole
+from src.constellations_metadata.constellations_data import get_constellation_center
+
+app = Flask(__name__, static_folder="public_html", static_url_path="")
+
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# BASE_DIR = корень проекта AstraGeek/
+
+CATALOG = Catalog(
+    catalog_name=os.path.join(BASE_DIR, "src", "hip_catalog", "hip_data.tsv"),
+    use_cache=True,
+)
+
+@app.route("/")
+def index():
+    return app.send_static_file("index.html")
+
+@app.route("/generator")
+def generator():
+    return app.send_static_file("generator.html")
+
+@app.route("/generate", methods=["POST"])
+def generate():
+    data = request.json
+    mode = data.get("mode", "stereo")
+
+    dtime = datetime.fromisoformat(data["datetime"]) if data.get("datetime") else datetime.utcnow()
+    v_mag_limit = float(data.get("v_mag_limit", 6.5))
+    constraints = CatalogConstraints(max_magnitude=v_mag_limit)
+
+    flags = {
+        "add_ecliptic":        data.get("add_ecliptic", False),
+        "add_equator":         data.get("add_equator", False),
+        "add_galactic_equator":data.get("add_galactic_equator", False),
+        "add_planets":         data.get("add_planets", False),
+        "add_equatorial_grid": data.get("add_equatorial_grid", False),
+        "add_constellations":  data.get("add_constellations", False),
+        "add_constellations_names": data.get("add_constellation_names", False),
+    }
+
+    tmp_path = os.path.join(tempfile.gettempdir(), f"skychart_{uuid.uuid4().hex}.pdf")
+
+    if mode == "stereo":
+        config = StereoProjConfig(
+            local_time=dtime,
+            latitude=float(data["latitude"]),
+            longitude=float(data["longitude"]),
+            **flags
+        )
+        proj = StereoProjector(
+            config=config,
+            catalog=CATALOG,
+            planets_catalog=PlanetCatalog(),
+            constellation_config=ConstellationConfig(),
+        )
+        fig, ax = proj.generate(constraints=constraints)
+        save_figure_skychart(
+            fig=fig, filename=tmp_path,
+            config=config, location_name="",
+            logo_path=os.path.join(BASE_DIR, "src", "helpers", "pdf_helpers", "logo_astrageek.png"),
+            footer_text="skychart.astrageek.ru",
+        )
+
+    elif mode == "pinhole":
+        constellation = data.get("constellation", "ORI").upper()
+        center = get_constellation_center(constellation)
+        camera_cfg = CameraConfig.from_fov_and_aspect(
+            fov_deg=float(data.get("fov", 60)),
+            aspect_ratio=float(data.get("aspect_ratio", 1.5)),
+            height_pix=int(data.get("height_pix", 1000)),
+        )
+        shot_cond = ShotConditions(
+            center_direction=center,
+            tilt_angle=float(data.get("tilt_angle", 0)),
+        )
+        config = PinholeConfig(local_time=dtime, **flags)
+        projector = Pinhole(
+            shot_cond=shot_cond, camera_cfg=camera_cfg,
+            config=config, constellation_config=ConstellationConfig(),
+            catalog=CATALOG, planet_catalog=PlanetCatalog(),
+        )
+        fig, ax = projector.generate(constraints=constraints)
+        save_figure_pinhole(fig=fig, filename=tmp_path,
+                            logo_path="src/helpers/pdf_helpers/logo_astrageek.png",
+                            footer_text="skychart.astrageek.ru")
+
+    return send_file(tmp_path, mimetype="application/pdf",
+                     as_attachment=True, download_name="skychart.pdf")
+
+if __name__ == "__main__":
+    app.run(debug=True, port=5000, use_reloader=False)
