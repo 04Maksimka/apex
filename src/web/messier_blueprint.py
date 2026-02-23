@@ -112,7 +112,6 @@ def _render_png(messier_object) -> bytes:
     ax.set_aspect("equal")
 
 
-
     # Маркер объекта
     cx, cy = camera_cfg.width / 2, camera_cfg.height / 2
     ms     = max(20, min(200, float(messier_object["size"]) * 2))

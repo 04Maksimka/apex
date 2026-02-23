@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AstraGeek — Генератор карт</title>
-    <link rel="icon" type="image/jpg" href="https://raw.githubusercontent.com/04Maksimka/AstraGeek/main/helpers/pdf_helpers/favicon.jpg">
+        <link rel="icon" type="image/jpg" href="https://raw.githubusercontent.com/04Maksimka/AstraGeek/main/src/helpers/pdf_helpers/favicon.jpg">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -423,7 +423,7 @@
 <nav id="navbar">
     <div class="nav-inner container">
         <a href="/" class="logo">
-            <img src="https://raw.githubusercontent.com/04Maksimka/AstraGeek/main/helpers/pdf_helpers/favicon.jpg" alt="AstraGeek Logo">
+            <img src="https://raw.githubusercontent.com/04Maksimka/AstraGeek/main/src/helpers/pdf_helpers/favicon.jpg" alt="AstraGeek Logo">
             AstraGeek
         </a>
         <a href="/" class="back-link">← Главная</a>
@@ -433,7 +433,7 @@
 <!-- Hero -->
 <div class="page-hero">
     <div class="container">
-        <h1>🌌 Генератор карт неба</h1>
+        <h1>Генератор карт неба</h1>
         <p>Настройте параметры и получите PDF со звёздной картой для наблюдений</p>
     </div>
 </div>
@@ -446,12 +446,10 @@
         <div class="section-label">Тип проекции</div>
         <div class="mode-switcher">
             <button class="mode-btn active" id="btn-stereo" onclick="setMode('stereo')">
-                <span class="mode-icon">🌐</span>
                 Стереографическая
                 <span class="mode-desc">Всё небо целиком для заданного места и времени</span>
             </button>
             <button class="mode-btn" id="btn-pinhole" onclick="setMode('pinhole')">
-                <span class="mode-icon">👁️</span>
                 Камера-обскура
                 <span class="mode-desc">Конкретный участок — как в телескоп или невооружённым глазом</span>
             </button>
@@ -513,11 +511,11 @@
         <!-- Звёздная величина -->
         <div class="section-label">Предельная звёздная величина</div>
         <div class="field">
-            <label>💫 Слабейшие видимые звёзды (чем больше — тем больше звёзд)</label>
+            <label>💫 Предельная звездная величина (чем больше — тем больше звёзд)</label>
             <div class="range-wrapper">
-                <input type="range" id="v_mag_limit" min="3.0" max="9.0" step="0.5" value="6.5"
+                <input type="range" id="v_mag_limit" min="3.0" max="9.0" step="0.5" value="5.5"
                        oninput="document.getElementById('mag-val').textContent = this.value">
-                <span class="range-value" id="mag-val">6.5</span>
+                <span class="range-value" id="mag-val">5.5</span>
             </div>
         </div>
     </div>
@@ -540,52 +538,39 @@
         <div class="checks-grid">
             <label class="check-item">
                 <input type="checkbox" id="add_ecliptic">
-                <span class="check-icon">☀️</span>
                 <span class="check-label">Эклиптика</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_equator">
-                <span class="check-icon">🌍</span>
                 <span class="check-label">Небесный экватор</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_galactic_equator">
-                <span class="check-icon">🌌</span>
                 <span class="check-label">Галактический экватор</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_planets">
-                <span class="check-icon">🪐</span>
                 <span class="check-label">Планеты</span>
             </label>
-            <label class="check-item">
-                <input type="checkbox" id="add_horizontal_grid">
-                <span class="check-icon">📏</span>
-                <span class="check-label">Горизонтальная сетка</span>
-            </label>
+
             <label class="check-item">
                 <input type="checkbox" id="add_equatorial_grid">
-                <span class="check-icon">📐</span>
                 <span class="check-label">Экваториальная сетка</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_constellations">
-                <span class="check-icon">✦</span>
                 <span class="check-label">Линии созвездий</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_constellation_names">
-                <span class="check-icon">🔤</span>
                 <span class="check-label">Названия созвездий</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_ticks">
-                <span class="check-icon">🔢</span>
                 <span class="check-label">Засечки осей</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_cardinal_directions">
-                <span class="check-icon">🧭</span>
                 <span class="check-label">Стороны света</span>
             </label>
         </div>
@@ -607,7 +592,7 @@
 
 <footer>
     <div class="container">
-        <p>© 2025 <a href="https://astrageek.ru/">AstraGeek</a> — образовательный проект по астрономии</p>
+        <p>© 2026 <a href="https://astrageek.ru/" target="_blank">AstraGeek</a> · Звёздный атлас</p>
     </div>
 </footer>
 
