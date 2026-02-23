@@ -1,10 +1,6 @@
 """
 Messier Game — Flask Blueprint
 Файл: src/web/messier_blueprint.py
-
-Подключение в app.py (добавить 3 строки):
-    from src.web.messier_blueprint import messier_bp
-    app.register_blueprint(messier_bp)
 """
 
 import io
@@ -15,8 +11,12 @@ from threading import Lock
 from typing import Dict, Any
 
 import matplotlib
-matplotlib.use("Agg")          # Без GUI — обязательно до импорта pyplot
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+# ── FIX 1: Закрываем все figure, которые matplotlib мог создать при импорте,
+#           чтобы первый рендер не «унаследовал» мусорное состояние.
+plt.close("all")
+
 import numpy as np
 
 from flask import Blueprint, request, jsonify, send_file
@@ -31,17 +31,22 @@ from src.planets_catalog.planet_catalog import PlanetCatalog
 # ── Blueprint ──────────────────────────────────────────────────────────────────
 messier_bp = Blueprint("messier", __name__)
 
-# ── Каталоги (инициализируются один раз при импорте) ───────────────────────────
+# ── Каталоги (инициализируются один раз при первом запросе) ───────────────────
 _star_catalog    = None
 _planet_catalog  = None
 _messier_catalog = None
+_catalogs_lock   = Lock()   # отдельный лок для инициализации каталогов
 
 def _get_catalogs():
     global _star_catalog, _planet_catalog, _messier_catalog
     if _star_catalog is None:
-        _star_catalog    = Catalog(catalog_name="hip_data.tsv", use_cache=True)
-        _planet_catalog  = PlanetCatalog()
-        _messier_catalog = MessierCatalog()
+        with _catalogs_lock:
+            # double-checked locking
+            if _star_catalog is None:
+                _star_catalog    = Catalog(catalog_name="hip_data.tsv", use_cache=True)
+                _planet_catalog  = PlanetCatalog()
+                _messier_catalog = MessierCatalog()
+                plt.close("all")
     return _star_catalog, _planet_catalog, _messier_catalog
 
 # ── Хранилище сессий ───────────────────────────────────────────────────────────
@@ -64,13 +69,16 @@ def _new_session(num_rounds: int) -> dict:
 
 
 def _render_png(messier_object) -> bytes:
+    """Рендерит pinhole-проекцию объекта в PNG-байты."""
+    # явно закрываем все висящие figure перед новым рендером
+    plt.close("all")
+
     star_catalog, planet_catalog, mc = _get_catalogs()
 
     camera_cfg = CameraConfig.from_fov_and_aspect(
         fov_deg=60, aspect_ratio=1.5, height_pix=600,
     )
 
-    # Используем уже готовые XYZ-координаты из каталога (как в game.py)
     direction = np.array([
         float(messier_object["x"]),
         float(messier_object["y"]),
@@ -79,7 +87,6 @@ def _render_png(messier_object) -> bytes:
 
     shot_cond = ShotConditions(center_direction=direction, tilt_angle=0.0)
 
-    # Включаем созвездия: линии + названия
     const_cfg = ConstellationConfig(
         constellation_color="lightgray",
         constellation_linewidth=0.8,
@@ -95,8 +102,8 @@ def _render_png(messier_object) -> bytes:
         add_equator=False,
         add_galactic_equator=False,
         add_equatorial_grid=False,
-        add_constellations=True,        # ← линии созвездий
-        add_constellations_names=True,  # ← названия созвездий
+        add_constellations=True,
+        add_constellations_names=True,
     )
 
     projector = Pinhole(
@@ -110,7 +117,6 @@ def _render_png(messier_object) -> bytes:
 
     fig, ax = projector.generate(constraints=CatalogConstraints(max_magnitude=5.5))
     ax.set_aspect("equal")
-
 
     # Маркер объекта
     cx, cy = camera_cfg.width / 2, camera_cfg.height / 2
@@ -180,7 +186,12 @@ def image():
         return jsonify({"error": "Игра завершена"}), 400
 
     png = _render_png(session["rounds"][idx])
-    return send_file(io.BytesIO(png), mimetype="image/png")
+    resp = send_file(io.BytesIO(png), mimetype="image/png")
+    # запрещаем кэширование изображений на прокси/nginx,
+    # чтобы каждый раунд показывал новый объект
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    return resp
 
 
 @messier_bp.route("/api/messier/answer", methods=["POST"])
@@ -216,7 +227,6 @@ def answer():
     session["current"] += 1
     game_over = session["current"] >= len(session["rounds"])
 
-    # obj is numpy.void — use bracket access, not .get()
     try:
         raw_name = obj["name"]
         name = str(raw_name).strip() if raw_name and str(raw_name).strip() else None
@@ -227,6 +237,7 @@ def answer():
     return jsonify({
         "correct":        is_ok,
         "correct_number": correct,
+        "guess":          guess,
         "name":           name,
         "type":           obj_type,
         "constellation":  str(obj["constellation"]),

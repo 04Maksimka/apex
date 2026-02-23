@@ -37,7 +37,7 @@
 
   #stars-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
-  /* ── Navbar (копия из index.html) ── */
+  /* ── Navbar ── */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     background: rgba(10,14,26,.82); backdrop-filter: blur(18px);
@@ -217,7 +217,7 @@
 <nav id="navbar">
   <div class="nav-inner">
     <a class="logo" href="index.html">
-      <img src="https://raw.githubusercontent.com/04Maksimka/AstraGeek/main/helpers/pdf_helpers/favicon.jpg" alt="AstraGeek">
+      <img src="https://raw.githubusercontent.com/04Maksimka/AstraGeek/main/src/helpers/pdf_helpers/favicon.jpg" alt="AstraGeek">
       AstraGeek
     </a>
     <ul class="nav-links" id="nav-links">
@@ -309,8 +309,6 @@
 
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
-// API_BASE = "" означает "тот же сервер и порт", на котором открыта страница.
-// Если Flask запущен на :5000, то и запросы пойдут на :5000.
 const API_BASE = "";
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -400,7 +398,7 @@ function loadRound(){
   const img = $('sky-img');
   img.style.display = 'none';
 
-  const src = `${API_BASE}/api/messier/image?session_id=${sessionId}&_=${Date.now()}`;
+  const src = `${API_BASE}/api/messier/image?session_id=${sessionId}&ts=${Date.now()}`;
   const tmp = new Image();
   tmp.onload = () => {
     img.src = src; img.style.display = 'block';
@@ -410,7 +408,8 @@ function loadRound(){
   tmp.onerror = () => {
     $('img-loading').innerHTML =
       '<span style="color:var(--red)">⚠ Ошибка загрузки изображения.<br>' +
-      'Проверьте, что сервер запущен и Blueprint подключён.</span>';
+      'Проверьте, что сервер запущен и Blueprint подключён.<br>' +
+      '<small style="opacity:.7">Попробуйте обновить страницу или проверить консоль браузера (F12)</small></span>';
   };
   tmp.src = src;
 }
@@ -418,8 +417,8 @@ function loadRound(){
 // ── Ответ ─────────────────────────────────────────────────────────────────────
 async function submitAnswer(){
   if(waitingNext) return;
-  const guess = parseInt($('guess-input').value, 10);
-  if(isNaN(guess) || guess < 1 || guess > 110){ $('guess-input').focus(); return; }
+  const guessVal = parseInt($('guess-input').value, 10);
+  if(isNaN(guessVal) || guessVal < 1 || guessVal > 110){ $('guess-input').focus(); return; }
 
   waitingNext = true;
   $('btn-send').disabled = true;
@@ -429,9 +428,13 @@ async function submitAnswer(){
     const r = await fetch(`${API_BASE}/api/messier/answer`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ session_id: sessionId, guess })
+      body: JSON.stringify({ session_id: sessionId, guess: guessVal })
     });
     const d = await r.json();
+
+    if (d.guess === undefined || d.guess === null) {
+      d.guess = guessVal;
+    }
 
     score = d.score; currentRound = d.round; results.push(d);
     $('score-cur').textContent = score;
