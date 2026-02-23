@@ -22,7 +22,6 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from src.messier.messier_catalog import MessierCatalog, MessierType
@@ -39,29 +38,26 @@ from src.constellations_metadata.constellations_data import (
 from src.game.session import DIFFICULTY_CONSTELLATIONS, DIFFICULTY_MAGNITUDE
 
 # ---------------------------------------------------------------------------
-# Module-level singletons (loaded once)
+# Module-level singletons (loaded once per process)
 # ---------------------------------------------------------------------------
 _BASE_DIR = Path(__file__).resolve().parents[2]
 _HIP_CATALOG: Optional[Catalog] = None
 _PLANET_CATALOG: Optional[PlanetCatalog] = None
 _MESSIER_CATALOG: Optional[MessierCatalog] = None
-_NAMED_STARS: Dict[int, str] = {}          # hip_id -> star_name
+_NAMED_STARS: Dict[int, str] = {}  # hip_id -> star_name
 
-# Fixed observation parameters — direction vector drives the view, not location
 OBS_TIME = datetime(2024, 6, 21, 0, 0, 0)
-OBS_LAT = 45.0
-OBS_LON = 0.0
 
 # ---------------------------------------------------------------------------
 # Fun-fact libraries
 # ---------------------------------------------------------------------------
 CONSTELLATION_FACTS: Dict[str, str] = {
-    "ORI": "Orion содержит две из самых ярких звёзд неба — красный гигант Бетельгейзе и голубой сверхгигант Ригель.",
+    "ORI": "Орион содержит две из самых ярких звёзд неба — красный гигант Бетельгейзе и голубой сверхгигант Ригель.",
     "UMA": "Большая Медведица содержит Большой Ковш — один из самых узнаваемых астеризмов северного неба.",
     "CAS": "Кассиопея имеет форму буквы W или M и никогда не заходит за горизонт для жителей средних широт.",
     "CYG": "Лебедь содержит яркую звезду Денеб — одну из самых далёких и светлых в Летнем треугольнике.",
     "LEO": "Лев — знак зодиака, в котором находится галактика M66 из триплета Льва.",
-    "SCO": "Скорпион украшен красным антаресом — звездой, настолько огромной, что она вмещала бы орбиту Марса.",
+    "SCO": "Скорпион украшен красным Антаресом — звездой, настолько огромной, что она вмещала бы орбиту Марса.",
     "GEM": "Близнецы названы в честь Кастора и Поллукса — мифических братьев-полубогов.",
     "TAU": "В Тельце находится Крабовидная туманность M1 — остаток сверхновой, наблюдавшейся в 1054 году.",
     "AQL": "В Орле находится Альтаир — одна из трёх звёзд Летнего треугольника.",
@@ -79,21 +75,21 @@ CONSTELLATION_FACTS: Dict[str, str] = {
 }
 
 STAR_FACTS: Dict[str, str] = {
-    "Sirius": "Сириус — самая яркая звезда ночного неба (−1,46m), двойная система на расстоянии 8,6 св. лет.",
-    "Vega": "Вега — одна из вершин Летнего треугольника; была Полярной звездой около 14 000 лет назад.",
-    "Arcturus": "Арктур — ярчайшая звезда северного полушария; красный гигант в 37 св. годах от нас.",
-    "Capella": "Капелла — тройная система из двух жёлтых гигантов и пары красных карликов.",
-    "Rigel": "Ригель — голубой сверхгигант, светимость которого в 120 000 раз превышает солнечную.",
-    "Procyon": "Процион — двойная система: яркий субгигант и белый карлик в 11,5 св. годах.",
+    "Sirius":     "Сириус — самая яркая звезда ночного неба (−1,46m), двойная система на расстоянии 8,6 св. лет.",
+    "Vega":       "Вега — одна из вершин Летнего треугольника; была Полярной звездой около 14 000 лет назад.",
+    "Arcturus":   "Арктур — ярчайшая звезда северного полушария; красный гигант в 37 св. годах от нас.",
+    "Capella":    "Капелла — тройная система из двух жёлтых гигантов и пары красных карликов.",
+    "Rigel":      "Ригель — голубой сверхгигант, светимость которого в 120 000 раз превышает солнечную.",
+    "Procyon":    "Процион — двойная система: яркий субгигант и белый карлик в 11,5 св. годах.",
     "Betelgeuse": "Бетельгейзе — красный сверхгигант на грани взрыва сверхновой; его диаметр больше орбиты Юпитера.",
-    "Altair": "Альтаир вращается так быстро (286 км/с), что сплюснута в экваторе на 20%.",
-    "Aldebaran": "Альдебаран — оранжевый гигант, «глаз» Тельца; в 65 св. годах от Земли.",
-    "Spica": "Спика — ярчайшая звезда Девы и двойная система: обе звезды деформированы приливными силами.",
-    "Antares": "Антарес — «соперник Марса»; красный сверхгигант диаметром ~700 солнечных.",
-    "Pollux": "Поллукс — ярчайшая звезда Близнецов; известен экзопланета Поллукс b.",
-    "Deneb": "Денеб — один из самых далёких «ярких» объектов неба: ~2600 св. лет, светимость 200 000 Солнц.",
-    "Regulus": "Регулус — сердце Льва; быстро вращающаяся звезда, почти достигшая критической скорости распада.",
-    "Polaris": "Полярная звезда отстоит от полюса мира примерно на 0,7° и медленно к нему приближается.",
+    "Altair":     "Альтаир вращается так быстро (286 км/с), что сплюснута в экваторе на 20%.",
+    "Aldebaran":  "Альдебаран — оранжевый гигант, «глаз» Тельца; в 65 св. годах от Земли.",
+    "Spica":      "Спика — ярчайшая звезда Девы и двойная система: обе звезды деформированы приливными силами.",
+    "Antares":    "Антарес — «соперник Марса»; красный сверхгигант диаметром ~700 солнечных.",
+    "Pollux":     "Поллукс — ярчайшая звезда Близнецов; известна экзопланета Поллукс b.",
+    "Deneb":      "Денеб — один из самых далёких «ярких» объектов неба: ~2600 св. лет, светимость 200 000 Солнц.",
+    "Regulus":    "Регулус — сердце Льва; быстро вращающаяся звезда, почти достигшая критической скорости распада.",
+    "Polaris":    "Полярная звезда отстоит от полюса мира примерно на 0,7° и медленно к нему приближается.",
 }
 
 MESSIER_FACTS: Dict[int, str] = {
@@ -117,7 +113,7 @@ TRIVIA_QUESTIONS: List[Dict[str, Any]] = [
     {
         "question": "Созвездие с семью яркими звёздами, образующими «Большой Ковш». Две крайние звезды «указывают» на Полярную.",
         "answer": "UMA",
-        "hint": "Медведица-мама из сказки о Маше",
+        "hint": "Медведица с длинным хвостом",
     },
     {
         "question": "Созвездие Летнего треугольника, в котором находится Вега — пятая по яркости звезда.",
@@ -150,12 +146,12 @@ TRIVIA_QUESTIONS: List[Dict[str, Any]] = [
         "hint": "Полуконь-получеловек с луком",
     },
     {
-        "question": "Созвездие с ярчайшей звездой северного полушария — Арктуром. Выглядит как «воздушный змей» или «галстук».",
+        "question": "Созвездие с ярчайшей звездой северного полушария — Арктуром. Выглядит как «воздушный змей».",
         "answer": "BOO",
-        "hint": "Охотник волов или пастух медведей",
+        "hint": "Пастух медведей",
     },
     {
-        "question": "Созвездие, в котором находится Денеб — одна из самых далёких и светоносных звёзд, видимых невооружённым глазом.",
+        "question": "Созвездие, в котором находится Денеб — одна из самых далёких и светоносных звёзд видимых невооружённым глазом.",
         "answer": "CYG",
         "hint": "Белая водоплавающая птица",
     },
@@ -218,54 +214,70 @@ def _fig_to_base64(fig: plt.Figure) -> str:
     return b64
 
 
-def _camera_config(fov: float = 60.0, aspect: float = 1.33) -> CameraConfig:
-    return CameraConfig.from_fov_and_aspect(
-        fov_deg=fov,
-        aspect_ratio=aspect,
-        height_pix=600,
-    )
-
-
-def _shot(direction: Any) -> ShotConditions:
-    return ShotConditions(
-        direction=np.array(direction, dtype=np.float32),
-        local_time=OBS_TIME,
-        latitude=OBS_LAT,
-        longitude=OBS_LON,
-    )
-
-
 def _generate_pinhole_image(
-    direction: Any,
+    direction,          # ECI unit vector [x, y, z]
     magnitude: float,
     show_const: bool = True,
     show_names: bool = False,
     fov: float = 60.0,
-    extra_draw: Optional[callable] = None,
+    extra_draw=None,    # callable(fig, ax, camera_cfg) or None
 ) -> str:
-    """Render a pinhole projection and return base64 PNG string."""
+    """
+    Render a pinhole projection and return base64-encoded PNG.
+
+    Correct API (matches messier_api.py and pinhole_projection_example.py):
+        shot_cond  = ShotConditions(center_direction=..., tilt_angle=0.0)
+        camera_cfg = CameraConfig.from_fov_and_aspect(fov_deg, aspect_ratio, height_pix)
+        config     = PinholeConfig(local_time=..., add_constellations=..., ...)
+        projector  = Pinhole(shot_cond, camera_cfg, config, catalog, planet_catalog,
+                             constellation_config)
+        fig, ax    = projector.generate(constraints)
+    """
+    direction = np.asarray(direction, dtype=np.float64)
+    norm = np.linalg.norm(direction)
+    if norm > 0:
+        direction = direction / norm
+
+    camera_cfg = CameraConfig.from_fov_and_aspect(
+        fov_deg=fov,
+        aspect_ratio=1.33,
+        height_pix=600,
+    )
+
+    shot_cond = ShotConditions(
+        center_direction=direction.astype(np.float32),
+        tilt_angle=0.0,
+    )
+
     config = PinholeConfig(
-        shot_conditions=_shot(direction),
-        camera_config=_camera_config(fov),
+        local_time=OBS_TIME,
         add_constellations=show_const,
         add_constellations_names=show_names,
-        add_equatorial_grid=False,
         add_ecliptic=False,
         add_equator=False,
         add_galactic_equator=False,
         add_planets=False,
+        add_ticks=False,
+        add_equatorial_grid=False,
+        use_dark_mode=True,
     )
-    pinhole = Pinhole(
+
+    constellation_config = ConstellationConfig() if show_const else None
+
+    projector = Pinhole(
+        shot_cond=shot_cond,
+        camera_cfg=camera_cfg,
         config=config,
         catalog=_get_catalog(),
-        planets_catalog=_get_planet_catalog(),
-        constellation_config=ConstellationConfig(),
+        planet_catalog=_get_planet_catalog(),
+        constellation_config=constellation_config,
     )
+
     constraints = CatalogConstraints(max_magnitude=magnitude)
-    fig, ax = pinhole.generate(constraints=constraints)
+    fig, ax = projector.generate(constraints=constraints)
 
     if extra_draw is not None:
-        extra_draw(fig, ax)
+        extra_draw(fig, ax, camera_cfg)
 
     return _fig_to_base64(fig)
 
@@ -274,7 +286,6 @@ def _get_constellation_list(difficulty: str) -> List[str]:
     pool = DIFFICULTY_CONSTELLATIONS.get(difficulty)
     if pool is None:
         pool = get_available_constellations()
-    # Filter to those present in CONSTELLATIONS_DATA
     available = set(CONSTELLATIONS_DATA.keys())
     return [c for c in pool if c in available]
 
@@ -294,6 +305,7 @@ def _gnomonic_project(
     hip_ids: Set[int],
     center: np.ndarray,
     catalog: Catalog,
+    magnitude: float,
 ) -> Dict[int, Dict[str, float]]:
     """Project constellation stars onto a 2-D tangent plane (gnomonic projection)."""
     z = center / np.linalg.norm(center)
@@ -302,7 +314,8 @@ def _gnomonic_project(
     x_ax /= np.linalg.norm(x_ax)
     y_ax = np.cross(z, x_ax)
 
-    stars = catalog.data
+    constraints = CatalogConstraints(max_magnitude=magnitude)
+    stars = catalog.get_stars(constraints)
     hip_map = {int(s["hip_id"]): s for s in stars}
 
     result: Dict[int, Dict[str, float]] = {}
@@ -346,21 +359,22 @@ class QuestionFactory:
         session.used_objects.add(correct_abbr)
 
         correct_name = CONSTELLATIONS_DATA[correct_abbr]["name"]
+        # "center" in CONSTELLATIONS_DATA is already an ECI [x, y, z] unit vector
         center = CONSTELLATIONS_DATA[correct_abbr]["center"]
 
-        # Render WITHOUT constellation names so player has to guess
         image_b64 = _generate_pinhole_image(
             direction=center,
             magnitude=magnitude,
             show_const=True,
             show_names=False,
+            fov=60.0,
         )
 
         distractors = _random_distractors(correct_abbr, pool)
         dist_names = [CONSTELLATIONS_DATA[d]["name"] for d in distractors]
         options = _shuffle_options(correct_name, *dist_names)
 
-        hint = f"Центр этого созвездия находится в направлении {correct_abbr.upper()}"
+        hint = f"Аббревиатура этого созвездия: {correct_abbr}"
         fun_fact = CONSTELLATION_FACTS.get(correct_abbr, f"Это созвездие — {correct_name}.")
 
         question = {
@@ -382,10 +396,10 @@ class QuestionFactory:
         magnitude = DIFFICULTY_MAGNITUDE[session.difficulty]
         named_stars = _load_named_stars()
         catalog = _get_catalog()
-        catalog.get_stars(CatalogConstraints(max_magnitude=magnitude))
+        constraints = CatalogConstraints(max_magnitude=magnitude)
+        stars_data = catalog.get_stars(constraints)
 
-        # Build a list of named stars present in catalog
-        available_hip = set(int(s["hip_id"]) for s in catalog.data)
+        available_hip = set(int(s["hip_id"]) for s in stars_data)
         candidates = {
             hip: name for hip, name in named_stars.items()
             if hip in available_hip and hip not in session.used_objects
@@ -394,31 +408,33 @@ class QuestionFactory:
             session.used_objects.clear()
             candidates = {hip: name for hip, name in named_stars.items() if hip in available_hip}
         if not candidates:
-            # Fallback: return a constellation question
             return self.make_constellation_question(session)
 
         correct_hip = random.choice(list(candidates.keys()))
         correct_name = candidates[correct_hip]
         session.used_objects.add(correct_hip)
 
-        # Find which constellation it belongs to
-        star_arr = next((s for s in catalog.data if int(s["hip_id"]) == correct_hip), None)
+        star_arr = next((s for s in stars_data if int(s["hip_id"]) == correct_hip), None)
         if star_arr is None:
             return self.make_constellation_question(session)
 
-        direction = np.array([float(star_arr["x"]), float(star_arr["y"]), float(star_arr["z"])])
+        # ECI direction from catalog
+        direction = np.array(
+            [float(star_arr["x"]), float(star_arr["y"]), float(star_arr["z"])],
+            dtype=np.float64,
+        )
 
-        # Project star position to sensor plane to place the highlight circle
-        def _add_highlight(fig, ax):
-            # The pinhole projector places the camera direction at the axes centre
-            # The target star IS the direction, so it appears at (0, 0) data coords.
-            # We add a glowing ring there.
-            ax.plot(0, 0, "o",
+        def _add_highlight(fig, ax, camera_cfg):
+            # Star is at the image centre because camera points directly at it.
+            # Pixel centre = (width/2, height/2)
+            cx = camera_cfg.width / 2
+            cy = camera_cfg.height / 2
+            ax.plot(cx, cy, "o",
                     markersize=22, markerfacecolor="none",
                     markeredgecolor="#ff6b6b", markeredgewidth=2.5,
                     alpha=0.9, zorder=10)
-            ax.plot(0, 0, "o",
-                    markersize=30, markerfacecolor="none",
+            ax.plot(cx, cy, "o",
+                    markersize=32, markerfacecolor="none",
                     markeredgecolor="#ff6b6b", markeredgewidth=1.0,
                     alpha=0.4, zorder=9)
 
@@ -427,17 +443,16 @@ class QuestionFactory:
             magnitude=magnitude,
             show_const=True,
             show_names=False,
-            fov=30.0,
+            fov=25.0,
             extra_draw=_add_highlight,
         )
 
-        # Build distractors from other named stars
         all_names = [n for h, n in named_stars.items() if h != correct_hip]
         distractors = random.sample(all_names, min(3, len(all_names)))
         options = _shuffle_options(correct_name, *distractors)
 
-        hint = f"Эта звезда является одной из ярчайших в своём созвездии"
-        fun_fact = STAR_FACTS.get(correct_name, f"{correct_name} — яркая именная звезда HIP {correct_hip}.")
+        hint = "Эта звезда находится точно в центре изображения, отмечена красным кольцом"
+        fun_fact = STAR_FACTS.get(correct_name, f"{correct_name} — яркая именная звезда (HIP {correct_hip}).")
 
         question = {
             "type": "star",
@@ -468,7 +483,11 @@ class QuestionFactory:
         m_num = int(obj["m_number"])
         session.used_objects.add(m_num)
 
-        direction = np.array([float(obj["x"]), float(obj["y"]), float(obj["z"])])
+        # ECI direction from pre-computed x, y, z fields in MessierCatalog
+        direction = np.array(
+            [float(obj["x"]), float(obj["y"]), float(obj["z"])],
+            dtype=np.float64,
+        )
 
         TYPE_NAMES = {
             1: "Галактика",
@@ -480,29 +499,38 @@ class QuestionFactory:
         }
         obj_type_name = TYPE_NAMES.get(int(obj["obj_type"]), "Объект")
         obj_catalog_name = str(obj["name"]).strip()
-        display_name = f"M{m_num}" + (f" — {obj_catalog_name}" if obj_catalog_name else "")
 
-        # Ask about M-number — show type as context
-        question_text = f"Объект типа «{obj_type_name}» в созвездии {obj['constellation']}. Что это за объект Мессье?"
+        question_text = (
+            f"Объект типа «{obj_type_name}» в созвездии {obj['constellation']}. "
+            f"Что это за объект Мессье?"
+        )
 
-        # Build 4 M-number options
         other_nums = [int(o["m_number"]) for o in all_objects if int(o["m_number"]) != m_num]
         dist_nums = random.sample(other_nums, min(3, len(other_nums)))
-        dist_labels = [f"M{n}" for n in dist_nums]
         correct_label = f"M{m_num}"
-        options = _shuffle_options(correct_label, *dist_labels)
+        options = _shuffle_options(correct_label, *[f"M{n}" for n in dist_nums])
 
-        # Image: wide pinhole centred on object
+        def _add_object_marker(fig, ax, camera_cfg):
+            cx = camera_cfg.width / 2
+            cy = camera_cfg.height / 2
+            marker_size = max(30, min(300, float(obj["size"]) * 3))
+            ax.scatter(cx, cy, s=marker_size, marker="o",
+                       facecolors="none", edgecolors="#4fc3f7",
+                       linewidths=2, alpha=0.85, zorder=10)
+            ax.scatter(cx, cy, s=12, marker=".", c="#4fc3f7", alpha=0.9, zorder=11)
+
         image_b64 = _generate_pinhole_image(
             direction=direction,
             magnitude=magnitude,
             show_const=True,
             show_names=False,
             fov=50.0,
+            extra_draw=_add_object_marker,
         )
 
         hint = f"Это {obj_type_name.lower()} с видимой звёздной величиной {float(obj['v_mag']):.1f}m"
         fun_fact = MESSIER_FACTS.get(m_num, f"M{m_num} — {obj_type_name} в созвездии {obj['constellation']}.")
+        display_name = f"M{m_num}" + (f" — {obj_catalog_name}" if obj_catalog_name else "")
 
         question = {
             "type": "messier",
@@ -535,27 +563,23 @@ class QuestionFactory:
         center = np.array(CONSTELLATIONS_DATA[correct_abbr]["center"], dtype=np.float64)
         lines = get_constellation_lines(correct_abbr)
 
-        # Collect all HIP IDs
         all_hip_ids: Set[int] = set()
         for line in lines:
             all_hip_ids.update(line)
 
         catalog = _get_catalog()
-        catalog.get_stars(CatalogConstraints(max_magnitude=magnitude))
-
-        projected = _gnomonic_project(all_hip_ids, center, catalog)
+        projected = _gnomonic_project(all_hip_ids, center, catalog, magnitude)
 
         if len(projected) < 2:
-            # Fallback to a different constellation
             session.used_objects.discard(correct_abbr)
             return self.make_draw_question(session)
 
-        # Normalize to [-1, 1]
         xs = [v["x"] for v in projected.values()]
         ys = [v["y"] for v in projected.values()]
         max_r = max(max(abs(x) for x in xs), max(abs(y) for y in ys), 1e-9)
-        stars_list = []
+
         named = _load_named_stars()
+        stars_list = []
         for hip_id, v in projected.items():
             stars_list.append({
                 "hip_id": hip_id,
@@ -565,7 +589,6 @@ class QuestionFactory:
                 "name": named.get(hip_id, ""),
             })
 
-        # Reference lines as list of [hip_id, hip_id] pairs
         ref_edges: List[List[int]] = []
         for line in lines:
             for i in range(len(line) - 1):
@@ -574,11 +597,11 @@ class QuestionFactory:
                     ref_edges.append([a, b])
 
         fun_fact = CONSTELLATION_FACTS.get(correct_abbr, f"Созвездие {constellation_name}.")
-        hint = f"У этого созвездия {len(all_hip_ids)} ключевых звёзд"
+        hint = f"У этого созвездия {len(all_hip_ids)} ключевых звёзд в рисунке"
 
         question = {
             "type": "draw",
-            "question": f"Нарисуйте созвездие. Соедините звёзды линиями, как они соединяются в этом созвездии.",
+            "question": "Соедините звёзды линиями так, как они соединены в рисунке созвездия.",
             "stars": stars_list,
             "ref_edges": ref_edges,
             "correct": constellation_name,
@@ -590,11 +613,6 @@ class QuestionFactory:
         return question
 
     def check_draw_answer(self, session, drawn_edges: List[List[int]]) -> Dict[str, Any]:
-        """
-        Validate the player's drawn constellation lines.
-        Matching is edge-based: we compare drawn pairs to reference pairs.
-        Score = (correct_edges / total_ref_edges) * 100 %
-        """
         if not session.current_question or session.current_question["type"] != "draw":
             return {"error": "No active draw question"}
 
@@ -623,17 +641,17 @@ class QuestionFactory:
     def make_trivia_question(self, session) -> Dict[str, Any]:
         magnitude = DIFFICULTY_MAGNITUDE[session.difficulty]
         pool = _get_constellation_list(session.difficulty)
+        pool_set = set(pool)
 
-        # Pick a trivia question that hasn't been used yet
         available_trivia = [
             q for q in TRIVIA_QUESTIONS
-            if q["answer"] in set(pool) and q["answer"] not in session.used_objects
+            if q["answer"] in pool_set and q["answer"] not in session.used_objects
         ]
         if not available_trivia:
             session.used_objects.clear()
-            available_trivia = [q for q in TRIVIA_QUESTIONS if q["answer"] in set(pool)]
+            available_trivia = [q for q in TRIVIA_QUESTIONS if q["answer"] in pool_set]
         if not available_trivia:
-            available_trivia = TRIVIA_QUESTIONS
+            available_trivia = list(TRIVIA_QUESTIONS)
 
         trivia = random.choice(available_trivia)
         correct_abbr = trivia["answer"]
@@ -641,20 +659,17 @@ class QuestionFactory:
 
         correct_name = CONSTELLATIONS_DATA.get(correct_abbr, {}).get("name", correct_abbr)
 
-        # Pick 3 distractor constellations
         distractors = _random_distractors(correct_abbr, pool)
         dist_names = [CONSTELLATIONS_DATA[d]["name"] for d in distractors]
         options = _shuffle_options(correct_name, *dist_names)
 
-        # Generate a WIDE stereo-style pinhole showing the sky region with labels
-        # We use a 120° FOV centered on the correct constellation, labels visible
         center = CONSTELLATIONS_DATA[correct_abbr]["center"]
         image_b64 = _generate_pinhole_image(
             direction=center,
             magnitude=magnitude,
             show_const=True,
-            show_names=True,   # show all constellation names — makes it a map
-            fov=120.0,
+            show_names=True,
+            fov=110.0,
         )
 
         fun_fact = CONSTELLATION_FACTS.get(correct_abbr, f"Созвездие {correct_name}.")
