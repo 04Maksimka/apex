@@ -8,12 +8,13 @@ Switch language
 This is a project for AstraGeek astronomy online school.
 Here you can find some software for building star maps.
 
-On the [website](https://skychart.astrageek.ru/) of this AstraGeek project you will soon be able to create classic skycharts and star sky maps.
+On the [website](https://skychart.astrageek.ru/) of this AstraGeek project you are able to create classic skycharts and star sky maps.
 
 Also visit [astrageek.ru](https://astrageek.ru/) for educational videos on astronomy and related topics.
+
 ---
 
-## 🚩 Release plan. **Current release 0.2**
+## Release plan. **Current release 0.2**
 
 During the development process, the interface uses software to generate maps via the command line. While it is being developed, you can use ready-made generated maps of random areas of the sky or use the source code yourself under a license.
 
@@ -27,7 +28,7 @@ During the development process, the interface uses software to generate maps via
 
 ---
 
-## 📦 Features
+## Features
 
 1. Stereographic projection of the entire sky available at specified location and time
 2. Pinhole projection for a specific small area of the sky at specified constellation direction
@@ -36,7 +37,7 @@ During the development process, the interface uses software to generate maps via
 
 ---
 
-## 👍 Examples
+## Examples
 
 Pinhole projection example (without a legend) with parameters: ...
 
@@ -53,13 +54,13 @@ Full: [polar_scatter_local_logo.pdf](https://github.com/user-attachments/files/2
 
 ---
 
-## 📘 How to use
+## How to use
 
 You can use the ready-made sets of starry sky maps that we have already generated. To do this, you need:
 
-1. 📁 Inside the project, go to the examples folder
-2. 📥 Download pinhole_samples archives.zip and samples.zip with pinhole camera mode maps and skycharts, respectively
-3. 🔓 Unpack the archives
+1. Inside the project, go to the examples folder
+2. Download pinhole_samples archives.zip and samples.zip with pinhole camera mode maps and skycharts, respectively
+3. Unpack the archives
 
 Inside each folder there are maps of the starry sky with tasks grouped by numbers. 
 
@@ -72,9 +73,9 @@ The 100 skycharts for random date and place are grouped inside the samples folde
 
 Each group consists of three files:
 
-1. 😶‍🌫️ For a student without planets - _student.pdf_
-2. 🪐 For a student with planets - _student_with_planets.pdf_
-3. 🎓 For the teacher - _teacher.pdf_
+1. For a student without planets - _student.pdf_
+2. For a student with planets - _student_with_planets.pdf_
+3. For the teacher - _teacher.pdf_
 
 Each file consists of two pages: on the first there are tasks for the map, on the second there is the map itself.
 
@@ -86,14 +87,14 @@ But if use want to generate new maps by yourself, do this (it is in the process 
 
 1.  Choose your type of required projection:
 
-    1. 🌐 You want the view of the entire sky available at this location at this time - choose **stereographic projection mode**
-    2. 👁️ If you want to see a specific small area of the sky, as if you were observing it with your eyes or a small telescope - choose **pinhole projection mode**
+    1. You want the view of the entire sky available at this location at this time - choose **stereographic projection mode**
+    2. If you want to see a specific small area of the sky, as if you were observing it with your eyes or a small telescope - choose **pinhole projection mode**
 
 2. Configure your catalog and projector:
 
-    1. 🌏 Set position (latitude and longitude) and local observation time.
-    2. 💫 Set the visual magnitude limits
-    3. ☑️ Use flags to set the additional functions and properties you want to display. Or, for educational purposes, you can use ready-made teacher and student sets (see the section below) 
+    1. Set position (latitude and longitude) and local observation time.
+    2. Set the visual magnitude limits
+    3. Use flags to set the additional functions and properties you want to display. Or, for educational purposes, you can use ready-made teacher and student sets (see the section below) 
 
 3. Get the resulting star maps
 
@@ -105,12 +106,14 @@ Example of usage:
 
 ---
 
-## 📚 Documentation
+## Documentation
+
+On the [website](https://04maksimka.github.io/AstraGeek/) you will be able soon to get full functional documentation of the project.
 
 | Section          | Link                                                                                      |
-| ---------------- | ----------------------------------------------------------------------------------------- |
-| Learn More       | [📚 Documentation](https://github.com/04Maksimka/AstraGeek/blob/main/DOCUMENTATION.md) |
-| Project on GitHub| [🔗 GitHub Repo](https://github.com/04Maksimka/AstraGeek)                                |
-| Submit Issue     | [🐛 Report](https://github.com/04Maksimka/AstraGeek/issues/new)                          |
+| ---------------- |-------------------------------------------------------------------------------------------|
+| Learn More       | [Usage documentation](https://github.com/04Maksimka/AstraGeek/blob/main/DOCUMENTATION.md) |
+| Project on GitHub| [GitHub Repo](https://github.com/04Maksimka/AstraGeek)                                    |
+| Submit Issue     | [Report](https://github.com/04Maksimka/AstraGeek/issues/new)                              |
 
 ---

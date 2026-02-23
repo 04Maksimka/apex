@@ -27,7 +27,8 @@ dependencies = [
     "pygame",        # messier_pygame/
     "pillow",        # PIL
     "loguru",
-    "click>=8.0"
+    "click>=8.0",
+    "flask"
 ]
 
 [project.optional-dependencies]
