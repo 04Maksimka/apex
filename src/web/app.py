@@ -4,7 +4,7 @@ import tempfile
 
 import matplotlib
 matplotlib.use('Agg')
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file, jsonify, redirect, url_for
 from datetime import datetime
 
 from src.web.messier_blueprint import messier_bp
@@ -33,85 +33,131 @@ CATALOG = Catalog(
     use_cache=True,
 )
 
+
+# ── Основные страницы ─────────────────────────────────────────────────────────
+
 @app.route("/")
 def index():
     return app.send_static_file("index.html")
 
+
 @app.route("/generator")
 def generator():
     return app.send_static_file("generator.html")
+
+
+# ── Игры ─────────────────────────────────────────────────────────────────────
+
+@app.route("/games")
+def games_redirect():
+    """Удобный алиас /games → /game/ (лобби игр)."""
+    return redirect("/game/", code=301)
+
+
+@app.route("/messier.html")
+def messier_html_redirect():
+    """Обратная совместимость: старые ссылки на /messier.html → /game/messier."""
+    return redirect("/game/messier", code=301)
+
+
+# ── Генерация карт ────────────────────────────────────────────────────────────
 
 @app.route("/generate", methods=["POST"])
 def generate():
     data = request.json
     mode = data.get("mode", "stereo")
 
-    dtime = datetime.fromisoformat(data["datetime"]) if data.get("datetime") else datetime.utcnow()
-    v_mag_limit = float(data.get("v_mag_limit", 6.5))
-    constraints = CatalogConstraints(max_magnitude=v_mag_limit)
-
-    flags = {
-        "add_ecliptic":        data.get("add_ecliptic", False),
-        "add_equator":         data.get("add_equator", False),
-        "add_galactic_equator":data.get("add_galactic_equator", False),
-        "add_planets":         data.get("add_planets", False),
-        "add_equatorial_grid": data.get("add_equatorial_grid", False),
-        "add_constellations":  data.get("add_constellations", False),
-        "add_constellations_names": data.get("add_constellation_names", False),
-    }
-
-    # Whether to print observation info block on the task page (stereo only)
-    print_skychart_info = bool(data.get("print_skychart_info", False))
-
-    tmp_path = os.path.join(tempfile.gettempdir(), f"skychart_{uuid.uuid4().hex}.pdf")
+    dtime = datetime.fromisoformat(data.get("datetime", datetime.now().isoformat()))
 
     if mode == "stereo":
+        lat  = float(data.get("lat", 55.75))
+        lon  = float(data.get("lon", 37.62))
+        mag  = float(data.get("mag", 5.5))
         config = StereoProjConfig(
             local_time=dtime,
-            latitude=float(data["latitude"]),
-            longitude=float(data["longitude"]),
-            **flags
+            latitude=lat,
+            longitude=lon,
+            limiting_magnitude=mag,
+            add_planets=data.get("add_planets", True),
+            add_ecliptic=data.get("add_ecliptic", True),
+            add_equator=data.get("add_equator", True),
+            add_galactic_equator=data.get("add_galactic_equator", False),
+            add_constellations=data.get("add_constellations", True),
+            add_constellations_names=data.get("add_constellations_names", True),
+            add_grid=data.get("add_grid", True),
+            use_dark_mode=data.get("use_dark_mode", True),
         )
-        proj = StereoProjector(
-            config=config,
-            catalog=CATALOG,
-            planets_catalog=PlanetCatalog(),
-            constellation_config=ConstellationConfig(),
-        )
-        fig, ax = proj.generate(constraints=constraints)
-        save_figure_skychart(
-            fig=fig, filename=tmp_path,
-            config=config, location_name="",
-            logo_path=os.path.join(BASE_DIR, "src", "helpers", "pdf_helpers", "logo_astrageek.png"),
-            footer_text="skychart.astrageek.ru",
-            print_skychart_info=print_skychart_info,
-        )
+        constraints = CatalogConstraints(limiting_magnitude=mag)
+        stars  = CATALOG.get_stars(constraints)
+        planets = PlanetCatalog()
+        proj   = StereoProjector(config)
+        fig    = proj.plot(stars, planets)
 
-    elif mode == "pinhole":
-        constellation = data.get("constellation", "ORI").upper()
-        center = get_constellation_center(constellation)
-        camera_cfg = CameraConfig.from_fov_and_aspect(
-            fov_deg=float(data.get("fov", 60)),
-            aspect_ratio=float(data.get("aspect_ratio", 1.5)),
-            height_pix=int(data.get("height_pix", 1000)),
-        )
-        shot_cond = ShotConditions(
-            center_direction=center,
-            tilt_angle=float(data.get("tilt_angle", 0)),
-        )
-        config = PinholeConfig(local_time=dtime, **flags)
-        projector = Pinhole(
-            shot_cond=shot_cond, camera_cfg=camera_cfg,
-            config=config, constellation_config=ConstellationConfig(),
-            catalog=CATALOG, planet_catalog=PlanetCatalog(),
-        )
-        fig, ax = projector.generate(constraints=constraints)
-        save_figure_pinhole(fig=fig, filename=tmp_path,
-                            logo_path="src/helpers/pdf_helpers/logo_astrageek.png",
-                            footer_text="skychart.astrageek.ru")
+    else:  # pinhole
+        ra_center  = float(data.get("ra",  0.0))
+        dec_center = float(data.get("dec", 0.0))
+        fov        = float(data.get("fov", 20.0))
+        mag        = float(data.get("mag", 7.0))
+        roll       = float(data.get("roll", 0.0))
 
-    return send_file(tmp_path, mimetype="application/pdf",
-                     as_attachment=True, download_name="skychart.pdf")
+        constellation = data.get("constellation")
+        if constellation:
+            ra_center, dec_center = get_constellation_center(constellation)
+
+        conditions = ShotConditions(ra=ra_center, dec=dec_center, roll=roll)
+        camera     = CameraConfig(
+            fov_width=fov,
+            fov_height=fov,
+            image_width=int(data.get("width", 800)),
+            image_height=int(data.get("height", 800)),
+        )
+        config = PinholeConfig(
+            local_time=dtime,
+            limiting_magnitude=mag,
+            add_planets=data.get("add_planets", False),
+            add_ecliptic=data.get("add_ecliptic", False),
+            add_equator=data.get("add_equator", False),
+            add_galactic_equator=data.get("add_galactic_equator", False),
+            add_constellations=data.get("add_constellations", True),
+            add_constellations_names=data.get("add_constellations_names", True),
+            add_ticks=data.get("add_ticks", True),
+            add_equatorial_grid=data.get("add_equatorial_grid", False),
+            use_dark_mode=data.get("use_dark_mode", True),
+            constellation_config=ConstellationConfig(names=[constellation]) if constellation else None,
+        )
+        constraints = CatalogConstraints(limiting_magnitude=mag)
+        stars   = CATALOG.get_stars(constraints)
+        planets = PlanetCatalog()
+        pinhole = Pinhole(conditions, camera, config)
+        fig     = pinhole.plot(stars, planets)
+
+    output_format = data.get("format", "png").lower()
+    tmp = tempfile.NamedTemporaryFile(
+        suffix=f".{output_format}", delete=False, dir=tempfile.gettempdir()
+    )
+    tmp.close()
+
+    if output_format == "pdf":
+        if mode == "stereo":
+            save_figure_skychart(fig, tmp.name)
+        else:
+            save_figure_pinhole(fig, tmp.name)
+        mimetype = "application/pdf"
+    else:
+        fig.savefig(tmp.name, format="png", dpi=150, bbox_inches="tight",
+                    facecolor=fig.get_facecolor())
+        mimetype = "image/png"
+
+    import matplotlib.pyplot as plt
+    plt.close(fig)
+
+    return send_file(
+        tmp.name,
+        mimetype=mimetype,
+        as_attachment=True,
+        download_name=f"skychart.{output_format}",
+    )
+
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000, use_reloader=False)
+    app.run(host="0.0.0.0", port=8000, debug=False)
