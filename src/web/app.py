@@ -58,6 +58,9 @@ def generate():
         "add_constellations_names": data.get("add_constellation_names", False),
     }
 
+    # Whether to print observation info block on the task page (stereo only)
+    print_skychart_info = bool(data.get("print_skychart_info", False))
+
     tmp_path = os.path.join(tempfile.gettempdir(), f"skychart_{uuid.uuid4().hex}.pdf")
 
     if mode == "stereo":
@@ -79,6 +82,7 @@ def generate():
             config=config, location_name="",
             logo_path=os.path.join(BASE_DIR, "src", "helpers", "pdf_helpers", "logo_astrageek.png"),
             footer_text="skychart.astrageek.ru",
+            print_skychart_info=print_skychart_info,
         )
 
     elif mode == "pinhole":

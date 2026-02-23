@@ -319,6 +319,123 @@
         }
         .preset-btn:hover { border-color: var(--gold); color: var(--gold); }
 
+        /* ── SKYCHART INFO TOGGLE CARD ── */
+        .info-toggle-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px 44px;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .info-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .info-toggle-text {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .info-toggle-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-toggle-desc {
+            font-size: .85rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+            max-width: 560px;
+        }
+
+        .info-toggle-desc code {
+            font-family: monospace;
+            font-size: .8rem;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 6px;
+            color: var(--cyan);
+        }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            cursor: pointer;
+            transition: background .25s, border-color .25s;
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            left: 3px;
+            top: 3px;
+            background: var(--text-dim);
+            border-radius: 50%;
+            transition: transform .25s, background .25s;
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background: rgba(108,99,255,.25);
+            border-color: var(--accent);
+        }
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(24px);
+            background: var(--accent);
+        }
+
+        .info-preview-box {
+            display: none;
+            margin-top: 18px;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--gold);
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-size: .85rem;
+            color: var(--text-dim);
+            line-height: 1.8;
+        }
+        .info-preview-box.visible { display: block; }
+        .info-preview-box .preview-row {
+            display: flex;
+            gap: 10px;
+            font-family: monospace;
+        }
+        .info-preview-box .preview-key {
+            color: var(--gold);
+            min-width: 180px;
+        }
+        .info-preview-box .preview-val {
+            color: var(--cyan);
+        }
+
         /* ── GENERATE BUTTON ── */
         .generate-btn {
             width: 100%;
@@ -408,10 +525,12 @@
         /* ── RESPONSIVE ── */
         @media (max-width: 640px) {
             .form-card { padding: 28px 22px; }
+            .info-toggle-card { padding: 24px 22px; }
             .fields-grid { grid-template-columns: 1fr; }
             .fields-grid.triple { grid-template-columns: 1fr 1fr; }
             .mode-switcher { grid-template-columns: 1fr 1fr; }
             .checks-grid { grid-template-columns: 1fr; }
+            .info-toggle-row { flex-direction: column; align-items: flex-start; gap: 14px; }
         }
     </style>
 </head>
@@ -576,6 +695,42 @@
         </div>
     </div>
 
+    <!-- ── PRINT SKYCHART INFO TOGGLE ─────────────────────────────────── -->
+    <div class="info-toggle-card" id="print-info-card">
+        <div class="section-label">Информация о наблюдении</div>
+        <div class="info-toggle-row">
+            <div class="info-toggle-text">
+                <div class="info-toggle-title">
+                    Добавить ответы
+                </div>
+                <div class="info-toggle-desc">
+                    Добавляет блок с датой, звёздным временем и координатами места
+                    в нижнюю часть страницы-задания.
+                </div>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="print_skychart_info">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        <!-- Preview strip that appears when toggled on -->
+        <div class="info-preview-box" id="info-preview">
+            <div class="preview-row">
+                <span class="preview-key">Время наблюдения :</span>
+                <span class="preview-val" id="preview-time">—</span>
+            </div>
+            <div class="preview-row">
+                <span class="preview-key">Звёздное время&nbsp;&nbsp; :</span>
+                <span class="preview-val">рассчитывается автоматически</span>
+            </div>
+            <div class="preview-row">
+                <span class="preview-key">Координаты&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; :</span>
+                <span class="preview-val" id="preview-coords">—</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Кнопка генерации -->
     <div style="position:relative;z-index:2;">
         <button class="generate-btn" id="generate-btn" onclick="generate()">
@@ -642,6 +797,10 @@ function setMode(mode) {
     document.getElementById('btn-pinhole').classList.toggle('active', mode === 'pinhole');
     document.getElementById('stereo-fields').style.display = mode === 'stereo' ? 'block' : 'none';
     document.getElementById('pinhole-fields').style.display = mode === 'pinhole' ? 'block' : 'none';
+
+    // Hide print_skychart_info card for pinhole — parameter not applicable
+    const infoCard = document.getElementById('print-info-card');
+    infoCard.style.display = mode === 'stereo' ? 'block' : 'none';
 }
 
 // ── PRESETS ───────────────────────────────────────────────────────────────
@@ -683,11 +842,42 @@ function applyPreset(name) {
 // ── SET DEFAULT DATETIME ──────────────────────────────────────────────────
 (function setDefaultDatetime() {
     const now = new Date();
-    // Format: YYYY-MM-DDTHH:MM
     const str = now.toISOString().slice(0, 16);
     document.getElementById('datetime-stereo').value = str;
     document.getElementById('datetime-pinhole').value = str;
 })();
+
+// ── PRINT_SKYCHART_INFO TOGGLE PREVIEW ───────────────────────────────────
+document.getElementById('print_skychart_info').addEventListener('change', function () {
+    const preview = document.getElementById('info-preview');
+    preview.classList.toggle('visible', this.checked);
+
+    if (this.checked) {
+        // Fill preview with current form values
+        const dtVal = document.getElementById('datetime-stereo').value;
+        document.getElementById('preview-time').textContent =
+            dtVal ? dtVal.replace('T', '  ') : '— не задано —';
+
+        const lat = document.getElementById('latitude').value;
+        const lon = document.getElementById('longitude').value;
+        document.getElementById('preview-coords').textContent =
+            (lat && lon) ? `${parseFloat(lat).toFixed(2)}°,  ${parseFloat(lon).toFixed(2)}°` : '— не задано —';
+    }
+});
+
+// Update preview values live when fields change (only if toggle is on)
+['datetime-stereo', 'latitude', 'longitude'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+        if (!document.getElementById('print_skychart_info').checked) return;
+        const dtVal = document.getElementById('datetime-stereo').value;
+        document.getElementById('preview-time').textContent =
+            dtVal ? dtVal.replace('T', '  ') : '— не задано —';
+        const lat = document.getElementById('latitude').value;
+        const lon = document.getElementById('longitude').value;
+        document.getElementById('preview-coords').textContent =
+            (lat && lon) ? `${parseFloat(lat).toFixed(2)}°,  ${parseFloat(lon).toFixed(2)}°` : '— не задано —';
+    });
+});
 
 // ── STATUS BOX ────────────────────────────────────────────────────────────
 function showStatus(state, text) {
@@ -742,6 +932,10 @@ async function generate() {
         add_constellation_names: document.getElementById('add_constellation_names').checked,
         add_ticks:               document.getElementById('add_ticks').checked,
         add_cardinal_directions: document.getElementById('add_cardinal_directions').checked,
+        // Only relevant for stereo, ignored by backend for pinhole
+        print_skychart_info:     currentMode === 'stereo'
+                                    ? document.getElementById('print_skychart_info').checked
+                                    : false,
     };
 
     if (currentMode === 'stereo') {
