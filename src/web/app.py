@@ -18,9 +18,11 @@ from src.pinhole_projection.pinhole_projector import (
 )
 from src.helpers.pdf_helpers.figure2pdf import save_figure_skychart, save_figure_pinhole
 from src.constellations_metadata.constellations_data import get_constellation_center
+from src.web.game_blueprint import game_bp
 
 app = Flask(__name__, static_folder="public_html", static_url_path="")
 app.register_blueprint(messier_bp)
+app.register_blueprint(game_bp)
 
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

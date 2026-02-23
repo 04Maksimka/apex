@@ -1,10 +1,428 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AstraGeek — Нарисуй созвездие</title>
+  <style>
+    :root{--bg:#060612;--surface:#0e0e2a;--surface2:#161636;--accent:#7b61ff;--accent2:#4fc3f7;--gold:#ffd54f;--text:#e8eaf6;--muted:#7986cb;--radius:14px;--green:#66bb6a;--red:#ef5350;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--surface);border-bottom:1px solid rgba(123,97,255,.2);position:sticky;top:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:16px;}
+    .back-btn{color:var(--muted);text-decoration:none;font-size:.9rem;display:flex;align-items:center;gap:6px;}
+    .back-btn:hover{color:var(--text);}
+    .game-title{font-weight:700;font-size:1rem;}
+    .topbar-right{display:flex;align-items:center;gap:20px;}
+    .stat-chip{background:var(--surface2);border-radius:20px;padding:6px 14px;font-size:.85rem;display:flex;align-items:center;gap:6px;}
+    .stat-chip .val{font-weight:700;color:var(--accent2);}
+    .streak-chip .val{color:var(--gold);}
+    .progress-wrap{padding:10px 24px 0;background:var(--surface);}
+    .progress-bar{height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s;}
+    main{max-width:900px;margin:0 auto;padding:24px 20px 60px;}
+    .question-label{text-align:center;font-size:1rem;color:var(--muted);margin-bottom:16px;}
+
+    /* ── Instructions ── */
+    .instructions{
+      display:flex;align-items:center;gap:16px;
+      background:rgba(79,195,247,.07);border:1px solid rgba(79,195,247,.2);
+      border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:.88rem;color:var(--accent2);
+    }
+    .instructions ul{list-style:none;display:flex;gap:16px;flex-wrap:wrap;}
+    .instructions li::before{content:"• ";color:var(--accent);}
+
+    /* ── Canvas container ── */
+    .canvas-wrap{
+      border-radius:var(--radius);overflow:hidden;
+      border:1px solid rgba(123,97,255,.25);
+      background:#020208;position:relative;
+      margin-bottom:20px;
+    }
+    canvas{display:block;cursor:crosshair;width:100%;touch-action:none;}
+
+    /* ── Draw controls ── */
+    .draw-controls{
+      display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;
+    }
+    .btn{padding:11px 24px;border-radius:30px;font-weight:700;font-size:.9rem;cursor:pointer;border:none;transition:all .15s;}
+    .btn-undo{background:rgba(123,97,255,.18);color:var(--accent);border:1px solid rgba(123,97,255,.4);}
+    .btn-undo:hover{background:rgba(123,97,255,.3);}
+    .btn-clear{background:rgba(239,83,80,.15);color:var(--red);border:1px solid rgba(239,83,80,.3);}
+    .btn-clear:hover{background:rgba(239,83,80,.25);}
+    .btn-submit{background:var(--accent);color:#fff;}
+    .btn-submit:hover{filter:brightness(1.15);}
+    .btn-submit:disabled{opacity:.4;cursor:default;}
+    .btn-hint{background:rgba(123,97,255,.18);color:var(--accent);border:1px solid rgba(123,97,255,.4);}
+    .btn-hint:hover{background:rgba(123,97,255,.3);}
+    .btn-hint:disabled{opacity:.4;cursor:default;}
+    .btn-next{background:var(--accent);color:#fff;display:none;}
+    .btn-next:hover{filter:brightness(1.15);}
+    .btn-next:disabled{opacity:.4;cursor:default;}
+
+    /* ── Hint box ── */
+    .hint-box{display:none;background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.3);border-radius:10px;padding:12px 16px;color:var(--accent2);font-size:.88rem;margin-bottom:16px;}
+
+    /* ── Result ── */
+    .result-card{border-radius:var(--radius);padding:20px 24px;border:1px solid;animation:fadeIn .3s;margin-bottom:20px;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+    .result-card.correct-card{background:rgba(102,187,106,.1);border-color:var(--green);}
+    .result-card.partial-card{background:rgba(255,213,79,.08);border-color:var(--gold);}
+    .result-card.wrong-card{background:rgba(239,83,80,.08);border-color:var(--red);}
+    .result-title{font-size:1.1rem;font-weight:700;margin-bottom:8px;}
+    .result-fact{color:var(--muted);font-size:.88rem;line-height:1.6;margin-top:8px;}
+    .score-bar{
+      margin-top:12px;background:rgba(255,255,255,.08);border-radius:4px;height:8px;overflow:hidden;
+    }
+    .score-fill{height:100%;border-radius:4px;transition:width 1s cubic-bezier(.2,.8,.4,1);}
+    .points-badge{display:inline-block;background:var(--gold);color:#000;font-weight:800;font-size:.85rem;padding:3px 12px;border-radius:12px;margin-left:8px;}
+    .edge-count{font-size:.85rem;color:var(--muted);margin-top:6px;}
+
+    /* ── Finish ── */
+    .finish-screen{display:none;text-align:center;padding:60px 20px;}
+    .finish-rank{font-size:2.8rem;margin-bottom:8px;}
+    .finish-score{font-size:1.2rem;color:var(--muted);}
+    .finish-score span{color:var(--gold);font-weight:800;font-size:1.8rem;}
+    .finish-stats{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin:28px 0;}
+    .fstat{background:var(--surface2);border-radius:var(--radius);padding:16px 24px;min-width:120px;}
+    .fstat .n{font-size:2rem;font-weight:800;color:var(--accent2);}
+    .fstat .l{font-size:.8rem;color:var(--muted);}
+    .finish-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px;}
+    .btn-restart{background:var(--accent);color:#fff;}
+    .btn-lobby{background:var(--surface2);color:var(--text);border:1px solid rgba(255,255,255,.1);}
+  </style>
 </head>
 <body>
-$END$
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="/game/lobby" class="back-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Выбор игры
+    </a>
+    <div class="game-title">✏️ Нарисуй созвездие</div>
+  </div>
+  <div class="topbar-right">
+    <div class="stat-chip">Раунд <span class="val" id="hdr-round">0</span>/<span id="hdr-total">10</span></div>
+    <div class="stat-chip">Очки <span class="val" id="hdr-score">0</span></div>
+    <div class="stat-chip streak-chip">🔥 <span class="val" id="hdr-streak">0</span></div>
+  </div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+</div>
+
+<main>
+  <div id="game-area">
+    <div class="question-label" id="question-label">Загрузка...</div>
+
+    <div class="instructions">
+      <div>📖</div>
+      <ul>
+        <li>Кликни на звезду, чтобы выбрать её</li>
+        <li>Кликни на другую звезду — нарисуется линия</li>
+        <li>Кликни на ту же звезду — снимется выбор</li>
+      </ul>
+    </div>
+
+    <div class="hint-box" id="hint-box"></div>
+
+    <div class="canvas-wrap">
+      <canvas id="sky-canvas" width="800" height="600"></canvas>
+    </div>
+
+    <div class="draw-controls">
+      <button class="btn btn-hint" id="btn-hint" onclick="useHint()">💡 Подсказка (−50%)</button>
+      <button class="btn btn-undo" onclick="undoLast()">↩ Отменить</button>
+      <button class="btn btn-clear" onclick="clearAll()">🗑 Очистить</button>
+      <button class="btn btn-submit" id="btn-submit" onclick="submitDrawing()">✔ Проверить</button>
+      <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">Следующий →</button>
+    </div>
+
+    <div id="result-area"></div>
+  </div>
+
+  <div class="finish-screen" id="finish-screen">
+    <div class="finish-rank" id="finish-rank">✏️</div>
+    <h2 style="margin-bottom:6px">Игра завершена!</h2>
+    <div class="finish-score">Итоговый счёт: <span id="finish-score-val">0</span></div>
+    <div class="finish-stats">
+      <div class="fstat"><div class="n" id="fs-correct">0</div><div class="l">правильных</div></div>
+      <div class="fstat"><div class="n" id="fs-acc">0%</div><div class="l">точность</div></div>
+      <div class="fstat"><div class="n" id="fs-streak">0</div><div class="l">лучшая серия</div></div>
+    </div>
+    <div class="finish-actions">
+      <button class="btn btn-restart" onclick="restartGame()">🔄 Играть снова</button>
+      <button class="btn btn-lobby" onclick="window.location.href='/game/lobby'">🎮 Выбор игры</button>
+    </div>
+  </div>
+</main>
+
+<script>
+  const MODE = 'draw';
+  const params = new URLSearchParams(location.search);
+  const DIFFICULTY = params.get('difficulty') || 'easy';
+  const ROUNDS = parseInt(params.get('rounds') || '10');
+
+  let sessionId = null, usedHint = false, questionStartTime = null;
+  let stars = [], drawnEdges = [], selectedStar = null;
+  let showingResult = false;
+
+  // ── Canvas setup ──
+  const canvas = document.getElementById('sky-canvas');
+  const ctx = canvas.getContext('2d');
+  const STAR_RADIUS = 8;
+  const CLICK_TOLERANCE = 18;
+
+  function resizeCanvas() {
+    const w = canvas.parentElement.clientWidth;
+    canvas.width = w; canvas.height = Math.round(w * 0.75);
+    drawAll();
+  }
+
+  function toCanvas(nx, ny) {
+    const pad = 60;
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const scale = Math.min(canvas.width, canvas.height) / 2 - pad;
+    return { x: cx + nx * scale, y: cy - ny * scale };
+  }
+
+  function starAtPos(mx, my) {
+    return stars.find(s => {
+      const p = toCanvas(s.x, s.y);
+      return Math.hypot(p.x - mx, p.y - my) < CLICK_TOLERANCE;
+    }) || null;
+  }
+
+  function drawAll(showRef = false) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Background
+    ctx.fillStyle = '#020208';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Reference edges (after submission)
+    if (showRef && window._refEdges) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(102,187,106,0.5)';
+      ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+      window._refEdges.forEach(([a, b]) => {
+        const sa = stars.find(s => s.hip_id === a);
+        const sb = stars.find(s => s.hip_id === b);
+        if (!sa || !sb) return;
+        const pa = toCanvas(sa.x, sa.y), pb = toCanvas(sb.x, sb.y);
+        ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    // Drawn edges
+    ctx.save();
+    ctx.strokeStyle = 'rgba(123,97,255,0.8)';
+    ctx.lineWidth = 2.5; ctx.setLineDash([]);
+    drawnEdges.forEach(([a, b]) => {
+      const sa = stars.find(s => s.hip_id === a);
+      const sb = stars.find(s => s.hip_id === b);
+      if (!sa || !sb) return;
+      const pa = toCanvas(sa.x, sa.y), pb = toCanvas(sb.x, sb.y);
+      ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+    });
+    ctx.restore();
+
+    // Stars
+    stars.forEach(s => {
+      const { x, y } = toCanvas(s.x, s.y);
+      const selected = selectedStar && selectedStar.hip_id === s.hip_id;
+      const radius = Math.max(2, 5 - s.v_mag * 0.6);
+
+      ctx.beginPath();
+      ctx.arc(x, y, STAR_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = selected
+        ? 'rgba(255,213,79,0.15)'
+        : 'rgba(123,97,255,0.10)';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = selected ? '#ffd54f' : '#c5cae9';
+      ctx.fill();
+
+      if (selected) {
+        ctx.beginPath();
+        ctx.arc(x, y, STAR_RADIUS, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      if (s.name) {
+        ctx.font = '11px Segoe UI, sans-serif';
+        ctx.fillStyle = 'rgba(121,134,203,0.85)';
+        ctx.fillText(s.name, x + STAR_RADIUS + 3, y - 3);
+      }
+    });
+  }
+
+  // ── Mouse / touch input ──
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    if (e.touches) {
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY,
+      };
+    }
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+  }
+
+  canvas.addEventListener('click', e => {
+    if (showingResult) return;
+    const { x, y } = getPos(e);
+    const hit = starAtPos(x, y);
+    if (!hit) { selectedStar = null; drawAll(); return; }
+    if (!selectedStar) { selectedStar = hit; drawAll(); return; }
+    if (selectedStar.hip_id === hit.hip_id) { selectedStar = null; drawAll(); return; }
+
+    // Add edge
+    const edge = [selectedStar.hip_id, hit.hip_id];
+    const already = drawnEdges.some(([a, b]) =>
+      (a === edge[0] && b === edge[1]) || (a === edge[1] && b === edge[0])
+    );
+    if (!already) drawnEdges.push(edge);
+    selectedStar = null;
+    drawAll();
+  });
+
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); canvas.dispatchEvent(new MouseEvent('click', getPos(e.touches[0]))); }, { passive: false });
+
+  // ── Undo / clear ──
+  function undoLast() { drawnEdges.pop(); drawAll(); }
+  function clearAll() { drawnEdges = []; selectedStar = null; drawAll(); }
+
+  // ── Submit ──
+  async function submitDrawing() {
+    if (showingResult) return;
+    showingResult = true;
+    document.getElementById('btn-submit').disabled = true;
+    const timeSec = ((Date.now() - questionStartTime) / 1000).toFixed(1);
+    const resp = await fetch('/game/api/answer', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sessionId,
+        drawn_edges: drawnEdges,
+        used_hint: usedHint,
+        time_seconds: parseFloat(timeSec),
+      }),
+    });
+    const data = await resp.json();
+    updateHeader(data);
+    window._refEdges = data.draw_details ? data.draw_details.ref_edges : [];
+    drawAll(true);
+
+    const pct = data.draw_details ? data.draw_details.score_pct : 0;
+    const correct = data.correct;
+    const cls = correct ? 'correct-card' : (pct > 30 ? 'partial-card' : 'wrong-card');
+    const icon = correct ? '✅' : (pct > 30 ? '🟡' : '❌');
+    const pts = data.points_earned > 0 ? `<span class="points-badge">+${data.points_earned}</span>` : '';
+    const barColor = correct ? '#66bb6a' : (pct > 30 ? '#ffd54f' : '#ef5350');
+
+    document.getElementById('result-area').innerHTML = `
+      <div class="result-card ${cls}">
+        <div class="result-title">${icon} Созвездие: <b>${data.correct_answer}</b> ${pts}</div>
+        <div class="edge-count">Совпало линий: ${data.draw_details?.correct_edges||0} из ${data.draw_details?.total_ref_edges||0}</div>
+        <div class="score-bar"><div class="score-fill" style="width:0%;background:${barColor}" id="score-fill-anim"></div></div>
+        <div class="result-fact">${data.fun_fact}</div>
+      </div>`;
+
+    setTimeout(() => {
+      const el = document.getElementById('score-fill-anim');
+      if (el) el.style.width = pct + '%';
+    }, 100);
+
+    document.getElementById('btn-next').style.display = 'inline-block';
+    document.getElementById('btn-submit').style.display = 'none';
+  }
+
+  // ── Hint ──
+  async function useHint() {
+    document.getElementById('btn-hint').disabled = true; usedHint = true;
+    const r = await fetch(`/game/api/hint?session_id=${sessionId}`);
+    const d = await r.json();
+    const hb = document.getElementById('hint-box');
+    hb.textContent = '💡 ' + (d.hint || 'Подсказка недоступна');
+    hb.style.display = 'block';
+  }
+
+  // ── Next ──
+  async function nextQuestion() {
+    document.getElementById('btn-next').style.display = 'none';
+    document.getElementById('btn-submit').style.display = 'inline-block';
+    document.getElementById('btn-submit').disabled = false;
+    await loadQuestion();
+  }
+
+  // ── Load question ──
+  async function loadQuestion() {
+    stars = []; drawnEdges = []; selectedStar = null;
+    showingResult = false; usedHint = false;
+    window._refEdges = [];
+    document.getElementById('hint-box').style.display = 'none';
+    document.getElementById('result-area').innerHTML = '';
+    document.getElementById('btn-hint').disabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#020208'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(121,134,203,0.5)';
+    ctx.font = '16px Segoe UI,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Загружаем звёзды…', canvas.width / 2, canvas.height / 2);
+    ctx.textAlign = 'left';
+
+    const resp = await fetch(`/game/api/question?session_id=${sessionId}`);
+    const data = await resp.json();
+    if (data.finished) { showFinish(data); return; }
+
+    updateHeader(data.session);
+    document.getElementById('question-label').textContent = data.question;
+    stars = data.stars || [];
+    questionStartTime = Date.now();
+    drawAll();
+  }
+
+  // ── Game init ──
+  async function initGame() {
+    const resp = await fetch('/game/api/start', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: MODE, difficulty: DIFFICULTY, rounds: ROUNDS }),
+    });
+    const data = await resp.json();
+    sessionId = data.session_id;
+    updateHeader(data);
+    await loadQuestion();
+  }
+
+  function updateHeader(s) {
+    document.getElementById('hdr-round').textContent  = s.round || 0;
+    document.getElementById('hdr-total').textContent  = s.total_rounds || ROUNDS;
+    document.getElementById('hdr-score').textContent  = s.score || 0;
+    document.getElementById('hdr-streak').textContent = s.streak || 0;
+    document.getElementById('progress-fill').style.width = ((s.round || 0) / (s.total_rounds || ROUNDS) * 100) + '%';
+  }
+
+  function showFinish(data) {
+    document.getElementById('game-area').style.display = 'none';
+    document.getElementById('finish-screen').style.display = 'block';
+    document.getElementById('finish-rank').textContent = data.rank || '✏️';
+    document.getElementById('finish-score-val').textContent = data.score || 0;
+    document.getElementById('fs-correct').textContent = data.correct_count || 0;
+    document.getElementById('fs-acc').textContent = (data.accuracy || 0) + '%';
+    document.getElementById('fs-streak').textContent = data.best_streak || 0;
+  }
+
+  function restartGame() { location.href = `/game/draw?difficulty=${DIFFICULTY}&rounds=${ROUNDS}`; }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+  initGame();
+</script>
 </body>
 </html>

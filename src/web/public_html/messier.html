@@ -398,6 +398,9 @@ function loadRound(){
   const img = $('sky-img');
   img.style.display = 'none';
 
+  // ── FIX 3: убираем параметр «_» (подчёркивание), который nginx/proxies
+  //    иногда вырезают (директива underscores_in_headers off по умолчанию).
+  //    Используем параметр «ts» (timestamp) — безопасное имя.
   const src = `${API_BASE}/api/messier/image?session_id=${sessionId}&ts=${Date.now()}`;
   const tmp = new Image();
   tmp.onload = () => {
@@ -432,6 +435,8 @@ async function submitAnswer(){
     });
     const d = await r.json();
 
+    // ── FIX 2: если сервер не вернул guess (старая версия blueprint),
+    //    сохраняем его из локальной переменной guessVal.
     if (d.guess === undefined || d.guess === null) {
       d.guess = guessVal;
     }
