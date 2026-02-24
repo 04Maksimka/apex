@@ -3,11 +3,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Code Documentation" href="code.html">
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Installation" href="installation.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>AstraGeek 0.2.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=acfd86a5" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -190,9 +190,11 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="code.html"> code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI Reference</a></li>
 </ul>
 
 </div>
@@ -231,23 +233,31 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="astrageek-documentation">
-<h1>AstraGeek documentation<a class="headerlink" href="#astrageek-documentation" title="Link to this heading">¶</a></h1>
+          <section id="astrageek-sky-chart-tools">
+<h1>AstraGeek Sky Chart Tools<a class="headerlink" href="#astrageek-sky-chart-tools" title="Link to this heading">¶</a></h1>
+<p>Software for building star maps and sky charts, developed for the
+<a class="reference external" href="https://astrageek.ru/">AstraGeek</a> astronomy online school.</p>
+<ul class="simple">
+<li><p>Build classic sky charts and star maps via the <a class="reference external" href="https://skychart.astrageek.ru/">web interface</a></p></li>
+<li><p>Use the <code class="docutils literal notranslate"><span class="pre">astrageek</span></code> CLI to generate maps locally from the command line</p></li>
+<li><p>Educational astronomy videos: <a class="reference external" href="https://astrageek.ru/">astrageek.ru</a></p></li>
+</ul>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="code.html"> code</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="code.html#src.helpers.geometry.geometry.generate_random_direction"><code class="docutils literal notranslate"><span class="pre">generate_random_direction()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="code.html#src.helpers.geometry.geometry.angular_distance"><code class="docutils literal notranslate"><span class="pre">angular_distance()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="code.html#src.helpers.geometry.geometry.mag_to_radius"><code class="docutils literal notranslate"><span class="pre">mag_to_radius()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="code.html#src.helpers.geometry.geometry.get_horizontal_coords"><code class="docutils literal notranslate"><span class="pre">get_horizontal_coords()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="code.html#src.helpers.geometry.geometry.make_stereo_projection"><code class="docutils literal notranslate"><span class="pre">make_stereo_projection()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="code.html#src.helpers.geometry.geometry.make_pinhole_projection"><code class="docutils literal notranslate"><span class="pre">make_pinhole_projection()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="code.html#src.helpers.geometry.geometry.create_camera_frame_system"><code class="docutils literal notranslate"><span class="pre">create_camera_frame_system()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="code.html#src.helpers.geometry.geometry.generate_small_circle"><code class="docutils literal notranslate"><span class="pre">generate_small_circle()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="code.html#src.helpers.geometry.geometry.make_points_stereo_projection"><code class="docutils literal notranslate"><span class="pre">make_points_stereo_projection()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="code.html#src.helpers.geometry.geometry.make_equatorial_grid_pinhole"><code class="docutils literal notranslate"><span class="pre">make_equatorial_grid_pinhole()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="code.html#src.helpers.geometry.geometry.clean_far_points"><code class="docutils literal notranslate"><span class="pre">clean_far_points()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#setting-up-a-virtual-environment">Setting up a virtual environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#from-pypi">From PyPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#from-source-github">From source (GitHub)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#basic-usage">Basic usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#example">Example: &lt;конкретная задача&gt;</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#astrageek">astrageek</a></li>
 </ul>
 </li>
 </ul>
@@ -259,12 +269,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="code.html">
+          <a class="next-page" href="installation.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Code Documentation</div>
+                <div class="title">Installation</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

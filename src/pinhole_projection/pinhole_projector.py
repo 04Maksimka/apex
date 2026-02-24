@@ -10,7 +10,7 @@ from src.constellations_metadata.constellations_data import get_available_conste
 from src.helpers.geometry.geometry import make_pinhole_projection, mag_to_radius, generate_small_circle, \
     make_equatorial_grid_pinhole
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from helpers.constellations.constellation_renderer_pinhole import ConstellationRenderer, draw_multiple_constellations
+from src.helpers.constellations.constellation_renderer_pinhole import ConstellationRenderer, draw_multiple_constellations
 from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 
 

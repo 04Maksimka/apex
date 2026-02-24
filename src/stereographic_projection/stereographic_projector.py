@@ -16,7 +16,7 @@ from src.hip_catalog.hip_catalog import CatalogConstraints, Catalog
 from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 from matplotlib.collections import LineCollection
 
-from helpers.constellations.constellation_renderer_stereo import ConstellationRendererStereo, \
+from src.helpers.constellations.constellation_renderer_stereo import ConstellationRendererStereo, \
     draw_multiple_constellations
 
 

@@ -11,20 +11,23 @@ release = '0.2.0'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon',            # поддержка Google/NumPy docstrings (на будущее)
-    'sphinx.ext.intersphinx',         # ссылки на документацию numpy, python
-    'sphinx_autodoc_typehints',       # красивые типы
+    'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx',
+    'sphinx_autodoc_typehints',
+    'sphinx_click',
 ]
 
+sphinx_click_mock_imports = []
+
 # --- autodoc настройки ---
-autodoc_member_order = 'bysource'               # порядок как в исходнике
-autodoc_typehints = 'description'                # типы в описание, НЕ в сигнатуру
-autodoc_typehints_format = 'short'               # short: NDArray вместо numpy.ndarray[...]
-add_module_names = False                         # angular_distance вместо src.helpers.geometry.geometry.angular_distance
+autodoc_member_order = 'bysource'
+autodoc_typehints = 'description'
+autodoc_typehints_format = 'short'
+add_module_names = False
 
 # --- sphinx-autodoc-typehints ---
-typehints_fully_qualified = False                # NDArray вместо numpy.typing.NDArray
-simplify_optional_unions = True                  # Optional[X] вместо Union[X, None]
+typehints_fully_qualified = False
+simplify_optional_unions = True
 
 # --- intersphinx: ссылки на внешние проекты ---
 intersphinx_mapping = {
@@ -38,3 +41,9 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 html_theme = 'furo'
 html_static_path = ['_static']
+
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'show-inheritance': True,
+}
