@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AstraGeek — Генератор карт</title>
-    <link rel="icon" type="image/jpg" href="https://raw.githubusercontent.com/04Maksimka/AstraGeek/main/helpers/pdf_helpers/favicon.jpg">
+        <link rel="icon" type="image/jpg" href="https://raw.githubusercontent.com/04Maksimka/AstraGeek/main/src/helpers/pdf_helpers/favicon.jpg">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -319,6 +319,123 @@
         }
         .preset-btn:hover { border-color: var(--gold); color: var(--gold); }
 
+        /* ── SKYCHART INFO TOGGLE CARD ── */
+        .info-toggle-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px 44px;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .info-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .info-toggle-text {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .info-toggle-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-toggle-desc {
+            font-size: .85rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+            max-width: 560px;
+        }
+
+        .info-toggle-desc code {
+            font-family: monospace;
+            font-size: .8rem;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 6px;
+            color: var(--cyan);
+        }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            cursor: pointer;
+            transition: background .25s, border-color .25s;
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            left: 3px;
+            top: 3px;
+            background: var(--text-dim);
+            border-radius: 50%;
+            transition: transform .25s, background .25s;
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background: rgba(108,99,255,.25);
+            border-color: var(--accent);
+        }
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(24px);
+            background: var(--accent);
+        }
+
+        .info-preview-box {
+            display: none;
+            margin-top: 18px;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--gold);
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-size: .85rem;
+            color: var(--text-dim);
+            line-height: 1.8;
+        }
+        .info-preview-box.visible { display: block; }
+        .info-preview-box .preview-row {
+            display: flex;
+            gap: 10px;
+            font-family: monospace;
+        }
+        .info-preview-box .preview-key {
+            color: var(--gold);
+            min-width: 180px;
+        }
+        .info-preview-box .preview-val {
+            color: var(--cyan);
+        }
+
         /* ── GENERATE BUTTON ── */
         .generate-btn {
             width: 100%;
@@ -408,10 +525,12 @@
         /* ── RESPONSIVE ── */
         @media (max-width: 640px) {
             .form-card { padding: 28px 22px; }
+            .info-toggle-card { padding: 24px 22px; }
             .fields-grid { grid-template-columns: 1fr; }
             .fields-grid.triple { grid-template-columns: 1fr 1fr; }
             .mode-switcher { grid-template-columns: 1fr 1fr; }
             .checks-grid { grid-template-columns: 1fr; }
+            .info-toggle-row { flex-direction: column; align-items: flex-start; gap: 14px; }
         }
     </style>
 </head>
@@ -423,7 +542,7 @@
 <nav id="navbar">
     <div class="nav-inner container">
         <a href="/" class="logo">
-            <img src="https://raw.githubusercontent.com/04Maksimka/AstraGeek/main/helpers/pdf_helpers/favicon.jpg" alt="AstraGeek Logo">
+            <img src="https://raw.githubusercontent.com/04Maksimka/AstraGeek/main/src/helpers/pdf_helpers/favicon.jpg" alt="AstraGeek Logo">
             AstraGeek
         </a>
         <a href="/" class="back-link">← Главная</a>
@@ -433,7 +552,7 @@
 <!-- Hero -->
 <div class="page-hero">
     <div class="container">
-        <h1>🌌 Генератор карт неба</h1>
+        <h1>Генератор карт неба</h1>
         <p>Настройте параметры и получите PDF со звёздной картой для наблюдений</p>
     </div>
 </div>
@@ -446,12 +565,10 @@
         <div class="section-label">Тип проекции</div>
         <div class="mode-switcher">
             <button class="mode-btn active" id="btn-stereo" onclick="setMode('stereo')">
-                <span class="mode-icon">🌐</span>
                 Стереографическая
                 <span class="mode-desc">Всё небо целиком для заданного места и времени</span>
             </button>
             <button class="mode-btn" id="btn-pinhole" onclick="setMode('pinhole')">
-                <span class="mode-icon">👁️</span>
                 Камера-обскура
                 <span class="mode-desc">Конкретный участок — как в телескоп или невооружённым глазом</span>
             </button>
@@ -513,11 +630,11 @@
         <!-- Звёздная величина -->
         <div class="section-label">Предельная звёздная величина</div>
         <div class="field">
-            <label>💫 Слабейшие видимые звёзды (чем больше — тем больше звёзд)</label>
+            <label>💫 Предельная звездная величина (чем больше — тем больше звёзд)</label>
             <div class="range-wrapper">
-                <input type="range" id="v_mag_limit" min="3.0" max="9.0" step="0.5" value="6.5"
+                <input type="range" id="v_mag_limit" min="3.0" max="9.0" step="0.5" value="5.5"
                        oninput="document.getElementById('mag-val').textContent = this.value">
-                <span class="range-value" id="mag-val">6.5</span>
+                <span class="range-value" id="mag-val">5.5</span>
             </div>
         </div>
     </div>
@@ -540,54 +657,77 @@
         <div class="checks-grid">
             <label class="check-item">
                 <input type="checkbox" id="add_ecliptic">
-                <span class="check-icon">☀️</span>
                 <span class="check-label">Эклиптика</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_equator">
-                <span class="check-icon">🌍</span>
                 <span class="check-label">Небесный экватор</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_galactic_equator">
-                <span class="check-icon">🌌</span>
                 <span class="check-label">Галактический экватор</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_planets">
-                <span class="check-icon">🪐</span>
                 <span class="check-label">Планеты</span>
             </label>
-            <label class="check-item">
-                <input type="checkbox" id="add_horizontal_grid">
-                <span class="check-icon">📏</span>
-                <span class="check-label">Горизонтальная сетка</span>
-            </label>
+
             <label class="check-item">
                 <input type="checkbox" id="add_equatorial_grid">
-                <span class="check-icon">📐</span>
                 <span class="check-label">Экваториальная сетка</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_constellations">
-                <span class="check-icon">✦</span>
                 <span class="check-label">Линии созвездий</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_constellation_names">
-                <span class="check-icon">🔤</span>
                 <span class="check-label">Названия созвездий</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_ticks">
-                <span class="check-icon">🔢</span>
                 <span class="check-label">Засечки осей</span>
             </label>
             <label class="check-item">
                 <input type="checkbox" id="add_cardinal_directions">
-                <span class="check-icon">🧭</span>
                 <span class="check-label">Стороны света</span>
             </label>
+        </div>
+    </div>
+
+    <!-- ── PRINT SKYCHART INFO TOGGLE ─────────────────────────────────── -->
+    <div class="info-toggle-card" id="print-info-card">
+        <div class="section-label">Информация о наблюдении</div>
+        <div class="info-toggle-row">
+            <div class="info-toggle-text">
+                <div class="info-toggle-title">
+                    Добавить ответы
+                </div>
+                <div class="info-toggle-desc">
+                    Добавляет блок с датой, звёздным временем и координатами места
+                    в нижнюю часть страницы-задания.
+                </div>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="print_skychart_info">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        <!-- Preview strip that appears when toggled on -->
+        <div class="info-preview-box" id="info-preview">
+            <div class="preview-row">
+                <span class="preview-key">Время наблюдения :</span>
+                <span class="preview-val" id="preview-time">—</span>
+            </div>
+            <div class="preview-row">
+                <span class="preview-key">Звёздное время&nbsp;&nbsp; :</span>
+                <span class="preview-val">рассчитывается автоматически</span>
+            </div>
+            <div class="preview-row">
+                <span class="preview-key">Координаты&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; :</span>
+                <span class="preview-val" id="preview-coords">—</span>
+            </div>
         </div>
     </div>
 
@@ -607,7 +747,7 @@
 
 <footer>
     <div class="container">
-        <p>© 2025 <a href="https://astrageek.ru/">AstraGeek</a> — образовательный проект по астрономии</p>
+        <p>© 2026 <a href="https://astrageek.ru/" target="_blank">AstraGeek</a> · Звёздный атлас</p>
     </div>
 </footer>
 
@@ -657,6 +797,10 @@ function setMode(mode) {
     document.getElementById('btn-pinhole').classList.toggle('active', mode === 'pinhole');
     document.getElementById('stereo-fields').style.display = mode === 'stereo' ? 'block' : 'none';
     document.getElementById('pinhole-fields').style.display = mode === 'pinhole' ? 'block' : 'none';
+
+    // Hide print_skychart_info card for pinhole — parameter not applicable
+    const infoCard = document.getElementById('print-info-card');
+    infoCard.style.display = mode === 'stereo' ? 'block' : 'none';
 }
 
 // ── PRESETS ───────────────────────────────────────────────────────────────
@@ -698,11 +842,42 @@ function applyPreset(name) {
 // ── SET DEFAULT DATETIME ──────────────────────────────────────────────────
 (function setDefaultDatetime() {
     const now = new Date();
-    // Format: YYYY-MM-DDTHH:MM
     const str = now.toISOString().slice(0, 16);
     document.getElementById('datetime-stereo').value = str;
     document.getElementById('datetime-pinhole').value = str;
 })();
+
+// ── PRINT_SKYCHART_INFO TOGGLE PREVIEW ───────────────────────────────────
+document.getElementById('print_skychart_info').addEventListener('change', function () {
+    const preview = document.getElementById('info-preview');
+    preview.classList.toggle('visible', this.checked);
+
+    if (this.checked) {
+        // Fill preview with current form values
+        const dtVal = document.getElementById('datetime-stereo').value;
+        document.getElementById('preview-time').textContent =
+            dtVal ? dtVal.replace('T', '  ') : '— не задано —';
+
+        const lat = document.getElementById('latitude').value;
+        const lon = document.getElementById('longitude').value;
+        document.getElementById('preview-coords').textContent =
+            (lat && lon) ? `${parseFloat(lat).toFixed(2)}°,  ${parseFloat(lon).toFixed(2)}°` : '— не задано —';
+    }
+});
+
+// Update preview values live when fields change (only if toggle is on)
+['datetime-stereo', 'latitude', 'longitude'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+        if (!document.getElementById('print_skychart_info').checked) return;
+        const dtVal = document.getElementById('datetime-stereo').value;
+        document.getElementById('preview-time').textContent =
+            dtVal ? dtVal.replace('T', '  ') : '— не задано —';
+        const lat = document.getElementById('latitude').value;
+        const lon = document.getElementById('longitude').value;
+        document.getElementById('preview-coords').textContent =
+            (lat && lon) ? `${parseFloat(lat).toFixed(2)}°,  ${parseFloat(lon).toFixed(2)}°` : '— не задано —';
+    });
+});
 
 // ── STATUS BOX ────────────────────────────────────────────────────────────
 function showStatus(state, text) {
@@ -752,12 +927,15 @@ async function generate() {
         add_equator:             document.getElementById('add_equator').checked,
         add_galactic_equator:    document.getElementById('add_galactic_equator').checked,
         add_planets:             document.getElementById('add_planets').checked,
-        add_horizontal_grid:     document.getElementById('add_horizontal_grid').checked,
         add_equatorial_grid:     document.getElementById('add_equatorial_grid').checked,
         add_constellations:      document.getElementById('add_constellations').checked,
         add_constellation_names: document.getElementById('add_constellation_names').checked,
         add_ticks:               document.getElementById('add_ticks').checked,
         add_cardinal_directions: document.getElementById('add_cardinal_directions').checked,
+        // Only relevant for stereo, ignored by backend for pinhole
+        print_skychart_info:     currentMode === 'stereo'
+                                    ? document.getElementById('print_skychart_info').checked
+                                    : false,
     };
 
     if (currentMode === 'stereo') {

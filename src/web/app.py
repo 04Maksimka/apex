@@ -4,9 +4,10 @@ import tempfile
 
 import matplotlib
 matplotlib.use('Agg')
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file, jsonify, redirect, url_for
 from datetime import datetime
 
+from src.web.messier_blueprint import messier_bp
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from src.planets_catalog.planet_catalog import PlanetCatalog
 from src.stereographic_projection.stereographic_projector import (
@@ -17,8 +18,11 @@ from src.pinhole_projection.pinhole_projector import (
 )
 from src.helpers.pdf_helpers.figure2pdf import save_figure_skychart, save_figure_pinhole
 from src.constellations_metadata.constellations_data import get_constellation_center
+from src.web.game_blueprint import game_bp
 
 app = Flask(__name__, static_folder="public_html", static_url_path="")
+app.register_blueprint(messier_bp)
+app.register_blueprint(game_bp)
 
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,13 +33,34 @@ CATALOG = Catalog(
     use_cache=True,
 )
 
+
+# ── Основные страницы ─────────────────────────────────────────────────────────
+
 @app.route("/")
 def index():
     return app.send_static_file("index.html")
 
+
 @app.route("/generator")
 def generator():
     return app.send_static_file("generator.html")
+
+
+# ── Игры ─────────────────────────────────────────────────────────────────────
+
+@app.route("/games")
+def games_redirect():
+    """Удобный алиас /games → /game/ (лобби игр)."""
+    return redirect("/game/", code=301)
+
+
+@app.route("/messier.html")
+def messier_html_redirect():
+    """Обратная совместимость: старые ссылки на /messier.html → /game/messier."""
+    return redirect("/game/messier", code=301)
+
+
+# ── Генерация карт ────────────────────────────────────────────────────────────
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -55,6 +80,9 @@ def generate():
         "add_constellations":  data.get("add_constellations", False),
         "add_constellations_names": data.get("add_constellation_names", False),
     }
+
+    # Whether to print observation info block on the task page (stereo only)
+    print_skychart_info = bool(data.get("print_skychart_info", False))
 
     tmp_path = os.path.join(tempfile.gettempdir(), f"skychart_{uuid.uuid4().hex}.pdf")
 
@@ -77,6 +105,7 @@ def generate():
             config=config, location_name="",
             logo_path=os.path.join(BASE_DIR, "src", "helpers", "pdf_helpers", "logo_astrageek.png"),
             footer_text="skychart.astrageek.ru",
+            print_skychart_info=print_skychart_info,
         )
 
     elif mode == "pinhole":
@@ -106,4 +135,4 @@ def generate():
                      as_attachment=True, download_name="skychart.pdf")
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000, use_reloader=False)
+    app.run(host="0.0.0.0", port=8000, debug=False)
