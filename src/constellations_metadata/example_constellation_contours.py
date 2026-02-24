@@ -11,8 +11,8 @@ from typing import List, Optional
 
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from src.constellations_metadata.constellations_data import get_constellation_center
-from src.pinhole_projection.constellation_renderer import ConstellationRenderer, \
-    draw_constellation_lines, draw_multiple_constellations
+from helpers.constellations.constellation_renderer_pinhole import ConstellationRenderer, \
+    draw_multiple_constellations, draw_constellation_lines_collection
 from src.pinhole_projection.pinhole_projector import (
     ShotConditions,
     Pinhole, CameraConfig, PinholeConfig
@@ -267,7 +267,7 @@ def visualize_constellation_with_contours(
         print(segments)
         
         if segments:
-            draw_constellation_lines(
+            draw_constellation_lines_collection(
                 ax, 
                 segments,
                 color=line_color,

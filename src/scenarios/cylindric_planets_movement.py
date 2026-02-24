@@ -5,12 +5,15 @@ projection, which maps the celestial sphere onto a flat rectangle. This is usefu
 tracking planetary positions over time and visualizing their paths through the zodiac.
 On the visualisation there is a  scatter plot for each planet at each tic of time of given interval.
 """
+
 from datetime import datetime, timedelta
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 from dataclasses import dataclass
+
+from numpy._typing import NDArray
 
 from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
@@ -19,6 +22,7 @@ from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
 @dataclass
 class CylindricProjectionConfig:
     """Configuration for cylindrical projection animation."""
+
     start_time: datetime
     end_time: datetime
     time_step: timedelta  # Time between frames
@@ -43,8 +47,8 @@ class CylindricPlanetsMovement:
         """
         Initialize the cylindrical projection animator.
 
-        Args:
-            config: Configuration for the animation
+        :param config: Configuration for the animation
+        :type config: CylindricProjectionConfig
         """
         self.config = config
         self.planet_catalog = PlanetCatalog()
@@ -72,38 +76,24 @@ class CylindricPlanetsMovement:
 
         return times
 
-    def _ra_dec_to_cylindric(self, ra: np.ndarray, dec: np.ndarray) -> Tuple[
-        np.ndarray, np.ndarray]:
+    def _ra_dec_to_cylindric(self, ra: NDArray, dec: NDArray) -> Tuple[NDArray, NDArray]:
         """Convert RA/Dec to cylindrical projection coordinates.
 
         :param ra: Right ascension in radians
+        :type ra: NDArray
         :param dec: Declination in radians
-        :param ra: np.ndarray:
-        :param dec: np.ndarray:
-        :param ra: np.ndarray:
-        :param dec: np.ndarray:
-        :param ra: np.ndarray:
-        :param dec: np.ndarray:
-        :param ra: np.ndarray:
-        :param dec: np.ndarray:
-        :param ra: np.ndarray:
-        :param dec: np.ndarray:
-        :param ra: np.ndarray:
-        :param dec: np.ndarray:
-        :param ra: np.ndarray:
-        :param dec: np.ndarray:
-        :param ra: np.ndarray: 
-        :param dec: np.ndarray: 
-        :returns: Tuple of->
-        :rtype: x
-
+        :type dec: NDArray
+        :return: cylindric coordinates
+        :rtype: Tuple[NDArray, NDArray]
         """
+
         x = np.rad2deg(ra) % 360
         y = np.rad2deg(dec)
         return x, y
 
     def _create_figure(self) -> Tuple[plt.Figure, plt.Axes]:
         """Create and configure the figure for animation."""
+
         if self.config.dark_mode:
             plt.style.use('dark_background')
             bg_color = 'black'
@@ -142,15 +132,8 @@ class CylindricPlanetsMovement:
     def _plot_stars(self, ax: plt.Axes):
         """Plot background stars on the axes.
 
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes: 
-
+        :param ax: stars drawing space
+        :type  ax: plt.Axes
         """
         if self.stars is None:
             return
@@ -170,16 +153,10 @@ class CylindricPlanetsMovement:
     def _plot_ecliptic(self, ax: plt.Axes):
         """Plot the ecliptic line.
 
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes:
-        :param ax: plt.Axes: 
-
+        :param ax: line drawing space
+        :type ax: plt.Axes
         """
+
         # The ecliptic is at roughly 23.5 degrees inclination to the celestial equator
         # For simplicity, we'll draw a sinusoidal curve
         ra_points = np.linspace(0, 360, 1000)
@@ -193,18 +170,13 @@ class CylindricPlanetsMovement:
         ax.plot(ra_points, dec_points, color=color, alpha=0.5,
                 linewidth=1.5, linestyle='--', label='Ecliptic', zorder=2)
 
-    def _get_planet_positions(self, time: datetime) -> dict:
+    def _get_planet_positions(self, time: datetime) -> Dict:
         """Get positions of all planets at given time.
 
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime: 
-
+        :param time: date and time
+        :type time: datetime
+        :return: the positions of the planets in the format (planet id: x, y, magnitude)
+        :rtype: Dict
         """
         planets_data = self.planet_catalog.get_planets(time)
 
@@ -225,6 +197,7 @@ class CylindricPlanetsMovement:
 
     def create_animation(self):
         """Create the animation and save it as a GIF."""
+
         fig, ax = self._create_figure()
 
         # Plot static elements
@@ -254,6 +227,7 @@ class CylindricPlanetsMovement:
 
         def init():
             """Initialize animation."""
+
             for scatter in planet_scatters.values():
                 scatter.set_offsets(np.empty((0, 2)))
             time_text.set_text('')
@@ -262,9 +236,10 @@ class CylindricPlanetsMovement:
         def update(frame_idx):
             """Update animation frame.
 
-            :param frame_idx: 
-
+            :param frame_idx: index of the frame
+            :type frame_idx: int
             """
+
             time = self.times[frame_idx]
             positions = self._get_planet_positions(time)
 
@@ -298,6 +273,7 @@ class CylindricPlanetsMovement:
 
 def example_planets():
     """Example: Track planets over a few months."""
+
     config = CylindricProjectionConfig(
         start_time=datetime(2024, 1, 1),
         end_time=datetime(2026, 12, 31),

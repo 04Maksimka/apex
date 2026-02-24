@@ -28,16 +28,12 @@ from src.planets_catalog.planet_catalog import PlanetCatalog
 def get_student_config(time: datetime) -> PinholeConfig:
     """Get configuration for student mode (minimal features).
 
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime: 
-
+    :param time: observation date and time
+    :type time: datetime
+    :return: Pinhole configuration for student mode
+    :rtype: PinholeConfig
     """
+
     return PinholeConfig(
         local_time=time,
         add_ecliptic=False,
@@ -55,16 +51,12 @@ def get_student_config(time: datetime) -> PinholeConfig:
 def get_student_with_planets_config(time: datetime) -> PinholeConfig:
     """Get configuration for student mode with planets.
 
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime: 
-
+    :param time: observation date and time
+    :type time: datetime
+    :return: Pinhole configuration for student with planets
+    :rtype: PinholeConfig
     """
+
     return PinholeConfig(
         local_time=time,
         add_ecliptic=False,
@@ -82,16 +74,12 @@ def get_student_with_planets_config(time: datetime) -> PinholeConfig:
 def get_teacher_config(time: datetime) -> PinholeConfig:
     """Get configuration for teacher mode (full features).
 
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime:
-    :param time: datetime: 
-
+    :param time: observation date and time
+    :type time: datetime
+    :return: Pinhole configuration for teacher mode
+    :rtype: PinholeConfig
     """
+
     return PinholeConfig(
         local_time=time,
         add_ecliptic=True,
@@ -115,82 +103,8 @@ def render_and_save(
         output_path: Path,
         constellation_config: Optional[ConstellationConfig] = None,
 ):
-    """Render a pinhole projection and save it to PDF.
+    """ Render a pinhole projection and save it to PDF. """
 
-    :param shot_cond: Shot conditions (direction and tilt)
-    :param camera_cfg: Camera configuration
-    :param config: Pinhole configuration
-    :param catalog: Star catalog
-    :param planet_catalog: Planet catalog
-    :param constraints: Catalog constraints
-    :param output_path: Output file path
-    :param constellation_config: Optional constellation configuration
-    :param shot_cond: ShotConditions:
-    :param camera_cfg: CameraConfig:
-    :param config: PinholeConfig:
-    :param catalog: Catalog:
-    :param planet_catalog: PlanetCatalog:
-    :param constraints: CatalogConstraints:
-    :param output_path: Path:
-    :param constellation_config: Optional[ConstellationConfig]:  (Default value = None)
-    :param shot_cond: ShotConditions:
-    :param camera_cfg: CameraConfig:
-    :param config: PinholeConfig:
-    :param catalog: Catalog:
-    :param planet_catalog: PlanetCatalog:
-    :param constraints: CatalogConstraints:
-    :param output_path: Path:
-    :param constellation_config: Optional[ConstellationConfig]:  (Default value = None)
-    :param shot_cond: ShotConditions:
-    :param camera_cfg: CameraConfig:
-    :param config: PinholeConfig:
-    :param catalog: Catalog:
-    :param planet_catalog: PlanetCatalog:
-    :param constraints: CatalogConstraints:
-    :param output_path: Path:
-    :param constellation_config: Optional[ConstellationConfig]:  (Default value = None)
-    :param shot_cond: ShotConditions:
-    :param camera_cfg: CameraConfig:
-    :param config: PinholeConfig:
-    :param catalog: Catalog:
-    :param planet_catalog: PlanetCatalog:
-    :param constraints: CatalogConstraints:
-    :param output_path: Path:
-    :param constellation_config: Optional[ConstellationConfig]:  (Default value = None)
-    :param shot_cond: ShotConditions:
-    :param camera_cfg: CameraConfig:
-    :param config: PinholeConfig:
-    :param catalog: Catalog:
-    :param planet_catalog: PlanetCatalog:
-    :param constraints: CatalogConstraints:
-    :param output_path: Path:
-    :param constellation_config: Optional[ConstellationConfig]:  (Default value = None)
-    :param shot_cond: ShotConditions:
-    :param camera_cfg: CameraConfig:
-    :param config: PinholeConfig:
-    :param catalog: Catalog:
-    :param planet_catalog: PlanetCatalog:
-    :param constraints: CatalogConstraints:
-    :param output_path: Path:
-    :param constellation_config: Optional[ConstellationConfig]:  (Default value = None)
-    :param shot_cond: ShotConditions:
-    :param camera_cfg: CameraConfig:
-    :param config: PinholeConfig:
-    :param catalog: Catalog:
-    :param planet_catalog: PlanetCatalog:
-    :param constraints: CatalogConstraints:
-    :param output_path: Path:
-    :param constellation_config: Optional[ConstellationConfig]:  (Default value = None)
-    :param shot_cond: ShotConditions: 
-    :param camera_cfg: CameraConfig: 
-    :param config: PinholeConfig: 
-    :param catalog: Catalog: 
-    :param planet_catalog: PlanetCatalog: 
-    :param constraints: CatalogConstraints: 
-    :param output_path: Path: 
-    :param constellation_config: Optional[ConstellationConfig]:  (Default value = None)
-
-    """
     # Create pinhole projector
     pinhole = Pinhole(
         shot_cond=shot_cond,
@@ -231,54 +145,8 @@ def generate_constellation_samples(
     1. student.pdf - basic view without annotations
     2. student_with_planets.pdf - view with planets
     3. teacher.pdf - full view with all annotations and constellations
-
-    :param output_folder: Root folder for output
-    :param time: Observation time
-    :param fov_deg: Field of view in degrees
-    :param tilt_angle: Camera tilt angle in degrees
-    :param max_magnitude: Maximum star magnitude to display
-    :param output_folder: str:
-    :param time: datetime:
-    :param fov_deg: float:  (Default value = 90.0)
-    :param tilt_angle: float:  (Default value = 0.0)
-    :param max_magnitude: float:  (Default value = 5.5)
-    :param output_folder: str:
-    :param time: datetime:
-    :param fov_deg: float:  (Default value = 90.0)
-    :param tilt_angle: float:  (Default value = 0.0)
-    :param max_magnitude: float:  (Default value = 5.5)
-    :param output_folder: str:
-    :param time: datetime:
-    :param fov_deg: float:  (Default value = 90.0)
-    :param tilt_angle: float:  (Default value = 0.0)
-    :param max_magnitude: float:  (Default value = 5.5)
-    :param output_folder: str:
-    :param time: datetime:
-    :param fov_deg: float:  (Default value = 90.0)
-    :param tilt_angle: float:  (Default value = 0.0)
-    :param max_magnitude: float:  (Default value = 5.5)
-    :param output_folder: str:
-    :param time: datetime:
-    :param fov_deg: float:  (Default value = 90.0)
-    :param tilt_angle: float:  (Default value = 0.0)
-    :param max_magnitude: float:  (Default value = 5.5)
-    :param output_folder: str:
-    :param time: datetime:
-    :param fov_deg: float:  (Default value = 90.0)
-    :param tilt_angle: float:  (Default value = 0.0)
-    :param max_magnitude: float:  (Default value = 5.5)
-    :param output_folder: str:
-    :param time: datetime:
-    :param fov_deg: float:  (Default value = 90.0)
-    :param tilt_angle: float:  (Default value = 0.0)
-    :param max_magnitude: float:  (Default value = 5.5)
-    :param output_folder: str: 
-    :param time: datetime: 
-    :param fov_deg: float:  (Default value = 90.0)
-    :param tilt_angle: float:  (Default value = 0.0)
-    :param max_magnitude: float:  (Default value = 5.5)
-
     """
+
     # Setup
     root = Path(output_folder) / "constellations"
     root.mkdir(parents=True, exist_ok=True)
@@ -390,55 +258,8 @@ def generate_random_sky_samples(
     1. student.pdf - basic view without annotations
     2. student_with_planets.pdf - view with planets
     3. teacher.pdf - full view with all annotations and constellations
-
-    :param output_folder: Root folder for output
-    :param num_samples: Number of random samples to generate
-    :param time_interval: Tuple of (start_time, end_time) for random time selection
-    :param fov_deg: Field of view in degrees
-    :param max_magnitude: Maximum star magnitude to display
-    :param output_folder: str:
-    :param num_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param fov_deg: float:  (Default value = 90.0)
-    :param max_magnitude: float:  (Default value = 6.0)
-    :param output_folder: str:
-    :param num_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param fov_deg: float:  (Default value = 90.0)
-    :param max_magnitude: float:  (Default value = 6.0)
-    :param output_folder: str:
-    :param num_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param fov_deg: float:  (Default value = 90.0)
-    :param max_magnitude: float:  (Default value = 6.0)
-    :param output_folder: str:
-    :param num_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param fov_deg: float:  (Default value = 90.0)
-    :param max_magnitude: float:  (Default value = 6.0)
-    :param output_folder: str:
-    :param num_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param fov_deg: float:  (Default value = 90.0)
-    :param max_magnitude: float:  (Default value = 6.0)
-    :param output_folder: str:
-    :param num_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param fov_deg: float:  (Default value = 90.0)
-    :param max_magnitude: float:  (Default value = 6.0)
-    :param output_folder: str:
-    :param num_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param fov_deg: float:  (Default value = 90.0)
-    :param max_magnitude: float:  (Default value = 6.0)
-    :param output_folder: str: 
-    :param num_samples: int: 
-    :param time_interval: tuple[datetime: 
-    :param datetime]: 
-    :param fov_deg: float:  (Default value = 90.0)
-    :param max_magnitude: float:  (Default value = 6.0)
-
     """
+
     # Setup
     root = Path(output_folder) / "random_sky"
     root.mkdir(parents=True, exist_ok=True)

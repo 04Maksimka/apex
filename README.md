@@ -58,9 +58,8 @@ Full: [polar_scatter_local_logo.pdf](https://github.com/user-attachments/files/2
 
 You can use the ready-made sets of starry sky maps that we have already generated. To do this, you need:
 
-1. Inside the project, go to the examples folder
+1. Follow the [link](https://drive.google.com/drive/folders/1AfBc7pkqLH_65TMAeXvpzzzqrLcVKNFO?usp=sharing)
 2. Download pinhole_samples archives.zip and samples.zip with pinhole camera mode maps and skycharts, respectively
-3. Unpack the archives
 
 Inside each folder there are maps of the starry sky with tasks grouped by numbers. 
 

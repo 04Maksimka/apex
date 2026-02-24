@@ -16,7 +16,7 @@ from src.hip_catalog.hip_catalog import CatalogConstraints, Catalog
 from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 from matplotlib.collections import LineCollection
 
-from src.stereographic_projection.constellation_renderer_stereo import ConstellationRendererStereo, \
+from helpers.constellations.constellation_renderer_stereo import ConstellationRendererStereo, \
     draw_multiple_constellations
 
 
@@ -94,16 +94,9 @@ class StereoProjector(object):
         """Generate a stereographic projection image.
 
         :param constraints: Catalog constraints
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :returns: figure
-
+        :type constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :return: figure
+        :rtype: Tuple[plt.Figure, plt.Axes]
         """
 
         # Make objects projections
@@ -154,16 +147,9 @@ class StereoProjector(object):
         """Objects projection maker
 
         :param constraints: Catalog constraints
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints: 
-
+        :type constraints: CatalogConstraints:
         """
+
         # Get catalog
         stars_data = self.catalog.get_stars(constraints)
 
@@ -198,16 +184,9 @@ class StereoProjector(object):
         """Returns a stereographic projection views to plot
 
         :param data: horizontal coordinates data
-        :param data: NDArray:
-        :param data: NDArray:
-        :param data: NDArray:
-        :param data: NDArray:
-        :param data: NDArray:
-        :param data: NDArray:
-        :param data: NDArray:
-        :param data: NDArray: 
-        :returns: projection data to plot
-
+        :type data: NDArray
+        :return: projection data to plot
+        :rtype: NDArray
         """
 
         VIEW_DTYPE = np.dtype([
@@ -238,26 +217,13 @@ class StereoProjector(object):
         """Returns horizontal coordinates.
 
         :param data: objects equatorial coordinates
+        :type data: NDArray
         :param object_type: star or planet
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray: 
-        :param object_type: str:  (Default value = 'star')
-        :returns: view parameters
-
+        :type object_type: str:  (Default value = 'star')
+        :return: view parameters in format (magnitude, zenith, azimuth, id)
+        :rtype: NDArray
         """
+
         VIEW_DTYPE = np.dtype([
             ('v_mag', np.float32),
             ('zenith', np.float32),
@@ -455,16 +421,9 @@ class StereoProjector(object):
         """Add planets to the scatter plot.
 
         :param projection_data: projection points for planets
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray: 
-
+        :type projection_data: NDArray
         """
+
         # Draw each planet separately
         for planet_data in projection_data:
             if planet_data['v_mag'] < self.catalog.constraints.max_magnitude:
@@ -687,15 +646,7 @@ class StereoProjector(object):
         """Create a scatter plot in polar coordinates for stars.
 
         :param projection_data: projection points to place on figure
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray:
-        :param projection_data: NDArray: 
-
+        :type projection_data: NDArray
         """
 
         # Set up the figure with polar projection

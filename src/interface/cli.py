@@ -18,12 +18,13 @@ from src.helpers.cli.cli import DependentOption
 # Helper function
 def resolve(preset, explicit, name):
     """
+    Helper function to get preset value of given flag (name) or return an explicit value.
 
-    :param preset: param explicit:
-    :param name: param explicit:
-    :param explicit: 
-
+    :param preset: preset value
+    :param name: param name
+    :param explicit: explicit value
     """
+
     if explicit is not None:
         return explicit
     return preset.get(name, False)  # from preset or False

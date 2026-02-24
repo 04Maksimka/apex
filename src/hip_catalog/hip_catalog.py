@@ -32,7 +32,7 @@ class Catalog(object):
     cache_dir: Optional[pathlib.Path]           # cache directory
     use_cache: bool                             # enable / disable caching
 
-    _data: Optional[np.ndarray]                 # catalog data storage
+    _data: Optional[NDArray]                 # catalog data storage
     _constraints: Optional[CatalogConstraints]  # constrains
     _cache_key: Optional[str]                   # key for cache with chosen constrains
 
@@ -186,7 +186,8 @@ class Catalog(object):
     def _load_raw_data(self) -> NDArray:
         """Loads raw data from file
         
-        :returns: cleaned raw data
+        :return: cleaned raw data
+        :rtype: NDArray
         """
 
         raw_data = np.genfromtxt(
@@ -207,25 +208,12 @@ class Catalog(object):
         """Applies constraints to raw data
 
         :param data: data to constraint
+        :type data: NDArray
         :param constraints: constraints
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray: 
-        :param constraints: CatalogConstraints: 
-        :returns: filtered data
+        :type constraints: CatalogConstraints
 
+        :return: filtered data
+        :rtype: NDArray
         """
 
         masks = []
@@ -251,15 +239,7 @@ class Catalog(object):
         """Converts raw data to structured numpy array of STAR_DTYPEs
 
         :param raw_data: raw data
-        :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray: 
-
+        :type raw_data: NDArray
         """
 
         number_of_stars = raw_data.shape[0]
@@ -288,15 +268,7 @@ class Catalog(object):
         """Main catalog generation method
 
         :param constraints: constraints, optional, defaults to None
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-
+        :type constraints: Optional[CatalogConstraints]:  (Default value = None)
         """
         if constraints is None:
             constraints = CatalogConstraints()
@@ -335,13 +307,14 @@ class Catalog(object):
         return self._constraints
 
     @staticmethod
-    def _clean_raw_data(raw_data):
+    def _clean_raw_data(raw_data: NDArray) -> NDArray:
         """Removes units and rows with missing values
         in right ascension and declinations columns
 
         :param raw_data: source catalog data
-        :returns: cleaned catalog data
-
+        :type raw_data: NDArray
+        :return: cleaned catalog data
+        :rtype: NDArray
         """
         raw_data = raw_data[1:]
         mask = (raw_data['_RAJ2000'] != '') & (raw_data['_DEJ2000'] != '')
@@ -351,8 +324,6 @@ class Catalog(object):
 
 
 def main():
-    """Main function."""
-
     # test catalog print
     catalog = Catalog(catalog_name='hip_data.tsv', use_cache=False)
     constraints = CatalogConstraints(

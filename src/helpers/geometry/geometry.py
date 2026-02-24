@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 import numpy as np
 
 
-def generate_random_direction() -> np.ndarray:
+def generate_random_direction() -> NDArray:
     """Generate random unit vector for sky direction."""
 
     theta = np.random.uniform(0, 2 * np.pi)  # azimuth

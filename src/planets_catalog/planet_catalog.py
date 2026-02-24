@@ -11,6 +11,7 @@ from astropy.coordinates import SkyCoord
 
 class Planets(IntEnum):
     """Planets of the Solar system."""
+
     SUN = 0
     MERCURY = 1
     VENUS = 2
@@ -38,18 +39,15 @@ class PlanetCatalog(object):
 
     @staticmethod
     def get_planet_color(planet: Planets) -> str:
+        """ Get planet color by name (enum index)
+
+        :param planet: planet index
+        :type planet: Planets
+
+        :return: color (matplotlib color name)
+        :rtype: str
         """
 
-        :param planet: Planets:
-        :param planet: Planets:
-        :param planet: Planets:
-        :param planet: Planets:
-        :param planet: Planets:
-        :param planet: Planets:
-        :param planet: Planets:
-        :param planet: Planets: 
-
-        """
         color_dict = {
             Planets.SUN: 'yellow',
             Planets.MERCURY: 'gray',
@@ -64,17 +62,13 @@ class PlanetCatalog(object):
         return color_dict.get(planet, 'orange')
 
     def get_planets(self, time: datetime) -> NDArray:
-        """
+        """Get the position of the planets for a given date and time.
 
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime:
-        :param time: datetime: 
+        :param time: date and time
+        :type time: datetime
 
+        :return: planets positions array
+        :rtype: NDArray
         """
         t = Time(time)
 

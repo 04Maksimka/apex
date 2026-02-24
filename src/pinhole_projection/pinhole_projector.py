@@ -10,7 +10,7 @@ from src.constellations_metadata.constellations_data import get_available_conste
 from src.helpers.geometry.geometry import make_pinhole_projection, mag_to_radius, generate_small_circle, \
     make_equatorial_grid_pinhole
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from src.pinhole_projection.constellation_renderer import ConstellationRenderer, draw_multiple_constellations
+from helpers.constellations.constellation_renderer_pinhole import ConstellationRenderer, draw_multiple_constellations
 from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 
 
@@ -136,10 +136,19 @@ class Pinhole(object):
         Initialize pinhole projector.
 
         :param shot_cond: Shot conditions
+        :type shot_cond: ShotConditions
         :param camera_cfg: Camera configuration
+        :type camera_cfg: CameraConfig
         :param config: Configuration
+        :type config: PinholeConfig
         :param catalog: Star catalog instance
+        :type catalog: Catalog
         :param planet_catalog: Planet catalog instance
+        :type planet_catalog: PlanetCatalog
+        :param constellation_config:
+        :type constellation_config: ConstellationConfig | None
+        :param constellations_renderer:
+        :type constellations_renderer: ConstellationRenderer | ConstellationRenderer object
         """
 
         self.shot_cond = shot_cond
@@ -157,26 +166,14 @@ class Pinhole(object):
         """Returns coordinates in picture plane (pinhole projection).
 
         :param data: objects equatorial coordinates
+        :type data: NDArray
         :param object_type: star or planet
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray:
-        :param object_type: str:  (Default value = 'star')
-        :param data: NDArray: 
-        :param object_type: str:  (Default value = 'star')
-        :returns: view parameters
+        :type object_type: str:  (Default value = 'star')
 
+        :return: array with the structure like (magnitude, x, y, point size, right ascension, declination, id number)
+        :rtype: NDArray
         """
+
         VIEW_DTYPE = np.dtype([
             ('v_mag', np.float32),
             ('x_pix', np.float32),
@@ -218,16 +215,11 @@ class Pinhole(object):
     def generate(self, constraints: Optional[CatalogConstraints]=None) -> Tuple[plt.Figure, plt.Axes]:
         """Generate a pinhole projection image.
 
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :returns: figure
+        :param constraints:
+        :type constraints: Optional[CatalogConstraints]:  (Default value = None)
 
+        :return: figure
+        :rtype: Tuple[plt.Figure, plt.Axes]
         """
 
         # Make objects projections
@@ -265,15 +257,7 @@ class Pinhole(object):
         """Objects projection maker
 
         :param constraints: Catalog constraints
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints:
-        :param constraints: CatalogConstraints: 
-
+        :type constraints: CatalogConstraints
         """
 
         # Get stars data
@@ -299,11 +283,11 @@ class Pinhole(object):
 
     @property
     def projection_result(self) -> ProjectionResult:
-        """ """
+        """Pair of the stars and planets projections. """
         return ProjectionResult(stars=self._star_projections, planets=self._planets_projections)
 
     def _create_picture_plane(self):
-        """Creates the figure and axes."""
+        """ Creates the figure and axes. """
 
         self._fig = plt.figure()
         self._ax = self._fig.add_subplot(111)
@@ -329,7 +313,7 @@ class Pinhole(object):
             self._ax.set_yticks([])
 
     def _add_planets(self):
-        """Add planets to image."""
+        """ Add planets to image. """
 
         for planet_data in self._planets_projections:
             if planet_data['v_mag'] < self.catalog.constraints.max_magnitude:
@@ -348,7 +332,7 @@ class Pinhole(object):
                 self._groups['Planets'] = self._groups.get('Planets', []) + [(scatter, name)]
 
     def _add_ecliptic(self):
-        """Add ecliptic on image"""
+        """ Add ecliptic on image. """
 
         RA = 270.0
         DEC = 66.5607
@@ -377,7 +361,7 @@ class Pinhole(object):
             self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Ecliptic')]
 
     def _add_equator(self):
-        """Add equator on image"""
+        """ Add equator on image. """
 
         equator_eci_coords = generate_small_circle(
             spheric_normal_deg=np.array([0.0, 0.0]),
@@ -403,7 +387,7 @@ class Pinhole(object):
             self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Celestial equator')]
 
     def _add_galactic_equator(self):
-        """Add galactic equator on image"""
+        """ Add galactic equator on image. """
 
         # Galactical center
         RA = 192.85948
@@ -433,7 +417,7 @@ class Pinhole(object):
             self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Galactic equator')]
 
     def _add_equatorial_grid(self):
-        """Add equatorial grid on image"""
+        """ Add equatorial grid on image. """
 
         grid = make_equatorial_grid_pinhole(
             center_direction=self.shot_cond.center_direction,
@@ -448,7 +432,7 @@ class Pinhole(object):
         self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Equatorial grid')]
 
     def _add_constellations(self):
-        """Adds constellation line patterns to the projection."""
+        """ Add constellation line patterns to the projection. """
 
         if self.constellation_config.constellations_list is not None:
             separate = True
@@ -490,7 +474,7 @@ class Pinhole(object):
                                                  [(first_lc, f'Constellation segments ({len(lcs)})')]
 
     def _add_constellations_names(self):
-        """Adds constellation names on skychart."""
+        """ Add constellation names on skychart. """
 
         POINT_DTYPE = np.dtype([('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
 
@@ -526,7 +510,8 @@ class Pinhole(object):
                 )
 
     def _create_grouped_legend(self):
-        """Create legend below the plot for landscape orientation"""
+        """ Create legend below the plot for landscape orientation. """
+
         groups = {k: v for k, v in self._groups.items() if v}
         if not groups:
             return
@@ -541,11 +526,6 @@ class Pinhole(object):
         # Calculate optimal number of columns
         n_columns = n_groups
         n_rows = 1
-
-        # Calculate positions for each legend
-        # We'll place legends in a grid below the plot
-        total_height = 0.15 * n_rows  # Adjust based on number of rows
-        vertical_spacing = 0.02
 
         # Adjust axis position to make room for legend below
         ax_pos = self._ax.get_position()

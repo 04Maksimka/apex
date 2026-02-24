@@ -16,6 +16,7 @@ from stereographic_projector import (
 
 def example_all_constellations():
     """Example 1: Show all available constellations."""
+
     print("Generating stereographic projection with all constellations...")
 
     # Projector configuration
@@ -66,6 +67,7 @@ def example_all_constellations():
 
 def example_specific_constellations():
     """Example 2: Show only specific constellations."""
+
     print("Generating stereographic projection with specific constellations...")
 
     # Select specific constellations
@@ -126,6 +128,7 @@ def example_specific_constellations():
 
 def example_colored_constellations():
     """Example 3: Show constellations with different colors."""
+
     print("Generating stereographic projection with colored constellations...")
 
     # Select constellations with custom colors
@@ -183,6 +186,7 @@ def example_colored_constellations():
 
 def example_with_planets_and_grids():
     """Example 4: Complete sky chart with everything."""
+
     print(
         "Generating complete sky chart with constellations, planets, and grids...")
 
