@@ -38,10 +38,10 @@ def cli():
 
 
 @cli.command()
-@click.option("--latitude", "-lat", required=True, type=float,
-              help="Observer's latitude in degrees.")
-@click.option("--longitude", "-lon", required=True, type=float,
-              help="Observer's longitude in degrees.")
+@click.option("--latitude", "-lat", default=0.0, type=float,
+              help="Observer's latitude in degrees (default 0.0).")
+@click.option("--longitude", "-lon", default=0.0, type=float,
+              help="Observer's longitude in degrees (default 0.0).")
 @click.option("--dtime", "-t",
     type=click.DateTime(formats=[
         "%Y-%m-%d %H:%M:%S",   # 2025-01-15 22:30:00
@@ -60,19 +60,19 @@ def cli():
               help="Mode presets for teacher and student. The student setting contains all\
               flags in the off state, resulting in a blank map with no symbols or notes.\
               The teacher setting contains all symbols and answers")
-@click.option("--add-ticks/--no-add-ticks", is_flag=True, default=None,
+@click.option("--add-ticks/--no-ticks", is_flag=True, default=None,
               help="Adds ticks: cardinal directions and azimuth marks.")
 @click.option("--random-origin/--no-random-origin", is_flag=True, default=None,
               help="Randomizes map orientation.")
-@click.option("--add-ecliptic/--no-add-ecliptic", is_flag=True, default=None,
+@click.option("--add-ecliptic/--no-ecliptic", is_flag=True, default=None,
               help="Adds the great circle of the ecliptic to the map")
-@click.option("--add-equator/--no-add-equator", is_flag=True, default=None,
+@click.option("--add-equator/--no-equator", is_flag=True, default=None,
               help="Adds the great circle of the celestial equator to the map.")
-@click.option("--add_galactic_equator/--no-add_galactic_equator" , is_flag=True, default=None,
+@click.option("--add_galactic_equator/--no_galactic_equator" , is_flag=True, default=None,
               help="Adds the great circle of the galactic equator to the map.")
-@click.option("--add-planets/--no-add-planets", is_flag=True, default=None,
+@click.option("--add-planets/--no-planets", is_flag=True, default=None,
               help="Marks planet's positions.")
-@click.option("--add-horizontal-grid/--no-add-horizontal-grid",  is_flag=True, default=None,
+@click.option("--add-horizontal-grid/--no-horizontal-grid",  is_flag=True, default=None,
               help="Adds an azimuthal coordinate grid to the map with a specified step on each axis (see the --grid-steps option below)")
 @click.option("--add-equatorial-grid/--no-equatorial-grid",  is_flag=True, default=None,
               help="Adds an equatorial coordinate grid to the map with a specified step on each axis (see the --grid-steps option)")
@@ -84,13 +84,13 @@ def cli():
     depends_on=["add_equatorial_grid", "add_horizontal_grid"],
     help="Grid steps in degrees (requires grids)."
 )
-@click.option("--add-zenith", is_flag=True, default=None,
+@click.option("--add-zenith/--no-zenith", is_flag=True, default=None,
               help="Adds the zenith label to the map. ")
-@click.option("--add-poles", is_flag=True, default=None,
+@click.option("--add-poles/--no-poles", is_flag=True, default=None,
               help="Adds the visible celestial pole label to the map.")
-@click.option("--add-constellations", is_flag=True, default=None,
+@click.option("--add-constellations/--no-constellations", is_flag=True, default=None,
               help="Adds constellations lines to the map.")
-@click.option("--add-constellations-names", is_flag=True, default=None,
+@click.option("--add-constellations-names/--no-constellations-names", is_flag=True, default=None,
               help="Add constellation labels (three-letter latin abbreviations.")
 @click.option("--mag-limit", default=5.5, type=float,
               help="Sets map magnitude top limit (default 5.5).")
@@ -259,13 +259,13 @@ def stereographic(
               help="Mode presets for teacher and student. The student setting contains all\
               flags in the off state, resulting in a blank map with no symbols or notes.\
               The teacher setting contains all symbols and answers")
-@click.option("--add-ecliptic/--no-add-ecliptic", is_flag=True, default=None,
+@click.option("--add-ecliptic/--no-ecliptic", is_flag=True, default=None,
               help="Adds the great circle of the ecliptic to the map")
-@click.option("--add-equator/--no-add-equator", is_flag=True, default=None,
+@click.option("--add-equator/--no-equator", is_flag=True, default=None,
               help="Adds the great circle of the celestial equator to the map.")
-@click.option("--add_galactic_equator/--no-add_galactic_equator" , is_flag=True, default=None,
+@click.option("--add-galactic-equator/--no-galactic-equator" , is_flag=True, default=None,
               help="Adds the great circle of the galactic equator to the map.")
-@click.option("--add-planets/--no-add-planets", is_flag=True, default=None,
+@click.option("--add-planets/--no-planets", is_flag=True, default=None,
               help="Marks planet's positions.")
 @click.option("--add-equatorial-grid/--no-equatorial-grid",  is_flag=True, default=None,
               help="Adds an equatorial coordinate grid to the map with a specified step on each axis (see the --grid-steps option)")
@@ -277,9 +277,9 @@ def stereographic(
     depends_on=["add_equatorial_grid"],
     help="Grid steps in degrees (requires grids)."
 )
-@click.option("--add-constellations", is_flag=True, default=None,
+@click.option("--add-constellations/--no-constellations", is_flag=True, default=None,
               help="Adds constellations lines to the map.")
-@click.option("--add-constellations-names", is_flag=True, default=None,
+@click.option("--add-constellations-names/--no-constellations-names", is_flag=True, default=None,
               help="Add constellation labels (three-letter latin abbreviations.")
 @click.option("--mag-limit", default=5.5, type=float,
               help="Sets map magnitude top limit (default 5.5).")

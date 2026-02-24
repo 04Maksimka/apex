@@ -12,28 +12,25 @@ class DependentOption(click.Option):
         super().__init__(*args, **kwargs)
 
     def handle_parse_result(self, ctx, opts, args):
-        """
-        Check if this option is set, but none of the dependencies are enabled
-
-        :param ctx: param opts:
-        :param args: param opts:
-        :param opts: 
-
-        """
-
         current_value = opts.get(self.name)
+        default_value = self.default
 
-        if current_value is not None:
-            # Convert names: "add_equatorial_grid" -> check value
+        # Check only if flag explicitly changed by user
+        if current_value != default_value:
             active_deps = [
                 dep for dep in self.depends_on
                 if opts.get(dep) is True
             ]
-            if not active_deps:
+            blocked_deps = [
+                dep for dep in self.depends_on
+                if opts.get(dep) is False  # explicitly got --no-add-equatorial-grid
+            ]
+
+            if not active_deps and len(blocked_deps) == len(self.depends_on):
                 dep_names = [f"--{d.replace('_', '-')}" for d in self.depends_on]
                 raise click.UsageError(
-                    f"'--{self.name.replace('_', '-')}' option requires "
-                    f"one of the: {', '.join(dep_names)}."
+                    f"'--{self.name.replace('_', '-')}' requires "
+                    f"one of: {', '.join(dep_names)}."
                 )
 
         return super().handle_parse_result(ctx, opts, args)

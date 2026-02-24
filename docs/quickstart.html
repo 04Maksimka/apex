@@ -236,21 +236,65 @@
           <section id="quickstart">
 <h1>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading">¶</a></h1>
 <p>After installation, the <code class="docutils literal notranslate"><span class="pre">astrageek</span></code> command becomes available in your terminal.</p>
-<section id="basic-usage">
-<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Link to this heading">¶</a></h2>
+<section id="about">
+<h2>About<a class="headerlink" href="#about" title="Link to this heading">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>astrageek<span class="w"> </span>--help
 </pre></div>
 </div>
 </section>
-<section id="example">
-<h2>Example: &lt;конкретная задача&gt;<a class="headerlink" href="#example" title="Link to this heading">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>astrageek<span class="w"> </span>&lt;команда&gt;<span class="w"> </span>&lt;аргумент&gt;
+<section id="example-1-stereographic-sky-map">
+<h2>Example 1: Stereographic sky map<a class="headerlink" href="#example-1-stereographic-sky-map" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>astrageek<span class="w"> </span>stereographic<span class="w"> </span>-lat<span class="w"> </span><span class="m">60</span><span class="w"> </span>-lon<span class="w"> </span><span class="m">10</span><span class="w"> </span>--add-planets<span class="w"> </span>--add-equatorial-grid<span class="w"> </span>--add-poles<span class="w"> </span>--add-equator<span class="w"> </span>--add-zenith<span class="w"> </span>--grid-steps<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="m">15</span><span class="w"> </span>--output<span class="w"> </span><span class="s2">&quot;example&quot;</span>
 </pre></div>
 </div>
-<p>Expected output:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;что выведет программа&gt;
+<p>This produces a map with the following properties:</p>
+<ul class="simple">
+<li><p>Observer location: 60°N, 10°E</p></li>
+<li><p>Planets, celestial poles and zenith are marked</p></li>
+<li><p>Celestial equator is shown</p></li>
+<li><p>Equatorial coordinate grid with 10° declination step and 15° right ascension step</p></li>
+<li><p>Output saved as <code class="docutils literal notranslate"><span class="pre">example.pdf</span></code> in the current directory</p></li>
+</ul>
+</section>
+<section id="example-2-pinhole-projection-with-random-direction">
+<h2>Example 2: Pinhole projection with random direction<a class="headerlink" href="#example-2-pinhole-projection-with-random-direction" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>astrageek<span class="w"> </span>pinhole<span class="w"> </span>--mode<span class="w"> </span>teacher<span class="w"> </span>-t<span class="w"> </span><span class="s1">&#39;13.02.2026 00:00&#39;</span><span class="w"> </span>--add-equatorial-grid<span class="w"> </span>--grid-steps<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="m">10</span><span class="w"> </span>--random-direction
 </pre></div>
 </div>
+<p>This produces a pinhole sky map with the following properties:</p>
+<ul class="simple">
+<li><p><strong>Teacher mode preset</strong>: ecliptic, celestial equator, galactic equator, planets, constellation lines and labels are shown</p></li>
+<li><p>Date and time: February 13, 2026, midnight</p></li>
+<li><p>Equatorial coordinate grid with 10° step on both axes</p></li>
+<li><p>Camera points in a <strong>random sky direction</strong></p></li>
+</ul>
+</section>
+<section id="example-3-pinhole-projection-toward-orion">
+<h2>Example 3: Pinhole projection toward Orion<a class="headerlink" href="#example-3-pinhole-projection-toward-orion" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>astrageek<span class="w"> </span>pinhole<span class="w"> </span>--mode<span class="w"> </span>teacher<span class="w"> </span>-t<span class="w"> </span><span class="s1">&#39;13.02.2026 00:00&#39;</span><span class="w"> </span>--grid-steps<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--constellation<span class="w"> </span>ORI
+</pre></div>
+</div>
+<p>This produces a pinhole sky map with the following properties:</p>
+<ul class="simple">
+<li><p><strong>Teacher mode preset</strong>: ecliptic, celestial equator, galactic equator, planets, constellation lines and labels are shown</p></li>
+<li><p>Date and time: February 13, 2026, midnight</p></li>
+<li><p>Equatorial coordinate grid with 1° step on both axes</p></li>
+<li><p>Camera points <strong>toward the Orion</strong> constellation (IAU code: ORI)</p></li>
+</ul>
+</section>
+<section id="example-4-stereographic-map-in-student-mode-with-overrides">
+<h2>Example 4: Stereographic map in student mode with overrides<a class="headerlink" href="#example-4-stereographic-map-in-student-mode-with-overrides" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>astrageek<span class="w"> </span>stereographic<span class="w"> </span>--mode<span class="w"> </span>teacher<span class="w"> </span>--no-equatorial-grid<span class="w"> </span>--no-planets<span class="w"> </span>--no-constellations<span class="w"> </span>--no-ecliptic
+</pre></div>
+</div>
+<p>This produces a stereographic sky map with the following properties:</p>
+<ul class="simple">
+<li><p><strong>Default observer location</strong>: 0°N, 0°E</p></li>
+<li><p>Base: <strong>teacher mode preset, with selected elements explicitly disabled</strong></p></li>
+<li><p>Equatorial grid, planets, constellation lines and ecliptic are turned off</p></li>
+<li><p>Remaining teacher preset elements are active: celestial equator, galactic equator, poles, zenith, ticks</p></li>
+</ul>
+<p>It’s useful for producing partially annotated maps for classroom exercises</p>
 </section>
 </section>
 
@@ -310,8 +354,11 @@
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Quickstart</a><ul>
-<li><a class="reference internal" href="#basic-usage">Basic usage</a></li>
-<li><a class="reference internal" href="#example">Example: &lt;конкретная задача&gt;</a></li>
+<li><a class="reference internal" href="#about">About</a></li>
+<li><a class="reference internal" href="#example-1-stereographic-sky-map">Example 1: Stereographic sky map</a></li>
+<li><a class="reference internal" href="#example-2-pinhole-projection-with-random-direction">Example 2: Pinhole projection with random direction</a></li>
+<li><a class="reference internal" href="#example-3-pinhole-projection-toward-orion">Example 3: Pinhole projection toward Orion</a></li>
+<li><a class="reference internal" href="#example-4-stereographic-map-in-student-mode-with-overrides">Example 4: Stereographic map in student mode with overrides</a></li>
 </ul>
 </li>
 </ul>
