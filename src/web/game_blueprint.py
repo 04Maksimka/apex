@@ -9,7 +9,7 @@ Registration in app.py:
 Supported game modes
 --------------------
 constellation  — угадай созвездие по изображению (4 варианта)
-star           — угадай название звезды по изображению (4 варианта)
+star           — угадай название звезды по изображению (easy/medium/hard)
 messier        — угадай номер объекта Мессье по pinhole-проекции
 draw           — нарисуй контур созвездия по точкам-звёздам
 trivia         — вопрос из базы фактов об астрономии (4 варианта)
@@ -72,7 +72,7 @@ MODES_META = [
         "title":       "Звёзды",
         "icon":        "⭐",
         "description": "Угадай название яркой звезды по изображению неба вокруг неё.",
-        "tags":        ["Яркие звёзды", "4 варианта"],
+        "tags":        ["Яркие звёзды", "4 варианта / ввод"],
     },
     {
         "id":          "messier",
@@ -90,7 +90,7 @@ MODES_META = [
     },
     {
         "id":          "trivia",
-        "title":       "Астро-триvia",
+        "title":       "Астро-trivia",
         "icon":        "🔭",
         "description": "Ответь на вопросы о физике, истории и мифологии астрономии.",
         "tags":        ["Мифология", "Факты", "4 варианта"],
@@ -119,7 +119,6 @@ def game_page(mode: str):
     if mode not in VALID_MODES:
         abort(404)
 
-    # Режим Мессье использует собственный файл страницы и API (/api/messier/*)
     if mode == "messier":
         filename = "messier.html"
     else:
@@ -166,7 +165,6 @@ def api_modes():
     """
     GET /game/api/modes
     Возвращает список доступных игровых режимов с описанием.
-    Используется фронтендом лобби для динамического рендера карточек.
     """
     return jsonify(MODES_META)
 
@@ -183,14 +181,6 @@ def api_start():
         { "mode": "constellation", "difficulty": "easy", "rounds": 10 }
     Ответ:
         { "session_id": "...", "mode": ..., "difficulty": ..., "total_rounds": ... }
-
-    Параметры:
-        mode        — игровой режим: constellation | star | messier | draw | trivia
-        difficulty  — сложность: easy | medium | hard
-        rounds      — количество раундов (1–30, по умолчанию 10)
-
-    Примечание: режим messier управляется отдельным blueprint-ом (/api/messier/*).
-    Этот эндпоинт создаёт сессию для остальных четырёх режимов.
     """
     cleanup_old_sessions()
     data: Dict[str, Any] = request.get_json(force=True, silent=True) or {}
@@ -216,21 +206,9 @@ def api_question():
     GET /game/api/question?session_id=<id>
     Возвращает следующий вопрос текущей сессии.
 
-    Ответ (общий):
-        {
-          "session":       { ...состояние сессии... },
-          "question_type": "constellation" | "star" | "draw" | "trivia",
-          "question":      "Какое это созвездие?",
-          "hint":          "Подсказка (если доступна)",
-          "round":         3
-        }
-
-    Дополнительные поля:
-        Для draw-режима:  "stars": [{ "hip": int, "x": float, "y": float }, ...]
-        Для остальных:    "image": "<base64>",  "options": ["A", "B", "C", "D"]
-
-    Если сессия завершена, возвращает:
-        { "finished": true, ...итоговые данные..., "rank": "⭐ Star Navigator" }
+    NOTE: correct_ra_deg / correct_dec_deg are intentionally NOT forwarded
+    to the client — they are stored in session.current_question only for
+    server-side answer validation.
     """
     session_id = request.args.get("session_id", "")
     session    = get_session(session_id)
@@ -270,37 +248,15 @@ def api_question():
 def api_answer():
     """
     POST /game/api/answer
-    Принимает ответ игрока и возвращает результат раунда.
 
-    Тело запроса (обычные режимы):
-        {
-          "session_id":  "...",
-          "answer":      "Orion",
-          "used_hint":   false,
-          "time_seconds": 7
-        }
+    Normal modes body:
+        { "session_id": "...", "answer": "Orion", "used_hint": false, "time_seconds": 7 }
 
-    Тело запроса (draw-режим):
-        {
-          "session_id":   "...",
-          "drawn_edges":  [[hip1, hip2], [hip2, hip3], ...],
-          "used_hint":    false,
-          "time_seconds": 30
-        }
+    Star hard mode extra fields:
+        { ..., "answer_ra": 101.3, "answer_dec": -16.7 }
 
-    Ответ:
-        {
-          "correct":        true,
-          "correct_answer": "Orion",
-          "player_answer":  "Orion",
-          "points":         240,
-          "score":          840,
-          "streak":         3,
-          "fun_fact":       "Ригель — голубой сверхгигант...",
-          "round":          3,
-          "total_rounds":   10,
-          "finished":       false
-        }
+    Draw mode body:
+        { "session_id": "...", "drawn_edges": [[hip1,hip2],...], "used_hint": false, "time_seconds": 30 }
     """
     data: Dict[str, Any] = request.get_json(force=True, silent=True) or {}
     session_id = data.get("session_id", "")
@@ -313,7 +269,10 @@ def api_answer():
     used_hint    = bool(data.get("used_hint", False))
     time_seconds = data.get("time_seconds")
 
-    # Draw mode has its own evaluation
+    coord_feedback = None
+    draw_details   = None
+
+    # ── Draw mode ────────────────────────────────────────────────────────────
     if session.current_question["type"] == "draw":
         drawn_edges    = data.get("drawn_edges", [])
         result         = _factory.check_draw_answer(session, drawn_edges)
@@ -321,12 +280,51 @@ def api_answer():
         correct_answer = result.get("correct_answer", "")
         player_answer  = f"{result.get('score_pct', 0):.0f}% линий совпало"
         fun_fact       = result.get("fun_fact", "")
+        draw_details   = result
+
+    # ── All other modes ───────────────────────────────────────────────────────
     else:
         player_answer  = str(data.get("answer", "")).strip()
         correct_answer = session.current_question.get("correct", "")
-        correct        = player_answer.lower() == correct_answer.lower()
         fun_fact       = session.current_question.get("fun_fact", "")
+        name_correct   = player_answer.lower() == correct_answer.lower()
 
+        # Star hard-mode: also validate equatorial coordinates (±10°)
+        if (session.current_question.get("type") == "star"
+                and session.difficulty == "hard"):
+
+            correct_ra  = session.current_question.get("correct_ra_deg")
+            correct_dec = session.current_question.get("correct_dec_deg")
+
+            if correct_ra is not None and correct_dec is not None:
+                try:
+                    answer_ra  = float(data["answer_ra"])
+                    answer_dec = float(data["answer_dec"])
+                    # RA is circular (0–360°) — use shortest arc
+                    ra_diff  = abs(((answer_ra - correct_ra + 180) % 360) - 180)
+                    dec_diff = abs(answer_dec - correct_dec)
+                    ra_ok    = ra_diff  <= 10.0
+                    dec_ok   = dec_diff <= 10.0
+                    correct  = name_correct and ra_ok and dec_ok
+                    coord_feedback = {
+                        "ra_ok":       ra_ok,
+                        "dec_ok":      dec_ok,
+                        "user_ra":     round(answer_ra,  1),
+                        "user_dec":    round(answer_dec, 1),
+                        "correct_ra":  round(correct_ra,  1),
+                        "correct_dec": round(correct_dec, 1),
+                        "ra_diff":     round(ra_diff,  1),
+                        "dec_diff":    round(dec_diff, 1),
+                    }
+                except (KeyError, TypeError, ValueError):
+                    # Coordinates not provided or invalid — mark only name
+                    correct = name_correct
+            else:
+                correct = name_correct
+        else:
+            correct = name_correct
+
+    # ── Scoring ───────────────────────────────────────────────────────────────
     points = calculate_score(
         difficulty=session.difficulty,
         correct=correct,
@@ -337,9 +335,9 @@ def api_answer():
     session.score += points
     session.round += 1
     if correct:
-        session.streak      += 1
+        session.streak       += 1
         session.correct_count += 1
-        session.best_streak  = max(session.best_streak, session.streak)
+        session.best_streak   = max(session.best_streak, session.streak)
     else:
         session.streak = 0
 
@@ -359,8 +357,12 @@ def api_answer():
         points=points,
         fun_fact=fun_fact,
     )
-    if session.current_question and session.current_question.get("type") == "draw":
-        resp["draw_details"] = result
+
+    if draw_details is not None:
+        resp["draw_details"] = draw_details
+    if coord_feedback is not None:
+        resp["coord_feedback"] = coord_feedback
+        resp["name_correct"]   = name_correct
 
     return jsonify(resp)
 
@@ -388,21 +390,6 @@ def api_score():
     """
     GET /game/api/score?session_id=<id>
     Возвращает текущий счёт и статистику сессии.
-
-    Ответ:
-        {
-          "session_id":    "...",
-          "mode":          "constellation",
-          "difficulty":    "medium",
-          "score":         1200,
-          "round":         5,
-          "total_rounds":  10,
-          "correct_count": 4,
-          "accuracy":      80,
-          "streak":        2,
-          "best_streak":   3,
-          "rank":          "🔭 Sky Watcher"
-        }
     """
     session_id = request.args.get("session_id", "")
     session    = get_session(session_id)
@@ -419,13 +406,6 @@ def api_finish():
     После вызова session_id становится недействительным.
 
     Тело запроса: { "session_id": "..." }
-
-    Ответ:
-        {
-          ...поля /api/score...,
-          "rank":    "⭐ Star Navigator",
-          "history": [{ "round": 1, "correct": true, "points": 240, "answer": "Orion" }, ...]
-        }
     """
     data       = request.get_json(force=True, silent=True) or {}
     session_id = data.get("session_id", "")

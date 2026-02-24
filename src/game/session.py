@@ -29,9 +29,9 @@ DIFFICULTY_CONSTELLATIONS: Dict[str, Optional[List[str]]] = {
 }
 
 DIFFICULTY_MAGNITUDE: Dict[str, float] = {
-    "easy": 4.5,
+    "easy": 5.0,
     "medium": 5.5,
-    "hard": 6.5,
+    "hard": 6.0,
 }
 
 TOTAL_ROUNDS_DEFAULT = 10

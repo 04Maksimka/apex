@@ -13,6 +13,7 @@ from __future__ import annotations
 import io
 import base64
 import json
+import math
 import random
 from pathlib import Path
 from datetime import datetime
@@ -47,7 +48,70 @@ _PLANET_CATALOG: Optional[PlanetCatalog] = None
 _MESSIER_CATALOG: Optional[MessierCatalog] = None
 _NAMED_STARS: Dict[int, str] = {}
 
-OBS_TIME = datetime(2024, 6, 21, 0, 0, 0)
+OBS_TIME = datetime(2004, 6, 14, 6, 10, 0)
+
+# ---------------------------------------------------------------------------
+# Fallback named-star list (used when lines_data.json is unavailable/broken)
+# HIP ID → English name for the brightest, most recognisable named stars
+# ---------------------------------------------------------------------------
+_FALLBACK_NAMED_STARS: Dict[int, str] = {
+    32349:  "Sirius",
+    91262:  "Vega",
+    69673:  "Arcturus",
+    37279:  "Procyon",
+    24436:  "Rigel",
+    27989:  "Betelgeuse",
+    30438:  "Canopus",
+    24608:  "Capella",
+    97649:  "Altair",
+    102098: "Deneb",
+    80763:  "Antares",
+    65474:  "Spica",
+    49669:  "Regulus",
+    11767:  "Polaris",
+    21421:  "Aldebaran",
+    677:    "Alpheratz",
+    25336:  "Bellatrix",
+    36850:  "Castor",
+    37826:  "Pollux",
+    57632:  "Denebola",
+    54061:  "Dubhe",
+    53910:  "Merak",
+    65378:  "Mizar",
+    3179:   "Schedar",
+    746:    "Caph",
+    6686:   "Ruchbah",
+    5447:   "Mirach",
+    113881: "Scheat",
+    113963: "Markab",
+    68702:  "Hadar",
+    71683:  "Rigil Kentaurus",
+    60718:  "Acrux",
+    87833:  "Eltanin",
+    92420:  "Sheliak",
+    93194:  "Sulafat",
+    84345:  "Rasalgethi",
+    80816:  "Kornephoros",
+    77070:  "Unukalhai",
+    72622:  "Zubenelgenubi",
+    74785:  "Zubeneschamali",
+    85670:  "Rastaban",
+    75097:  "Pherkad",
+    72105:  "Izar",
+    68756:  "Thuban",
+    95947:  "Albireo",
+    100453: "Sadr",
+    105199: "Alderamin",
+    84012:  "Sabik",
+    86228:  "Sargas",
+    78820:  "Acrab",
+    85696:  "Lesath",
+    81266:  "Shaula",
+    92855:  "Nunki",
+    14135:  "Menkar",
+    10826:  "Mira",
+    20205:  "Aldebaran",
+}
 
 # ---------------------------------------------------------------------------
 # Fun-facts
@@ -91,6 +155,12 @@ STAR_FACTS: Dict[str, str] = {
     "Deneb":      "Денеб — один из самых далёких «ярких» объектов неба: ~2600 св. лет, светимость 200 000 Солнц.",
     "Regulus":    "Регулус — сердце Льва; быстро вращающаяся звезда, почти достигшая критической скорости распада.",
     "Polaris":    "Полярная звезда отстоит от полюса мира примерно на 0,7° и медленно к нему приближается.",
+    "Canopus":    "Канопус — вторая по яркости звезда неба, голубовато-белый сверхгигант на расстоянии 310 св. лет.",
+    "Rigil Kentaurus": "Альфа Центавра — ближайшая к нам звёздная система (4,37 св. лет); тройная звезда.",
+    "Acrux":      "Акрукс — ярчайшая звезда Южного Креста, голубой гигант на расстоянии 320 св. лет.",
+    "Denebola":   "Денебола — «хвост Льва»; умеренно горячая белая звезда главной последовательности.",
+    "Castor":     "Кастор — шестикратная звёздная система: три пары, вращающихся вокруг общего центра масс.",
+    "Mizar":      "Мицар — первая двойная звезда, обнаруженная в телескоп (1617 г.); компонент — Алькор.",
 }
 
 MESSIER_FACTS: Dict[int, str] = {
@@ -147,19 +217,76 @@ def _get_messier_catalog() -> MessierCatalog:
 
 
 def _load_named_stars() -> Dict[int, str]:
+    """
+    Load named stars from lines_data.json.
+
+    The file has a mixed structure — it may be a dict whose values include
+    arrays of boundary strings, constellation-line objects, AND named-star
+    entries keyed as "HIP XXXXX".  We iterate defensively: each key/value
+    pair is processed individually so a single bad entry never aborts the
+    whole load.
+
+    If the file is completely unreadable, or no HIP entries are found, the
+    built-in _FALLBACK_NAMED_STARS list is returned so the star-game always
+    has a working pool of stars.
+    """
     global _NAMED_STARS
     if _NAMED_STARS:
         return _NAMED_STARS
+
     lines_path = _BASE_DIR / "src" / "constellations_metadata" / "lines_data.json"
+    parsed: Dict[int, str] = {}
+
     try:
         with open(lines_path, encoding="utf-8") as f:
             raw = json.load(f)
-        for key, value in raw.items():
-            if key.startswith("HIP "):
-                hip_id = int(key.split(" ")[1])
-                _NAMED_STARS[hip_id] = value[0]["english"]
+
+        # Handle top-level dict  (expected format)
+        if isinstance(raw, dict):
+            for key, value in raw.items():
+                if not isinstance(key, str) or not key.startswith("HIP "):
+                    continue
+                try:
+                    hip_id = int(key.split()[1])
+                    if isinstance(value, list) and value:
+                        entry = value[0]
+                        name = (
+                            entry.get("english")
+                            or entry.get("native")
+                            if isinstance(entry, dict) else None
+                        )
+                        if name:
+                            parsed[hip_id] = str(name)
+                except Exception:
+                    continue  # skip this one entry, keep going
+
+        # Handle top-level list  (rare alternative format)
+        elif isinstance(raw, list):
+            for item in raw:
+                if not isinstance(item, dict):
+                    continue
+                for key, value in item.items():
+                    if not isinstance(key, str) or not key.startswith("HIP "):
+                        continue
+                    try:
+                        hip_id = int(key.split()[1])
+                        if isinstance(value, list) and value:
+                            entry = value[0]
+                            name = (
+                                entry.get("english")
+                                or entry.get("native")
+                                if isinstance(entry, dict) else None
+                            )
+                            if name:
+                                parsed[hip_id] = str(name)
+                    except Exception:
+                        continue
+
     except Exception:
-        pass
+        pass  # file missing or JSON invalid — fall through to fallback
+
+    # Merge: fallback first (lower priority), parsed data overrides
+    _NAMED_STARS = {**_FALLBACK_NAMED_STARS, **parsed}
     return _NAMED_STARS
 
 
@@ -174,7 +301,7 @@ def _fig_to_base64(fig: plt.Figure) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Core render helper  (FIX 1: plt.close("all") + ax.set_aspect("equal"))
+# Core render helper
 # ---------------------------------------------------------------------------
 def _generate_pinhole_image(
     direction,
@@ -184,13 +311,7 @@ def _generate_pinhole_image(
     fov: float = 60.0,
     extra_draw=None,       # callable(fig, ax, camera_cfg)
 ) -> str:
-    """Render a pinhole projection → base64 PNG.
-
-    Mirrors the pattern used in messier_blueprint.py:
-      - plt.close("all") before creating a new figure
-      - ax.set_aspect("equal") after generate()
-    """
-    # FIX 1a: flush any stale figures before creating a new one
+    """Render a pinhole projection → base64 PNG."""
     plt.close("all")
 
     direction = np.asarray(direction, dtype=np.float32)
@@ -240,7 +361,6 @@ def _generate_pinhole_image(
     constraints = CatalogConstraints(max_magnitude=magnitude)
     fig, ax = projector.generate(constraints=constraints)
 
-    # FIX 1b: force square pixels so the sky isn't stretched
     ax.set_aspect("equal")
 
     if extra_draw is not None:
@@ -274,7 +394,7 @@ def _shuffle_options(*items: str) -> List[str]:
 def _gnomonic_project(
     hip_ids: Set[int],
     center: np.ndarray,
-    all_stars_data,         # pre-loaded catalog data array
+    all_stars_data,
 ) -> Dict[int, Dict[str, float]]:
     """Project stars onto the tangent plane at `center`."""
     z = center / np.linalg.norm(center)
@@ -345,21 +465,25 @@ class QuestionFactory:
         session.current_question = question
         return question
 
-    # ── Mode 2: Name the Star  (FIX 2) ─────────────────────────────────────
+    # ── Mode 2: Name the Star ──────────────────────────────────────────────
     def make_star_question(self, session) -> Dict[str, Any]:
+        """
+        Show a pinhole image with the target star highlighted by a red ring
+        and crosshair at the image centre.  The answer mode depends on
+        session.difficulty:
+          easy   — choose from 4 option buttons
+          medium — type the star name
+          hard   — type the star name + RA/Dec (±10° tolerance)
+        """
         magnitude = DIFFICULTY_MAGNITUDE[session.difficulty]
-        named_stars = _load_named_stars()
-
-        if not named_stars:
-            # lines_data.json not found — fall back gracefully
-            return self.make_constellation_question(session)
+        named_stars = _load_named_stars()   # always non-empty thanks to fallback
 
         catalog = _get_catalog()
-        # Always reload with current constraints so hip IDs are present
         constraints = CatalogConstraints(max_magnitude=magnitude)
         stars_data = catalog.get_stars(constraints)
         available_hip = set(int(s["hip_id"]) for s in stars_data)
 
+        # Select candidate star
         candidates = {
             hip: name for hip, name in named_stars.items()
             if hip in available_hip and hip not in session.used_objects
@@ -369,70 +493,101 @@ class QuestionFactory:
             candidates = {hip: name for hip, name in named_stars.items()
                           if hip in available_hip}
         if not candidates:
-            # Even after reset no named stars in catalog — widen magnitude
+            # Widen magnitude limit to 7 — should always capture top named stars
             wide = catalog.get_stars(CatalogConstraints(max_magnitude=7.0))
             available_hip = set(int(s["hip_id"]) for s in wide)
+            stars_data = wide
             candidates = {hip: name for hip, name in named_stars.items()
                           if hip in available_hip}
         if not candidates:
-            return self.make_constellation_question(session)
+            # Absolute last resort: use the first star in the catalog
+            star_arr = stars_data[0]
+            correct_hip = int(star_arr["hip_id"])
+            correct_name = named_stars.get(correct_hip, f"HIP {correct_hip}")
+            candidates = {correct_hip: correct_name}
 
         correct_hip = random.choice(list(candidates.keys()))
         correct_name = candidates[correct_hip]
         session.used_objects.add(correct_hip)
 
-        # Get the star's ECI direction
-        star_arr = next(
-            (s for s in stars_data if int(s["hip_id"]) == correct_hip), None
-        )
+        # Find star's catalog entry
+        star_arr = next((s for s in stars_data if int(s["hip_id"]) == correct_hip), None)
         if star_arr is None:
-            # Re-query without magnitude filter
-            all_stars = catalog.get_stars(CatalogConstraints(max_magnitude=7.0))
-            star_arr = next(
-                (s for s in all_stars if int(s["hip_id"]) == correct_hip), None
-            )
+            wide = catalog.get_stars(CatalogConstraints(max_magnitude=7.0))
+            star_arr = next((s for s in wide if int(s["hip_id"]) == correct_hip), None)
         if star_arr is None:
-            return self.make_constellation_question(session)
+            star_arr = stars_data[0]
+            correct_hip = int(star_arr["hip_id"])
+            correct_name = named_stars.get(correct_hip, f"HIP {correct_hip}")
 
         direction = np.array(
             [float(star_arr["x"]), float(star_arr["y"]), float(star_arr["z"])],
             dtype=np.float32,
         )
 
-        # FIX 2: draw ring at pixel centre (width/2, height/2)
+        # RA/Dec in degrees (stored server-side only, used for hard-mode validation)
+        correct_ra_deg  = math.degrees(float(star_arr["ra"])) % 360.0
+        correct_dec_deg = math.degrees(float(star_arr["dec"]))
+
+        # Draw red ring + crosshair at image centre
         def _add_ring(fig, ax, camera_cfg):
             cx = camera_cfg.width  / 2
             cy = camera_cfg.height / 2
-            ax.plot(cx, cy, "o", markersize=22, markerfacecolor="none",
+            # Main ring
+            ax.plot(cx, cy, "o", markersize=24, markerfacecolor="none",
                     markeredgecolor="#ff6b6b", markeredgewidth=2.5,
                     alpha=0.9, zorder=10)
-            ax.plot(cx, cy, "o", markersize=34, markerfacecolor="none",
-                    markeredgecolor="#ff6b6b", markeredgewidth=1.0,
-                    alpha=0.35, zorder=9)
 
         image_b64 = _generate_pinhole_image(
             direction=direction,
             magnitude=magnitude,
             show_const=True,
             show_names=False,
-            fov=25.0,
+            fov=60,
             extra_draw=_add_ring,
         )
 
+        # Option buttons (used in easy mode; generated for all modes for completeness)
         all_names = [n for h, n in named_stars.items() if h != correct_hip]
         distractors = random.sample(all_names, min(3, len(all_names)))
         options = _shuffle_options(correct_name, *distractors)
 
+        # Difficulty-aware question text and hint
+        difficulty = getattr(session, "difficulty", "easy")
+        if difficulty == "easy":
+            question_text = "Как называется звезда, отмеченная красным кольцом?"
+            hint_text = ("Звезда находится точно в центре изображения, "
+                         "отмечена красным кольцом и перекрестием")
+        elif difficulty == "medium":
+            question_text = "Введите название звезды, отмеченной красным кольцом"
+            hint_text = (
+                f"Название этой звезды состоит из {len(correct_name)} символов "
+                f"и начинается на «{correct_name[0]}»"
+            )
+        else:  # hard
+            question_text = (
+                "Введите название звезды и её экваториальные координаты "
+                "с точностью до ±10°"
+            )
+            ra_h = correct_ra_deg / 15.0
+            hint_text = (
+                f"RA ≈ {correct_ra_deg:.0f}° ({ra_h:.1f}ч), "
+                f"Dec ≈ {correct_dec_deg:.0f}°"
+            )
+
         question = {
             "type": "star",
             "image": image_b64,
-            # FIX 2: correct question text for this mode
-            "question": "Как называется звезда, отмеченная красным кольцом?",
+            "question": question_text,
             "options": options,
             "correct": correct_name,
-            "hint": "Звезда находится точно в центре изображения, отмечена красным кольцом",
+            # Server-side only — not sent to client in api_question response:
+            "correct_ra_deg":  correct_ra_deg,
+            "correct_dec_deg": correct_dec_deg,
+            "hint": hint_text,
             "fun_fact": STAR_FACTS.get(
-                correct_name, f"{correct_name} — яркая именная звезда (HIP {correct_hip})."
+                correct_name,
+                f"{correct_name} — именная звезда каталога Hipparcos (HIP {correct_hip})."
             ),
         }
         session.current_question = question
@@ -457,8 +612,8 @@ class QuestionFactory:
             [float(obj["x"]), float(obj["y"]), float(obj["z"])], dtype=np.float32
         )
 
-        TYPE_NAMES = {1:"Галактика", 2:"Шаровое скопление", 3:"Рассеянное скопление",
-                      4:"Туманность", 5:"Остаток сверхновой", 6:"Звёздное облако"}
+        TYPE_NAMES = {1: "Галактика", 2: "Шаровое скопление", 3: "Рассеянное скопление",
+                      4: "Туманность", 5: "Остаток сверхновой", 6: "Звёздное облако"}
         obj_type_name = TYPE_NAMES.get(int(obj["obj_type"]), "Объект")
 
         def _add_marker(fig, ax, camera_cfg):
@@ -480,15 +635,17 @@ class QuestionFactory:
             magnitude=magnitude,
             show_const=True,
             show_names=False,
-            fov=50.0,
+            fov=60.0,
             extra_draw=_add_marker,
         )
 
         obj_catalog_name = str(obj["name"]).strip()
         correct_label = f"M{m_num}"
         other_nums = [int(o["m_number"]) for o in all_objects if int(o["m_number"]) != m_num]
-        options = _shuffle_options(correct_label,
-                                   *[f"M{n}" for n in random.sample(other_nums, min(3, len(other_nums)))])
+        options = _shuffle_options(
+            correct_label,
+            *[f"M{n}" for n in random.sample(other_nums, min(3, len(other_nums)))]
+        )
 
         question = {
             "type": "messier",
@@ -503,10 +660,9 @@ class QuestionFactory:
         session.current_question = question
         return question
 
-    # ── Mode 4: Draw the Constellation  (FIX 4) ────────────────────────────
+    # ── Mode 4: Draw the Constellation ─────────────────────────────────────
     def make_draw_question(self, session) -> Dict[str, Any]:
         magnitude = DIFFICULTY_MAGNITUDE[session.difficulty]
-        # Use a slightly wider magnitude for background stars in draw mode
         bg_magnitude = min(magnitude + 1.0, 6.5)
 
         pool = _get_constellation_list(session.difficulty)
@@ -522,25 +678,20 @@ class QuestionFactory:
         center = np.array(CONSTELLATIONS_DATA[correct_abbr]["center"], dtype=np.float64)
         lines = get_constellation_lines(correct_abbr)
 
-        # Collect constellation HIP IDs
         const_hip_ids: Set[int] = set()
         for line in lines:
             const_hip_ids.update(line)
 
         catalog = _get_catalog()
-
-        # FIX 4a: load MORE background stars (wider magnitude)
         bg_constraints = CatalogConstraints(max_magnitude=bg_magnitude)
         all_stars_data = catalog.get_stars(bg_constraints)
 
-        # Project constellation stars
         const_projected = _gnomonic_project(const_hip_ids, center, all_stars_data)
 
         if len(const_projected) < 2:
             session.used_objects.discard(correct_abbr)
             return self.make_draw_question(session)
 
-        # Also project nearby background stars (within the visible cone)
         z = center / np.linalg.norm(center)
         bg_projected: Dict[int, Dict[str, float]] = {}
         for s in all_stars_data:
@@ -549,7 +700,7 @@ class QuestionFactory:
                 continue
             d = np.array([float(s["x"]), float(s["y"]), float(s["z"])])
             cos_t = float(np.dot(d, z))
-            if cos_t < 0.7:   # roughly ±45° FOV
+            if cos_t < 0.7:
                 continue
             arb = np.array([0.0, 0.0, 1.0]) if abs(z[2]) < 0.9 else np.array([1.0, 0.0, 0.0])
             x_ax = np.cross(arb, z); x_ax /= np.linalg.norm(x_ax)
@@ -558,16 +709,13 @@ class QuestionFactory:
             py = float(np.dot(d, y_ax) / cos_t)
             bg_projected[hip_id] = {"hip_id": hip_id, "x": px, "y": py, "v_mag": float(s["v_mag"])}
 
-        # Normalize all coordinates to [-1, 1] using constellation extents
         all_xs = [v["x"] for v in const_projected.values()]
         all_ys = [v["y"] for v in const_projected.values()]
         max_r = max(max(abs(x) for x in all_xs), max(abs(y) for y in all_ys), 1e-9)
-        # Add 20% padding
         max_r *= 1.2
 
         named = _load_named_stars()
 
-        # FIX 4b: constellation stars include magnitude for variable-size rendering
         stars_list = []
         for hip_id, v in const_projected.items():
             stars_list.append({
@@ -579,7 +727,6 @@ class QuestionFactory:
                 "is_constellation": True,
             })
 
-        # Background stars (clamped to canvas, smaller)
         for hip_id, v in bg_projected.items():
             nx = v["x"] / max_r
             ny = v["y"] / max_r
@@ -632,12 +779,11 @@ class QuestionFactory:
             "correct_edges": correct_edges,
             "total_ref_edges": total_ref,
             "correct_answer": session.current_question["correct"],
-            # FIX 4c: always send ref_edges so frontend can draw the solution
             "ref_edges": ref,
             "fun_fact": session.current_question["fun_fact"],
         }
 
-    # ── Mode 5: Trivia  (FIX 3: show_names=False) ──────────────────────────
+    # ── Mode 5: Trivia ──────────────────────────────────────────────────────
     def make_trivia_question(self, session) -> Dict[str, Any]:
         magnitude = DIFFICULTY_MAGNITUDE[session.difficulty]
         pool = _get_constellation_list(session.difficulty)
@@ -665,7 +811,7 @@ class QuestionFactory:
             direction=center,
             magnitude=magnitude,
             show_const=True,
-            show_names=False,   # FIX 3: no constellation name labels
+            show_names=False,
             fov=110.0,
         )
 

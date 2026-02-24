@@ -193,7 +193,7 @@
     const cx    = canvas.width  / 2;
     const cy    = canvas.height / 2;
     const scale = Math.min(canvas.width, canvas.height) / 2 - pad;
-    return { x: cx + nx * scale, y: cy - ny * scale };
+    return { x: cx - nx * scale, y: cy - ny * scale };
   }
 
   // Visual radius from apparent magnitude (brighter = larger)
@@ -497,7 +497,7 @@
   function updateHeader(s) {
     document.getElementById('hdr-round').textContent   = s.round || 0;
     document.getElementById('hdr-total').textContent   = s.total_rounds || ROUNDS;
-    document.getElementById('hdr-score').textContent   = s.score || 0;
+    document.getElementById('hdr-score').textContent = s.total_score ?? s.score ?? 0;
     document.getElementById('hdr-streak').textContent  = s.streak || 0;
     document.getElementById('progress-fill').style.width =
       ((s.round || 0) / (s.total_rounds || ROUNDS) * 100) + '%';

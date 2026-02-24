@@ -724,47 +724,41 @@
         <div class="features-grid">
 
             <div class="feature-card" style="border-color:rgba(108,99,255,.4);">
-                <div style="font-size:2rem;margin-bottom:8px;">🌟</div>
                 <h3>Созвездия</h3>
                 <p>Угадай созвездие по участку карты неба. Четыре варианта ответа, три уровня сложности.</p>
                 <a href="/game/constellation" class="game-link-btn">Играть</a>
             </div>
 
             <div class="feature-card" style="border-color:rgba(251,191,36,.35);">
-                <div style="font-size:2rem;margin-bottom:8px;">⭐</div>
                 <h3>Звёзды</h3>
                 <p>Узнай яркую звезду по виду неба вокруг неё — Бетельгейзе, Вега, Сириус и другие.</p>
                 <a href="/game/star" class="game-link-btn">Играть</a>
             </div>
 
             <div class="feature-card" style="border-color:rgba(34,211,238,.35);">
-                <div style="font-size:2rem;margin-bottom:8px;">🌌</div>
                 <h3>Объекты Мессье</h3>
                 <p>Угадай номер объекта каталога Мессье (M1–M110) по pinhole-проекции участка неба.</p>
                 <a href="/game/messier" class="game-link-btn">Играть</a>
             </div>
 
             <div class="feature-card" style="border-color:rgba(167,139,250,.35);">
-                <div style="font-size:2rem;margin-bottom:8px;">✏️</div>
                 <h3>Нарисуй созвездие</h3>
                 <p>Соедини звёзды линиями, чтобы получился правильный контур созвездия. Проверяется точность рисунка.</p>
                 <a href="/game/draw" class="game-link-btn">Играть</a>
             </div>
 
             <div class="feature-card" style="border-color:rgba(52,211,153,.35);">
-                <div style="font-size:2rem;margin-bottom:8px;">🔭</div>
                 <h3>Астро-триvia</h3>
                 <p>Вопросы о физике звёзд, истории астрономии и мифологии созвездий. Учись через истории!</p>
                 <a href="/game/trivia" class="game-link-btn">Играть</a>
             </div>
 
             <div class="feature-card" style="border-color:rgba(248,113,113,.25);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
-                <div style="font-size:2rem;margin-bottom:8px;">🏆</div>
                 <h3>Система рангов</h3>
                 <p style="font-size:.9rem;color:var(--text-dim);">
-                    🌑 Beginner · 🌙 Night Apprentice<br>
-                    🔭 Sky Watcher · ⭐ Star Navigator<br>
-                    🌌 Galactic Explorer
+                    Beginner · Night Apprentice<br>
+                    Sky Watcher · Star Navigator<br>
+                    Galactic Explorer
                 </p>
                 <a href="/game/" style="margin-top:14px;padding:8px 20px;border-radius:50px;border:1px solid var(--border);color:var(--text-dim);font-size:.85rem;text-decoration:none;transition:border-color .2s,color .2s;">Лобби →</a>
             </div>
@@ -926,96 +920,6 @@
                     <div class="dl-desc">Создание небесных карт онлайн</div>
                 </div>
             </a>
-        </div>
-
-        <!-- API документация игр -->
-        <h3 style="margin-top:56px;font-size:1.4rem;color:var(--accent2);">API игр — Sky Quiz</h3>
-        <p style="color:var(--text-dim);margin-bottom:28px;">
-            REST API доступен всем, кто хочет встроить игры AstraGeek в своё приложение или изучить его устройство.
-        </p>
-        <div class="docs-grid">
-            <div class="doc-link" style="cursor:default;">
-                <span class="emoji">🎮</span>
-                <div>
-                    <div class="dl-label">Лобби игр</div>
-                    <div class="dl-desc"><code>GET /game/</code> — выбор режима и сложности</div>
-                </div>
-            </div>
-            <div class="doc-link" style="cursor:default;">
-                <span class="emoji">▶️</span>
-                <div>
-                    <div class="dl-label">Старт сессии</div>
-                    <div class="dl-desc">
-                        <code>POST /game/api/start</code><br>
-                        Тело: <code>{ mode, difficulty, rounds }</code><br>
-                        Режимы: <code>constellation</code> · <code>star</code> · <code>messier</code> · <code>draw</code> · <code>trivia</code>
-                    </div>
-                </div>
-            </div>
-            <div class="doc-link" style="cursor:default;">
-                <span class="emoji">❓</span>
-                <div>
-                    <div class="dl-label">Следующий вопрос</div>
-                    <div class="dl-desc">
-                        <code>GET /game/api/question?session_id=…</code><br>
-                        Возвращает изображение и 4 варианта ответа.<br>
-                        Для <code>draw</code>: координаты звёзд вместо картинки.
-                    </div>
-                </div>
-            </div>
-            <div class="doc-link" style="cursor:default;">
-                <span class="emoji">✅</span>
-                <div>
-                    <div class="dl-label">Ответ на вопрос</div>
-                    <div class="dl-desc">
-                        <code>POST /game/api/answer</code><br>
-                        Тело: <code>{ session_id, answer, used_hint, time_seconds }</code><br>
-                        Для <code>draw</code>: <code>drawn_edges</code> вместо <code>answer</code>
-                    </div>
-                </div>
-            </div>
-            <div class="doc-link" style="cursor:default;">
-                <span class="emoji">💡</span>
-                <div>
-                    <div class="dl-label">Подсказка</div>
-                    <div class="dl-desc">
-                        <code>GET /game/api/hint?session_id=…</code><br>
-                        Использование подсказки снижает очки за раунд на 50%.
-                    </div>
-                </div>
-            </div>
-            <div class="doc-link" style="cursor:default;">
-                <span class="emoji">📊</span>
-                <div>
-                    <div class="dl-label">Счёт и завершение</div>
-                    <div class="dl-desc">
-                        <code>GET /game/api/score?session_id=…</code> — текущий счёт<br>
-                        <code>POST /game/api/finish</code> — итоговый результат и история
-                    </div>
-                </div>
-            </div>
-            <div class="doc-link" style="cursor:default;">
-                <span class="emoji">🌌</span>
-                <div>
-                    <div class="dl-label">Объекты Мессье (отдельный API)</div>
-                    <div class="dl-desc">
-                        <code>POST /api/messier/start</code><br>
-                        <code>GET &nbsp;/api/messier/image?session_id=…</code><br>
-                        <code>POST /api/messier/answer</code><br>
-                        <code>GET &nbsp;/api/messier/score?session_id=…</code>
-                    </div>
-                </div>
-            </div>
-            <div class="doc-link" style="cursor:default;">
-                <span class="emoji">🏅</span>
-                <div>
-                    <div class="dl-label">Система очков</div>
-                    <div class="dl-desc">
-                        Easy: 100 · Medium: 200 · Hard: 350 базовых очков.<br>
-                        Стрик ×1.2–×3.0 · Быстрый ответ (≤8 с) ×1.2 · Подсказка ×0.5
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </section>
