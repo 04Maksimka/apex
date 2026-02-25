@@ -535,15 +535,15 @@ class CylindricProjector:
 
     def _create_figure(self):
         """Create and configure the matplotlib figure."""
+        import matplotlib
+        matplotlib.rcdefaults()
 
         if self.config.use_dark_mode:
-            plt.style.use('dark_background')
-            self._bg_color = 'black'
+            self._bg_color   = 'black'
             self._grid_color = 'gray'
             self._text_color = 'white'
         else:
-            plt.style.use('default')
-            self._bg_color = 'white'
+            self._bg_color   = 'white'
             self._grid_color = 'lightgray'
             self._text_color = 'black'
 
@@ -552,11 +552,13 @@ class CylindricProjector:
             dpi=self.config.dpi
         )
 
-        # Set limits and aspect
-        self._ax.set_xlim(self.config.ra_min, self.config.ra_max)
-        self._ax.set_ylim(self.config.dec_min, self.config.dec_max)
+        # Явно устанавливаем цвета только для этой фигуры
+        self._fig.patch.set_facecolor(self._bg_color)
+        self._ax.set_facecolor(self._bg_color)
 
         # Labels
+        self._ax.set_xlim(self.config.ra_min, self.config.ra_max)
+        self._ax.set_ylim(self.config.dec_min, self.config.dec_max)
         self._ax.set_xlabel('Right Ascension (degrees)', fontsize=12, color=self._text_color)
         self._ax.set_ylabel('Declination (degrees)', fontsize=12, color=self._text_color)
         self._ax.set_title(
@@ -564,12 +566,8 @@ class CylindricProjector:
             fontsize=14,
             color=self._text_color
         )
-
-        # Background
-        self._fig.patch.set_facecolor(self._bg_color)
-        self._ax.set_facecolor(self._bg_color)
-
-        # Inverse x_axis
+        self._ax.tick_params(colors=self._text_color)
+        self._ax.spines[:].set_color(self._text_color)
         self._ax.invert_xaxis()
 
     def _plot_stars(self, projection_data: NDArray):

@@ -248,11 +248,16 @@
 
     // Load image
     const img = document.getElementById('sky-img');
-    img.onload = () => {
+    const _showImg = () => {
       document.getElementById('sky-loader').style.display = 'none';
       img.style.display = 'block';
     };
+    img.onload = _showImg;
+    img.onerror = _showImg;   // показать область даже при ошибке декодирования
+    img.src = '';             // сброс состояния "complete" в браузере
     img.src = 'data:image/png;base64,' + data.image;
+    // Fallback: браузер уже декодировал изображение синхронно
+    if (img.complete && img.naturalHeight > 0) _showImg();
 
     // Render options
     const optEl = document.getElementById('options');
@@ -285,7 +290,18 @@
         time_seconds: parseFloat(timeSec),
       }),
     });
-    const data = await resp.json();
+    const data = await resp.json();   // или r.json() в game_messier
+    // Обработка ошибки сервера (например "No active question")
+    if (data.error) {
+      console.error('Ошибка ответа:', data.error);
+      // Сброс флага и перезагрузка вопроса
+      answered = false;
+      document.querySelectorAll('.opt-btn').forEach(b => b.disabled = false);
+      document.getElementById('result-area').innerHTML =
+        `<div style="color:#f87171;text-align:center">⚠️ Ошибка: ${data.error}. Перезагрузка...</div>`;
+      setTimeout(() => loadQuestion(), 1500);
+      return;
+    }
     updateHeader(data);
     highlightOptions(data.correct, data.correct_answer, answer);
     showResult(data);
@@ -314,7 +330,7 @@
     const s = session || {};
     document.getElementById('hdr-round').textContent  = s.round || 0;
     document.getElementById('hdr-total').textContent  = s.total_rounds || ROUNDS;
-    document.getElementById('hdr-score').textContent  = s.score || 0;
+    document.getElementById('hdr-score').textContent = s.total_score ?? s.score ?? 0;
     document.getElementById('hdr-streak').textContent = s.streak || 0;
     const pct = ((s.round || 0) / (s.total_rounds || ROUNDS)) * 100;
     document.getElementById('progress-fill').style.width = pct + '%';

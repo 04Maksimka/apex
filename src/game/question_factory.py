@@ -18,6 +18,7 @@ import random
 from pathlib import Path
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
+from threading import Lock
 
 import numpy as np
 import matplotlib
@@ -46,6 +47,7 @@ _BASE_DIR = Path(__file__).resolve().parents[2]
 _HIP_CATALOG: Optional[Catalog] = None
 _PLANET_CATALOG: Optional[PlanetCatalog] = None
 _MESSIER_CATALOG: Optional[MessierCatalog] = None
+_catalog_lock = Lock()
 _NAMED_STARS: Dict[int, str] = {}
 
 OBS_TIME = datetime(2004, 6, 14, 6, 10, 0)
@@ -85,7 +87,7 @@ _FALLBACK_NAMED_STARS: Dict[int, str] = {
     113881: "Scheat",
     113963: "Markab",
     68702:  "Hadar",
-    71683:  "Rigil Kentaurus",
+    71683:  "Rigil Centaurus",
     60718:  "Acrux",
     87833:  "Eltanin",
     92420:  "Sheliak",
@@ -195,24 +197,32 @@ TRIVIA_QUESTIONS: List[Dict[str, Any]] = [
 def _get_catalog() -> Catalog:
     global _HIP_CATALOG
     if _HIP_CATALOG is None:
-        _HIP_CATALOG = Catalog(
-            catalog_name=str(_BASE_DIR / "src" / "hip_catalog" / "hip_data.tsv"),
-            use_cache=True,
-        )
+        with _catalog_lock:
+            if _HIP_CATALOG is None:
+                _HIP_CATALOG = Catalog(
+                    catalog_name=str(_BASE_DIR / "src" / "hip_catalog" / "hip_data.tsv"),
+                    use_cache=True,
+                )
+                # Прогреть кэш сразу, чтобы первый запрос не был медленным
+                _HIP_CATALOG.get_stars(CatalogConstraints(max_magnitude=6.5))
     return _HIP_CATALOG
 
 
 def _get_planet_catalog() -> PlanetCatalog:
     global _PLANET_CATALOG
     if _PLANET_CATALOG is None:
-        _PLANET_CATALOG = PlanetCatalog()
+        with _catalog_lock:
+            if _PLANET_CATALOG is None:
+                _PLANET_CATALOG = PlanetCatalog()
     return _PLANET_CATALOG
 
 
 def _get_messier_catalog() -> MessierCatalog:
     global _MESSIER_CATALOG
     if _MESSIER_CATALOG is None:
-        _MESSIER_CATALOG = MessierCatalog()
+        with _catalog_lock:
+            if _MESSIER_CATALOG is None:
+                _MESSIER_CATALOG = MessierCatalog()
     return _MESSIER_CATALOG
 
 
