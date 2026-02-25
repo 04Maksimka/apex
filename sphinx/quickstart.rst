@@ -25,6 +25,14 @@ This produces a map with the following properties:
 - Equatorial coordinate grid with 10° declination step and 15° right ascension step
 - Output saved as ``example.pdf`` in the current directory
 
+.. image:: _static/images/image_1.png
+   :alt: Stereographic sky map
+   :width: 600px
+   :align: center
+
+:download:`Download full resolution PDF <_static/examples/example_1.pdf>`
+
+
 Example 2: Pinhole projection with random direction
 ---------------------------------------------------
 
@@ -39,6 +47,14 @@ This produces a pinhole sky map with the following properties:
 - Equatorial coordinate grid with 10° step on both axes
 - Camera points in a **random sky direction**
 
+.. image:: _static/images/image_2.png
+   :alt: Pinhole projection with random direction
+   :width: 600px
+   :align: center
+
+:download:`Download full resolution PDF <_static/examples/example_2.pdf>`
+
+
 Example 3: Pinhole projection toward Orion
 ------------------------------------------
 
@@ -52,6 +68,13 @@ This produces a pinhole sky map with the following properties:
 - Date and time: February 13, 2026, midnight
 - Equatorial coordinate grid with 1° step on both axes
 - Camera points **toward the Orion** constellation (IAU code: ORI)
+
+.. image:: _static/images/image_3.png
+   :alt: Pinhole projection toward Orion
+   :width: 600px
+   :align: center
+
+:download:`Download full resolution PDF <_static/examples/example_3.pdf>`
 
 Example 4: Stereographic map in student mode with overrides
 -----------------------------------------------------------
@@ -68,3 +91,10 @@ This produces a stereographic sky map with the following properties:
 - Remaining teacher preset elements are active: celestial equator, galactic equator, poles, zenith, ticks
 
 It's useful for producing partially annotated maps for classroom exercises
+
+.. image:: _static/images/image_4.png
+   :alt: Stereographic map in student mode with overrides
+   :width: 600px
+   :align: center
+
+:download:`Download full resolution PDF <_static/examples/example_4.pdf>`

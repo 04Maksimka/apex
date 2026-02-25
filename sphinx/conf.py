@@ -15,11 +15,16 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx_autodoc_typehints',
     'sphinx_click',
+    'sphinx_copybutton'
 ]
 
 sphinx_click_mock_imports = []
 
-# --- autodoc настройки ---
+# --- copybutton ---
+copybutton_prompt_text = r"\$ |>>> "
+copybutton_prompt_is_regexp = True
+
+# --- autodoc ---
 autodoc_member_order = 'bysource'
 autodoc_typehints = 'description'
 autodoc_typehints_format = 'short'
