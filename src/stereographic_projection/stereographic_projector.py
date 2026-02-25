@@ -5,6 +5,7 @@ from typing import Optional, List, Dict, Tuple
 
 from numpy.typing import NDArray
 import numpy as np
+import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 
@@ -72,21 +73,23 @@ class StereoProjector(object):
     """Class of the stereographic projector."""
 
     def __init__(
-        self,
-        config: StereoProjConfig,
-        catalog: Catalog,
-        planets_catalog: PlanetCatalog,
-        constellations_renderer: Optional[ConstellationRendererStereo] = ConstellationRendererStereo(),
-        constellation_config: Optional[ConstellationConfig] = None,
-        random_angle: float = np.random.uniform(0.0, 2*np.pi)
+            self,
+            config: StereoProjConfig,
+            catalog: Catalog,
+            planets_catalog: PlanetCatalog,
+            constellations_renderer: Optional[ConstellationRendererStereo] = None,  # не создаём объект в сигнатуре
+            constellation_config: Optional[ConstellationConfig] = None,
+            random_angle: Optional[float] = None,   # генерируем внутри __init__, не в сигнатуре
     ):
         self.config = config
         self.constellation_config = constellation_config
-        self.constellations_renderer = constellations_renderer
+        # Создаём renderer здесь, если не передан — это безопасно
+        self.constellations_renderer = constellations_renderer or ConstellationRendererStereo()
         self.catalog = catalog
         self.planets_catalog = planets_catalog
-        self.random_angle = random_angle
-        self._groups = {}  # Legend groups - initialize as instance variable
+        # Каждый экземпляр получает свой случайный угол
+        self.random_angle = random_angle if random_angle is not None else np.random.uniform(0.0, 2 * np.pi)
+        self._groups = {}
         self._star_projections = None
         self._planets_projections = None
 
@@ -647,18 +650,28 @@ class StereoProjector(object):
 
         :param projection_data: projection points to place on figure
         :type projection_data: NDArray
+        
+        ВАЖНО: НЕ используем plt.style.use() — это глобальная операция.
+        Сбрасываем глобальное состояние через rcdefaults() и явно устанавливаем
+        белый фон + чёрные звёзды для каждой новой фигуры.
         """
+        # ── Сброс глобального состояния matplotlib ───────────────────────────
+        # Если до этого игра вызвала plt.style.use('dark_background'),
+        # без этого сброса звёзды (c='black') будут невидимы на чёрном фоне.
+        matplotlib.rcdefaults()
 
-        # Set up the figure with polar projection
-        self._fig = plt.figure()
+        # ── Создаём фигуру с явным белым фоном ──────────────────────────────
+        self._fig = plt.figure(facecolor='white')
         self._ax = self._fig.add_subplot(111, projection='polar')
+        self._fig.patch.set_facecolor('white')
+        self._ax.set_facecolor('white')
 
-        # Get parameters from projections data array
+        # ── Параметры проекции ───────────────────────────────────────────────
         sizes = projection_data['size']
         angles = projection_data['angle']
         radii = projection_data['radius']
 
-        # Make scatter
+        # ── Рисуем звёзды (явно чёрный цвет, независимо от глобального стиля)
         self._ax.scatter(
             angles,
             radii,
