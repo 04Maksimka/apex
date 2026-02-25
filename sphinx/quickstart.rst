@@ -54,7 +54,10 @@ This produces a pinhole sky map with the following properties:
 
 :download:`Download full resolution PDF <_static/examples/example_2.pdf>`
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 Example 3: Pinhole projection toward Orion
 ------------------------------------------
 

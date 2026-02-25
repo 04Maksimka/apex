@@ -18,6 +18,9 @@ extensions = [
     'sphinx_copybutton'
 ]
 
+copybutton_prompt_text = r"\$ |>>> "
+copybutton_prompt_is_regexp = True
+
 sphinx_click_mock_imports = []
 
 # --- copybutton ---

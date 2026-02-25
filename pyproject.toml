@@ -7,7 +7,7 @@ name = "astrageek"
 version = "0.2.0"
 authors = [
     {name = "Ilia Bespyatyy", email = "ilia.bespytatyy@gmail.com"},
-    {name = "Maksim Ramenskyy", email = "maksim.ramenskyy@gmail.com"},
+    {name = "Maksim Ramenskyy", email = "msramenskiy@edu.hse.ru"},
 ]
 description = "Star maps maker"
 readme = "README.md"
@@ -38,6 +38,13 @@ docs = [
     "sphinx-autodoc-typehints",
     "sphinx-click",
     "sphinx-copybutton"
+<<<<<<< Updated upstream
+=======
+]
+dev = [
+    "build",
+    "twine"
+>>>>>>> Stashed changes
 ]
 
 [tool.setuptools.packages.find]
