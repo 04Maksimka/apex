@@ -1,9 +1,9 @@
 """In-memory game session management for AstraGeek Sky Quiz."""
-import uuid
-import threading
-from dataclasses import dataclass, field
-from typing import Optional, Set, List, Dict, Any
 
+import threading
+import uuid
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set
 
 # ---------------------------------------------------------------------------
 # In-memory store (replace with Redis / SQLite for production)
@@ -16,15 +16,60 @@ _sessions: Dict[str, "GameSession"] = {}
 # ---------------------------------------------------------------------------
 DIFFICULTY_CONSTELLATIONS: Dict[str, Optional[List[str]]] = {
     "easy": [
-        "ORI", "UMA", "CAS", "CYG", "LEO", "SCO", "GEM",
-        "TAU", "AQL", "LYR", "PER", "AUR", "VIR", "SGR", "AND",
+        "ORI",
+        "UMA",
+        "CAS",
+        "CYG",
+        "LEO",
+        "SCO",
+        "GEM",
+        "TAU",
+        "AQL",
+        "LYR",
+        "PER",
+        "AUR",
+        "VIR",
+        "SGR",
+        "AND",
     ],
     "medium": [
-        "ORI", "UMA", "CAS", "CYG", "LEO", "SCO", "GEM", "TAU",
-        "AQL", "LYR", "PER", "AUR", "VIR", "SGR", "AND", "BOO",
-        "HER", "AQR", "CAP", "PSC", "ARI", "CNC", "CMI", "CMA",
-        "CRU", "GRU", "COR", "UMI", "DRA", "CEP", "CET", "ERI",
-        "PEG", "DEL", "SAG", "OPH", "SER",
+        "ORI",
+        "UMA",
+        "CAS",
+        "CYG",
+        "LEO",
+        "SCO",
+        "GEM",
+        "TAU",
+        "AQL",
+        "LYR",
+        "PER",
+        "AUR",
+        "VIR",
+        "SGR",
+        "AND",
+        "BOO",
+        "HER",
+        "AQR",
+        "CAP",
+        "PSC",
+        "ARI",
+        "CNC",
+        "CMI",
+        "CMA",
+        "CRU",
+        "GRU",
+        "COR",
+        "UMI",
+        "DRA",
+        "CEP",
+        "CET",
+        "ERI",
+        "PEG",
+        "DEL",
+        "SAG",
+        "OPH",
+        "SER",
     ],
     "hard": None,  # All available constellations
 }
@@ -44,8 +89,8 @@ TOTAL_ROUNDS_DEFAULT = 10
 @dataclass
 class GameSession:
     session_id: str
-    mode: str           # constellation | star | messier | draw | trivia
-    difficulty: str     # easy | medium | hard
+    mode: str  # constellation | star | messier | draw | trivia
+    difficulty: str  # easy | medium | hard
 
     score: int = 0
     round: int = 0
@@ -58,11 +103,11 @@ class GameSession:
     history: List[Dict[str, Any]] = field(default_factory=list)
     current_question: Optional[Dict[str, Any]] = None
 
-    # ── Prefetch (pre-generation of next question image) ─────────────────────
+    # ── Prefetch (pre-generation of next question image) ────────────────────
     # prefetch_event is set() when the background generation thread finishes.
     # api/question waits on this event instead of generating synchronously.
     prefetch_event: threading.Event = field(default_factory=threading.Event)
-    # If the background thread raised an exception, the message is stored here.
+    # If the background thread raised an exception, the message is stored here
     prefetch_error: Optional[str] = None
 
     @property
@@ -77,24 +122,26 @@ class GameSession:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "session_id":    self.session_id,
-            "mode":          self.mode,
-            "difficulty":    self.difficulty,
-            "score":         self.score,
-            "round":         self.round,
-            "total_rounds":  self.total_rounds,
-            "streak":        self.streak,
-            "best_streak":   self.best_streak,
+            "session_id": self.session_id,
+            "mode": self.mode,
+            "difficulty": self.difficulty,
+            "score": self.score,
+            "round": self.round,
+            "total_rounds": self.total_rounds,
+            "streak": self.streak,
+            "best_streak": self.best_streak,
             "correct_count": self.correct_count,
-            "accuracy":      self.accuracy,
-            "is_finished":   self.is_finished,
+            "accuracy": self.accuracy,
+            "is_finished": self.is_finished,
         }
 
 
 # ---------------------------------------------------------------------------
 # CRUD helpers
 # ---------------------------------------------------------------------------
-def create_session(mode: str, difficulty: str, total_rounds: int = TOTAL_ROUNDS_DEFAULT) -> GameSession:
+def create_session(
+    mode: str, difficulty: str, total_rounds: int = TOTAL_ROUNDS_DEFAULT
+) -> GameSession:
     session_id = str(uuid.uuid4())
     session = GameSession(
         session_id=session_id,

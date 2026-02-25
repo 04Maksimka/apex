@@ -1,124 +1,43 @@
 """Usage example of pinhole projection."""
+
+from datetime import datetime
+
 import numpy as np
 from matplotlib import pyplot as plt
 
-from src.constellations_metadata.constellations_data import get_constellation_center
+from src.constellations_metadata.constellations_data import (
+    get_constellation_center,
+)
 from src.helpers.pdf_helpers.figure2pdf import save_figure_pinhole
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
-from src.pinhole_projection.pinhole_projector import ShotConditions, CameraConfig, \
-    Pinhole, PinholeConfig, ConstellationConfig
+from src.pinhole_projection.pinhole_projector import (
+    CameraConfig,
+    ConstellationConfig,
+    Pinhole,
+    PinholeConfig,
+    ShotConditions,
+)
 from src.planets_catalog.planet_catalog import PlanetCatalog
-from datetime import datetime
 
 
 def example_pinhole_visualization(
-        constellation: str,
-        tilt_angle: float = 0,
-        use_dark_mode: bool = True,
-        add_ticks: bool = False,
-        add_planets: bool = False,
-        add_ecliptic: bool = False,
-        add_equator: bool = False,
-        add_galactic_equator: bool = False,
-        add_equatorial_grid: bool = False,
-        add_constellations: bool = False,
-        add_constellations_names: bool = False,
+    constellation: str,
+    tilt_angle: float = 0,
+    use_dark_mode: bool = True,
+    add_ticks: bool = False,
+    add_planets: bool = False,
+    add_ecliptic: bool = False,
+    add_equator: bool = False,
+    add_galactic_equator: bool = False,
+    add_equatorial_grid: bool = False,
+    add_constellations: bool = False,
+    add_constellations_names: bool = False,
 ):
-    """Create example visualization of pinhole projections.
+    """Create example visualization of pinhole projections."""
 
-    :param constellation: str:
-    :param tilt_angle: float:  (Default value = 0)
-    :param use_dark_mode: bool:  (Default value = True)
-    :param add_ticks: bool:  (Default value = False)
-    :param add_planets: bool:  (Default value = False)
-    :param add_ecliptic: bool:  (Default value = False)
-    :param add_equator: bool:  (Default value = False)
-    :param add_galactic_equator: bool:  (Default value = False)
-    :param add_equatorial_grid: bool:  (Default value = False)
-    :param add_constellations: bool:  (Default value = False)
-    :param add_constellations_names: bool:  (Default value = False)
-    :param constellation: str:
-    :param tilt_angle: float:  (Default value = 0)
-    :param use_dark_mode: bool:  (Default value = True)
-    :param add_ticks: bool:  (Default value = False)
-    :param add_planets: bool:  (Default value = False)
-    :param add_ecliptic: bool:  (Default value = False)
-    :param add_equator: bool:  (Default value = False)
-    :param add_galactic_equator: bool:  (Default value = False)
-    :param add_equatorial_grid: bool:  (Default value = False)
-    :param add_constellations: bool:  (Default value = False)
-    :param add_constellations_names: bool:  (Default value = False)
-    :param constellation: str:
-    :param tilt_angle: float:  (Default value = 0)
-    :param use_dark_mode: bool:  (Default value = True)
-    :param add_ticks: bool:  (Default value = False)
-    :param add_planets: bool:  (Default value = False)
-    :param add_ecliptic: bool:  (Default value = False)
-    :param add_equator: bool:  (Default value = False)
-    :param add_galactic_equator: bool:  (Default value = False)
-    :param add_equatorial_grid: bool:  (Default value = False)
-    :param add_constellations: bool:  (Default value = False)
-    :param add_constellations_names: bool:  (Default value = False)
-    :param constellation: str:
-    :param tilt_angle: float:  (Default value = 0)
-    :param use_dark_mode: bool:  (Default value = True)
-    :param add_ticks: bool:  (Default value = False)
-    :param add_planets: bool:  (Default value = False)
-    :param add_ecliptic: bool:  (Default value = False)
-    :param add_equator: bool:  (Default value = False)
-    :param add_galactic_equator: bool:  (Default value = False)
-    :param add_equatorial_grid: bool:  (Default value = False)
-    :param add_constellations: bool:  (Default value = False)
-    :param add_constellations_names: bool:  (Default value = False)
-    :param constellation: str:
-    :param tilt_angle: float:  (Default value = 0)
-    :param use_dark_mode: bool:  (Default value = True)
-    :param add_ticks: bool:  (Default value = False)
-    :param add_planets: bool:  (Default value = False)
-    :param add_ecliptic: bool:  (Default value = False)
-    :param add_equator: bool:  (Default value = False)
-    :param add_galactic_equator: bool:  (Default value = False)
-    :param add_equatorial_grid: bool:  (Default value = False)
-    :param add_constellations: bool:  (Default value = False)
-    :param add_constellations_names: bool:  (Default value = False)
-    :param constellation: str:
-    :param tilt_angle: float:  (Default value = 0)
-    :param use_dark_mode: bool:  (Default value = True)
-    :param add_ticks: bool:  (Default value = False)
-    :param add_planets: bool:  (Default value = False)
-    :param add_ecliptic: bool:  (Default value = False)
-    :param add_equator: bool:  (Default value = False)
-    :param add_galactic_equator: bool:  (Default value = False)
-    :param add_equatorial_grid: bool:  (Default value = False)
-    :param add_constellations: bool:  (Default value = False)
-    :param add_constellations_names: bool:  (Default value = False)
-    :param constellation: str:
-    :param tilt_angle: float:  (Default value = 0)
-    :param use_dark_mode: bool:  (Default value = True)
-    :param add_ticks: bool:  (Default value = False)
-    :param add_planets: bool:  (Default value = False)
-    :param add_ecliptic: bool:  (Default value = False)
-    :param add_equator: bool:  (Default value = False)
-    :param add_galactic_equator: bool:  (Default value = False)
-    :param add_equatorial_grid: bool:  (Default value = False)
-    :param add_constellations: bool:  (Default value = False)
-    :param add_constellations_names: bool:  (Default value = False)
-    :param constellation: str: 
-    :param tilt_angle: float:  (Default value = 0)
-    :param use_dark_mode: bool:  (Default value = True)
-    :param add_ticks: bool:  (Default value = False)
-    :param add_planets: bool:  (Default value = False)
-    :param add_ecliptic: bool:  (Default value = False)
-    :param add_equator: bool:  (Default value = False)
-    :param add_galactic_equator: bool:  (Default value = False)
-    :param add_equatorial_grid: bool:  (Default value = False)
-    :param add_constellations: bool:  (Default value = False)
-    :param add_constellations_names: bool:  (Default value = False)
-
-    """
     # Create catalogs
     constraints = CatalogConstraints(max_magnitude=6.0)
-    catalog = Catalog(catalog_name='hip_data.tsv', use_cache=True)
+    catalog = Catalog(catalog_name="hip_data.tsv", use_cache=True)
     planet_catalog = PlanetCatalog()
 
     # Set time
@@ -129,9 +48,7 @@ def example_pinhole_visualization(
     height = 1000
 
     camera_cfg = CameraConfig.from_fov_and_aspect(
-        fov_deg=fov_deg,
-        aspect_ratio=aspect_ratio,
-        height_pix=height
+        fov_deg=fov_deg, aspect_ratio=aspect_ratio, height_pix=height
     )
 
     config = PinholeConfig(
@@ -144,17 +61,18 @@ def example_pinhole_visualization(
         add_equatorial_grid=add_equatorial_grid,
         add_constellations=add_constellations,
         add_constellations_names=add_constellations_names,
-        local_time=time
+        local_time=time,
     )
 
     # Constellation viewing configurations
     constellation_config = ConstellationConfig(
-        constellation_linewidth=0.5,
-        constellation_alpha=0.5
+        constellation_linewidth=0.5, constellation_alpha=0.5
     )
     # And shot conditions
     shot_cond = ShotConditions(
-        center_direction=np.asarray(get_constellation_center(constellation), dtype=np.float32),
+        center_direction=np.asarray(
+            get_constellation_center(constellation), dtype=np.float32
+        ),
         tilt_angle=tilt_angle,
     )
 
@@ -165,11 +83,11 @@ def example_pinhole_visualization(
         config=config,
         constellation_config=constellation_config,
         catalog=catalog,
-        planet_catalog=planet_catalog
+        planet_catalog=planet_catalog,
     )
     # Make a shot
     fig, ax = pinhole.generate(constraints=constraints)
-    ax.set_aspect('equal')
+    ax.set_aspect("equal")
 
     # Save skychart
     save_figure_pinhole(
@@ -182,9 +100,9 @@ def example_pinhole_visualization(
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     example_pinhole_visualization(
-        constellation='TAU',
+        constellation="TAU",
         tilt_angle=0.0,
         use_dark_mode=False,
         add_ticks=False,
@@ -194,7 +112,7 @@ if __name__ == '__main__':
         add_galactic_equator=True,
         add_equatorial_grid=True,
         add_constellations=True,
-        add_constellations_names=True
+        add_constellations_names=True,
     )
 
     plt.show()

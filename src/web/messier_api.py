@@ -9,37 +9,38 @@ Messier Object Guessing Game — Flask API
 
 API:
     POST /api/messier/start          — начать новую игру
-    GET  /api/messier/image          — получить PNG-изображение текущего объекта
+    GET  /api/messier/image          — получить изображение текущего объекта
     POST /api/messier/answer         — отправить ответ
     GET  /api/messier/score          — получить итог
 """
 
 import io
-import uuid
 import random
-import base64
-from datetime import datetime
+import uuid
 from threading import Lock
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Использовать Agg-бэкенд ДО импорта pyplot, чтобы matplotlib не требовал GUI
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from flask import Flask, jsonify, request, send_file
 
-from flask import Flask, request, jsonify, send_file
-from flask import make_response
-
-from src.messier.messier_catalog import MessierCatalog, MessierType
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from src.messier.messier_catalog import MessierCatalog, MessierType
 from src.pinhole_projection.pinhole_projector import (
-    ShotConditions, CameraConfig, Pinhole, PinholeConfig, ConstellationConfig
+    CameraConfig,
+    ConstellationConfig,
+    Pinhole,
+    PinholeConfig,
+    ShotConditions,
 )
 from src.planets_catalog.planet_catalog import PlanetCatalog
 
 app = Flask(__name__)
 
-# ── Хранилище сессий (in-memory, подходит для небольшой нагрузки) ─────────────
+# ── Хранилище сессий (in-memory, подходит для небольшой нагрузки) ────────────
 sessions: Dict[str, Any] = {}
 sessions_lock = Lock()
 
@@ -52,13 +53,15 @@ messier_catalog = MessierCatalog()
 def _make_session(num_rounds: int) -> dict:
     """Создать новую игровую сессию."""
     all_objects = messier_catalog.get_all_objects()
-    chosen = random.sample(list(all_objects), min(num_rounds, len(all_objects)))
+    chosen = random.sample(
+        list(all_objects), min(num_rounds, len(all_objects))
+    )
     return {
-        "rounds": chosen,          # список объектов
-        "current": 0,              # текущий раунд
+        "rounds": chosen,  # список объектов
+        "current": 0,  # текущий раунд
         "score": 0,
-        "answered": False,         # ожидаем ли мы ответ прямо сейчас
-        "results": [],             # история ответов
+        "answered": False,  # ожидаем ли мы ответ прямо сейчас
+        "results": [],  # история ответов
     }
 
 
@@ -70,15 +73,18 @@ def _render_pinhole_png(messier_object) -> bytes:
         height_pix=600,
     )
 
-    ra  = float(messier_object["ra"])
+    ra = float(messier_object["ra"])
     dec = float(messier_object["dec"])
 
     import numpy as np
-    direction = np.array([
-        np.cos(dec) * np.cos(ra),
-        np.cos(dec) * np.sin(ra),
-        np.sin(dec),
-    ])
+
+    direction = np.array(
+        [
+            np.cos(dec) * np.cos(ra),
+            np.cos(dec) * np.sin(ra),
+            np.sin(dec),
+        ]
+    )
 
     shot_cond = ShotConditions(
         center_direction=direction,
@@ -105,27 +111,46 @@ def _render_pinhole_png(messier_object) -> bytes:
     ax.set_aspect("equal")
 
     # Маркер объекта
-    cx = camera_config.width  / 2
+    cx = camera_config.width / 2
     cy = camera_config.height / 2
     marker_size = max(20, min(200, float(messier_object["size"]) * 2))
-    color = MessierCatalog.get_type_color(MessierType(messier_object["obj_type"]))
-    ax.scatter(cx, cy, s=marker_size, marker="o",
-               facecolors="none", edgecolors=color, linewidths=2, alpha=0.8)
+    color = MessierCatalog.get_type_color(
+        MessierType(messier_object["obj_type"])
+    )
+    ax.scatter(
+        cx,
+        cy,
+        s=marker_size,
+        marker="o",
+        facecolors="none",
+        edgecolors=color,
+        linewidths=2,
+        alpha=0.8,
+    )
     ax.scatter(cx, cy, s=10, marker=".", c=color, alpha=0.9)
 
     # Подпись (без номера объекта — это загадка)
-    obj_type = MessierCatalog.get_type_name(MessierType(messier_object["obj_type"]))
+    obj_type = MessierCatalog.get_type_name(
+        MessierType(messier_object["obj_type"])
+    )
     ax.set_title(
         f"Тип: {obj_type}  |  Зв. вел.: {messier_object['v_mag']:.1f}  "
         f"|  Угл. размер: {messier_object['size']:.1f}'  "
         f"|  Созвездие: {messier_object['constellation']}",
-        fontsize=10, pad=14, color="white"
+        fontsize=10,
+        pad=14,
+        color="white",
     )
     fig.patch.set_facecolor("#0a0e1a")
 
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=100, bbox_inches="tight",
-                facecolor=fig.get_facecolor())
+    fig.savefig(
+        buf,
+        format="png",
+        dpi=100,
+        bbox_inches="tight",
+        facecolor=fig.get_facecolor(),
+    )
     plt.close(fig)
     buf.seek(0)
     return buf.read()
@@ -133,10 +158,11 @@ def _render_pinhole_png(messier_object) -> bytes:
 
 @app.after_request
 def add_cors(response):
-    response.headers["Access-Control-Allow-Origin"]  = "*"
+    response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
     return response
+
 
 @app.route("/api/messier/<path:_>", methods=["OPTIONS"])
 def options_handler(_):
@@ -158,10 +184,12 @@ def start_game():
     with sessions_lock:
         sessions[session_id] = session
 
-    return jsonify({
-        "session_id": session_id,
-        "num_rounds": len(session["rounds"]),
-    })
+    return jsonify(
+        {
+            "session_id": session_id,
+            "num_rounds": len(session["rounds"]),
+        }
+    )
 
 
 @app.route("/api/messier/image", methods=["GET"])
@@ -231,28 +259,32 @@ def submit_answer():
     obj_type = MessierCatalog.get_type_name(MessierType(obj["obj_type"]))
     name = str(obj.get("name", "")) if obj.get("name") else None
 
-    session["results"].append({
-        "round": idx + 1,
-        "guess": guess,
-        "correct": correct,
-        "is_correct": is_correct,
-    })
+    session["results"].append(
+        {
+            "round": idx + 1,
+            "guess": guess,
+            "correct": correct,
+            "is_correct": is_correct,
+        }
+    )
     session["current"] += 1
     game_over = session["current"] >= len(session["rounds"])
 
-    return jsonify({
-        "correct": is_correct,
-        "correct_number": correct,
-        "name": name,
-        "type": obj_type,
-        "constellation": str(obj["constellation"]),
-        "magnitude": float(obj["v_mag"]),
-        "size": float(obj["size"]),
-        "score": session["score"],
-        "round": idx + 1,
-        "total_rounds": len(session["rounds"]),
-        "game_over": game_over,
-    })
+    return jsonify(
+        {
+            "correct": is_correct,
+            "correct_number": correct,
+            "name": name,
+            "type": obj_type,
+            "constellation": str(obj["constellation"]),
+            "magnitude": float(obj["v_mag"]),
+            "size": float(obj["size"]),
+            "score": session["score"],
+            "round": idx + 1,
+            "total_rounds": len(session["rounds"]),
+            "game_over": game_over,
+        }
+    )
 
 
 @app.route("/api/messier/score", methods=["GET"])
@@ -268,12 +300,13 @@ def get_score():
     if not session:
         return jsonify({"error": "Сессия не найдена"}), 404
 
-    return jsonify({
-        "score": session["score"],
-        "total": len(session["rounds"]),
-        "results": session["results"],
-    })
-
+    return jsonify(
+        {
+            "score": session["score"],
+            "total": len(session["rounds"]),
+            "results": session["results"],
+        }
+    )
 
 
 if __name__ == "__main__":

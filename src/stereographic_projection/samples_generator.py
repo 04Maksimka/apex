@@ -1,13 +1,20 @@
 """Generator of samples of stereographic projection."""
-from datetime import datetime
 
+import random
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 
 from src.helpers.pdf_helpers.figure2pdf import save_figure_skychart
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from src.planets_catalog.planet_catalog import PlanetCatalog
-from src.stereographic_projection.stereographic_projector import StereoProjConfig, \
-    StereoProjector, ConstellationConfig
+from src.stereographic_projection.stereographic_projector import (
+    ConstellationConfig,
+    StereoProjConfig,
+    StereoProjector,
+)
 
 
 def get_teacher_cfg(
@@ -17,32 +24,16 @@ def get_teacher_cfg(
 ) -> StereoProjConfig:
     """Get configuration for teacher mode.
 
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param time: datetime: 
-    :param latitude: float: 
-    :param longitude: float: 
-
+    :param time: observation date and time
+    :type time: datetime
+    :param latitude: observation latitude
+    :type latitude: float
+    :param longitude: observation latitude
+    :type longitude: float
+    :return: Configuration for teacher mode
+    :rtype: StereoProjConfig
     """
+
     return StereoProjConfig(
         add_ecliptic=True,
         add_equator=True,
@@ -70,42 +61,18 @@ def get_student_cfg(
     longitude: float,
     add_planets: bool,
 ) -> StereoProjConfig:
-    """Get configuration for student mode.
+    """Get configuration for teacher mode.
 
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param add_planets: bool:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param add_planets: bool:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param add_planets: bool:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param add_planets: bool:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param add_planets: bool:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param add_planets: bool:
-    :param time: datetime:
-    :param latitude: float:
-    :param longitude: float:
-    :param add_planets: bool:
-    :param time: datetime: 
-    :param latitude: float: 
-    :param longitude: float: 
-    :param add_planets: bool: 
-
+    :param time: observation date and time
+    :type time: datetime
+    :param latitude: observation latitude
+    :type latitude: float
+    :param longitude: observation latitude
+    :type longitude: float
+    :return: Configuration for student mode
+    :rtype: StereoProjConfig
     """
+
     return StereoProjConfig(
         add_ecliptic=False,
         add_equator=False,
@@ -124,97 +91,94 @@ def get_student_cfg(
         add_poles=False,
     )
 
-import random
-from pathlib import Path
-from datetime import timedelta
-
-import matplotlib.pyplot as plt
-
-from src.stereographic_projection.stereographic_projector import (
-    StereoProjConfig,
-)
 
 def _random_time(start: datetime, end: datetime) -> datetime:
     """Random datetime in [start, end].
 
-    :param start: datetime:
-    :param end: datetime:
-    :param start: datetime:
-    :param end: datetime:
-    :param start: datetime:
-    :param end: datetime:
-    :param start: datetime:
-    :param end: datetime:
-    :param start: datetime:
-    :param end: datetime:
-    :param start: datetime:
-    :param end: datetime:
-    :param start: datetime:
-    :param end: datetime:
-    :param start: datetime: 
-    :param end: datetime: 
-
+    :param start: datetime start
+    :type start: datetime
+    :param end: datetime end
+    :type end: datetime
     """
+
     delta = end - start
     return start + timedelta(seconds=random.uniform(0, delta.total_seconds()))
+
+
+def render_and_save(
+    cfg: StereoProjConfig,
+    filename: str,
+    random_angle: float,
+    sample_dir: Path,
+    teacher: bool = False,
+):
+    """Render helper."""
+
+    catalog = Catalog(
+        catalog_name="hip_data.tsv",
+        use_cache=True,
+    )
+
+    # Create projector object with configuration
+    constellation_cfg = None
+    if teacher:
+        constellation_cfg = ConstellationConfig(
+            constellations_list=None,
+            # Render all available constellations
+            constellation_color="gray",
+            constellation_linewidth=0.8,
+            constellation_alpha=0.7,
+            constellation_color_map=None,
+        )
+
+    # Create projector object with configuration
+    projector = StereoProjector(
+        config=cfg,
+        catalog=catalog,
+        planets_catalog=PlanetCatalog(),
+        constellation_config=constellation_cfg,
+        # Передаем конфигурацию созвездий
+        random_angle=random_angle,
+    )
+    constraints = CatalogConstraints(
+        max_magnitude=5.5,
+    )
+
+    fig, ax = projector.generate(constraints=constraints)
+
+    save_figure_skychart(
+        fig=fig,
+        filename=str(sample_dir / filename),
+        config=cfg,
+        print_skychart_info=teacher,
+    )
+
+    plt.close(fig)
 
 
 def generate_stereo_samples(
     number_of_samples: int,
     time_interval: tuple[datetime, datetime],
     folder_name: str,
-    random_angle: float = np.random.uniform(0.0, 2*np.pi),
+    random_angle: float = np.random.uniform(0.0, 2 * np.pi),
 ):
     """Creates a folder with subfolders with skycharts.
-    
+
     Each subfolder is generated by randomly choosing time in time_interval,
     latitude, longitude. In each subfolder there are 3 skycharts:
       1) student_cfg(add_planets=False)
       2) student_cfg(add_planets=True)
       3) teacher_cfg + print_skychart_info=True
 
-    :param number_of_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param folder_name: str:
-    :param random_angle: float:  (Default value = np.random.uniform(0.0)
-    :param 2: np.pi):
-    :param number_of_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param folder_name: str:
-    :param random_angle: float:  (Default value = np.random.uniform(0.0)
-    :param 2: np.pi):
-    :param number_of_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param folder_name: str:
-    :param random_angle: float:  (Default value = np.random.uniform(0.0)
-    :param 2: np.pi):
-    :param number_of_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param folder_name: str:
-    :param random_angle: float:  (Default value = np.random.uniform(0.0)
-    :param 2: np.pi):
-    :param number_of_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param folder_name: str:
-    :param random_angle: float:  (Default value = np.random.uniform(0.0)
-    :param 2: np.pi):
-    :param number_of_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param folder_name: str:
-    :param random_angle: float:  (Default value = np.random.uniform(0.0)
-    :param 2: np.pi):
-    :param number_of_samples: int:
-    :param time_interval: tuple[datetime:
-    :param datetime: param folder_name: str:
-    :param random_angle: float:  (Default value = np.random.uniform(0.0)
-    :param 2: np.pi):
-    :param number_of_samples: int: 
-    :param time_interval: tuple[datetime: 
-    :param datetime]: 
-    :param folder_name: str: 
-    :param random_angle: float:  (Default value = np.random.uniform(0.0)
-    :param 2*np.pi): 
-
+    :param number_of_samples: number of samples to generate
+    :type number_of_samples: int
+    :param time_interval: the time interval from which a random time
+        will be taken to generate the map
+    :type time_interval: tuple[datetime, datetime]:
+    :param folder_name: output folder name
+    :type folder_name: str
+    :param random_angle: North shift angle on the map
+    :type random_angle: float:  (Default value = np.random.uniform(0, 2pi):
     """
 
     root = Path(folder_name)
@@ -251,76 +215,6 @@ def generate_stereo_samples(
             latitude=latitude,
             longitude=longitude,
         )
-        # Render helper
-        def render_and_save(cfg: StereoProjConfig, filename: str, teacher: bool = False):
-            """
-
-            :param cfg: StereoProjConfig:
-            :param filename: str:
-            :param teacher: bool:  (Default value = False)
-            :param cfg: StereoProjConfig:
-            :param filename: str:
-            :param teacher: bool:  (Default value = False)
-            :param cfg: StereoProjConfig:
-            :param filename: str:
-            :param teacher: bool:  (Default value = False)
-            :param cfg: StereoProjConfig:
-            :param filename: str:
-            :param teacher: bool:  (Default value = False)
-            :param cfg: StereoProjConfig:
-            :param filename: str:
-            :param teacher: bool:  (Default value = False)
-            :param cfg: StereoProjConfig:
-            :param filename: str:
-            :param teacher: bool:  (Default value = False)
-            :param cfg: StereoProjConfig:
-            :param filename: str:
-            :param teacher: bool:  (Default value = False)
-            :param cfg: StereoProjConfig: 
-            :param filename: str: 
-            :param teacher: bool:  (Default value = False)
-
-            """
-            catalog = Catalog(
-                catalog_name='hip_data.tsv',
-                use_cache=True,
-            )
-
-            # Create projector object with configuration
-            constellation_cfg = None
-            if teacher:
-                constellation_cfg = ConstellationConfig(
-                    constellations_list=None,
-                    # Render all available constellations
-                    constellation_color='gray',
-                    constellation_linewidth=0.8,
-                    constellation_alpha=0.7,
-                    constellation_color_map=None,
-                )
-
-            # Create projector object with configuration
-            projector = StereoProjector(
-                config=cfg,
-                catalog=catalog,
-                planets_catalog=PlanetCatalog(),
-                constellation_config=constellation_cfg,
-                # Передаем конфигурацию созвездий
-                random_angle=random_angle,
-            )
-            constraints = CatalogConstraints(
-                max_magnitude=5.5,
-            )
-
-            fig, ax = projector.generate(constraints=constraints)
-
-            save_figure_skychart(
-                fig=fig,
-                filename=str(sample_dir / filename),
-                config=cfg,
-                print_skychart_info=teacher,
-            )
-
-            plt.close(fig)
 
         # ----------------------------
         # Generate charts
@@ -328,26 +222,33 @@ def generate_stereo_samples(
         render_and_save(
             student_cfg_no_planets,
             "student_no_planets.pdf",
+            random_angle=random_angle,
+            sample_dir=sample_dir,
             teacher=False,
         )
 
         render_and_save(
             student_cfg_with_planets,
             "student_with_planets.pdf",
+            random_angle=random_angle,
+            sample_dir=sample_dir,
             teacher=False,
         )
 
         render_and_save(
             teacher_cfg,
             "teacher.pdf",
+            random_angle=random_angle,
+            sample_dir=sample_dir,
             teacher=True,
         )
 
-if __name__ == '__main__':
-    start_time = datetime(1984,1, 1)
-    end_time = datetime(2034,1, 1)
+
+if __name__ == "__main__":
+    start_time = datetime(1984, 1, 1)
+    end_time = datetime(2034, 1, 1)
     generate_stereo_samples(
         number_of_samples=100,
         time_interval=(start_time, end_time),
-        folder_name='samples'
+        folder_name="stereographic_samples",
     )

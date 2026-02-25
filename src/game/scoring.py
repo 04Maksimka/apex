@@ -1,6 +1,6 @@
 """Scoring logic for AstraGeek Sky Quiz."""
-from typing import Optional
 
+from typing import Optional
 
 # ---------------------------------------------------------------------------
 # Base points per difficulty
@@ -16,10 +16,10 @@ BASE_POINTS = {
 # ---------------------------------------------------------------------------
 STREAK_MULTIPLIERS = [
     (10, 3.0),
-    (5,  2.0),
-    (3,  1.5),
-    (2,  1.2),
-    (0,  1.0),
+    (5, 2.0),
+    (3, 1.5),
+    (2, 1.2),
+    (0, 1.0),
 ]
 
 # ---------------------------------------------------------------------------
@@ -40,8 +40,8 @@ RANKS = [
     (5000, "🌌 Galactic Explorer"),
     (3000, "⭐ Star Navigator"),
     (1500, "🔭 Sky Watcher"),
-    (500,  "🌙 Night Apprentice"),
-    (0,    "🌑 Beginner"),
+    (500, "🌙 Night Apprentice"),
+    (0, "🌑 Beginner"),
 ]
 
 

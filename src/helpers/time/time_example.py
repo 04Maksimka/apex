@@ -1,6 +1,8 @@
-from src.helpers.time.time import get_sidereal_time, julian_date
 from datetime import datetime
+
 import numpy as np
+
+from src.helpers.time.time import get_sidereal_time, julian_date
 
 print(
     get_sidereal_time(
@@ -12,16 +14,16 @@ print(
             hour=14,
             minute=36,
             second=52,
-        )
+        ),
     )
 )
 
 print(
     julian_date(
-    date_time=datetime(
-        year=2025,
-        month=12,
-        day=12,
+        date_time=datetime(
+            year=2025,
+            month=12,
+            day=12,
+        )
     )
-))
-
+)

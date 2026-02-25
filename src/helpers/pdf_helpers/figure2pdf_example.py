@@ -1,4 +1,5 @@
 """Example how to save a figure as pdf file with logo."""
+
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -31,12 +32,13 @@ def example_with_local_logo(need_pdf: bool = False):
 
     plt.show()
 
+
 def _create_polar_scatter():
     """Create a scatter plot in polar coordinates."""
 
     # Set up the figure with polar projection
     fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection='polar')
+    ax = fig.add_subplot(111, projection="polar")
 
     # Generate sample data
     np.random.seed(42)
@@ -52,12 +54,12 @@ def _create_polar_scatter():
         c=colors,
         s=sizes,
         alpha=0.7,
-        cmap='viridis',
-        edgecolors='white',
+        cmap="viridis",
+        edgecolors="white",
         linewidth=0.5,
     )
 
-    ax.set_title("Polar Scatter Plot", va='bottom', fontsize=14, pad=20)
+    ax.set_title("Polar Scatter Plot", va="bottom", fontsize=14, pad=20)
     ax.set_xlabel("Angle (θ)", labelpad=15)
 
     return fig, ax

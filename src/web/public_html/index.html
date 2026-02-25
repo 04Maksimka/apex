@@ -322,27 +322,6 @@
 
         .feature-card p { color: var(--text-dim); font-size: .95rem; }
 
-        /* Кнопки «Играть» в карточках секции #games */
-        .game-link-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 14px;
-            padding: 10px 22px;
-            border-radius: 50px;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            color: #fff;
-            font-weight: 700;
-            font-size: .9rem;
-            text-decoration: none;
-            transition: opacity .2s, transform .2s;
-        }
-        .game-link-btn:hover {
-            opacity: .85;
-            transform: translateY(-1px);
-            color: #fff;
-        }
-
         .examples-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
@@ -468,16 +447,6 @@
             color: var(--text-dim);
         }
 
-        /* Код в документации */
-        #docs code {
-            font-family: 'Courier New', monospace;
-            background: rgba(108,99,255,.15);
-            padding: 1px 5px;
-            border-radius: 4px;
-            font-size: .82rem;
-            color: var(--accent2);
-        }
-
         .code-block {
             background: #0d1117;
             border: 1px solid var(--border);
@@ -578,31 +547,6 @@
             opacity: 1;
             transform: translateY(0);
         }
-        .scroll-arrow {
-            position: absolute;
-            bottom: 36px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-dim);
-            border: 2px solid var(--border);
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            transition: color .3s, border-color .3s;
-            animation: bounce 2.2s ease-in-out infinite;
-            z-index: 3;
-        }
-        .scroll-arrow:hover {
-            color: var(--accent2);
-            border-color: var(--accent);
-        }
-        @keyframes bounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50%       { transform: translateX(-50%) translateY(8px); }
-        }
     </style>
 </head>
 <body>
@@ -619,12 +563,10 @@
         <ul class="nav-links" id="nav-links">
             <li><a href="#roadmap">План</a></li>
             <li><a href="#features">Инструменты</a></li>
-            <li><a href="#games">Игры</a></li>
             <li><a href="#examples">Примеры</a></li>
             <li><a href="#howto">Как использовать</a></li>
             <li><a href="#docs">Документация</a></li>
-            <li><a href="/game/" style="color:var(--cyan);font-weight:700;">🎮 Играть</a></li>
-            <li><a href="/generator" style="color:var(--accent2);font-weight:700;">✨ Генератор</a></li>
+            <li><a href="/generator" style="color:var(--cyan);font-weight:700;">✨ Генератор</a></li>
         </ul>
         <button class="burger" id="burger" aria-label="Меню">
             <span></span><span></span><span></span>
@@ -636,42 +578,36 @@
 <section class="hero" id="hero">
     <div class="hero-glow"></div>
     <div class="container" style="position:relative;z-index:2;">
-        <h1><span class="gradient">AstraGeek</span><br>Звёздный атлас</h1>
+       <h1><span class="gradient">AstraGeek</span><br>Звёздный атлас</h1>
         <p>Программное обеспечение для создания карт звёздного неба.</p>
         <div class="hero-btns">
             <a href="https://github.com/04Maksimka/AstraGeek" class="btn btn-primary" target="_blank">
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .5C5.37.5 0 5.78 0 12.29c0 5.21 3.44 9.64 8.21 11.21.6.11.82-.26.82-.57v-2.01c-3.34.72-4.04-1.61-4.04-1.61-.55-1.37-1.33-1.74-1.33-1.74-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.33 3.3 1.23a11.5 11.5 0 0 1 6.02 0c2.28-1.56 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.22.69.82.57C20.57 21.92 24 17.5 24 12.29 24 5.78 18.63.5 12 .5z"/></svg>
                 GitHub
             </a>
-            <a href="https://astrageek.ru/" class="btn btn-outline" target="_blank">Основной сайт</a>
+            <a href="https://astrageek.ru/" class="btn btn-outline" target="_blank">🔭 astrageek.ru</a>
             <a href="/generator" class="btn btn-primary">🗺️ Создать карту</a>
-            <a href="/game/" class="btn btn-outline" style="border-color:var(--cyan);color:var(--cyan);">🎮 Обучающие игры</a>
         </div>
     </div>
-    <a href="#roadmap" class="scroll-arrow" aria-label="Прокрутить вниз">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
-    </a>
 </section>
 
 <!-- Roadmap -->
 <section id="roadmap">
     <div class="container reveal">
-        <h2>План выпуска</h2>
-        <p class="section-sub">Наш проект развивается. Сейчас уже вы уже можете генерировать скайчарты и играть в разные обучающие игры.</p>
+        <h2>🚩 План выпуска</h2>
+        <p class="section-sub">В процессе разработки находится интерфейс генерации карт через командную строку. Пока он разрабатывается, вы можете использовать готовые сгенерированные карты или исходный код в рамках лицензии.</p>
         <div class="timeline">
             <div class="tl-item done">
                 <div class="tl-dot"></div>
                 <div class="tl-version">0.1 — Стереографическая проекция</div>
                 <div class="tl-text">Скайчарт неба по заданному местоположению и времени. Отображение планет, эклиптики, небесного и галактического экватора. Горизонтальная и экваториальная сетка координат, стороны света.</div>
             </div>
-            <div class="tl-item done">
+            <div class="tl-item current">
                 <div class="tl-dot"></div>
-                <div class="tl-version">0.2 — Камера-обскура</div>
+                <div class="tl-version">0.2 — Камера-обскура ✨</div>
                 <div class="tl-text">Построение участков неба в режиме камеры-обскуры. Все возможности v0.1 в новой проекции. Отображение созвездий по названию, настройка поля зрения, угла поворота камеры и размера изображения.</div>
             </div>
-            <div class="tl-item current">
+            <div class="tl-item future">
                 <div class="tl-dot"></div>
                 <div class="tl-version">0.3 — Анимация планет</div>
                 <div class="tl-text">Анимация прохождения планет (GIF и статические последовательности изображений).</div>
@@ -688,81 +624,29 @@
 <!-- Features -->
 <section id="features" style="background: linear-gradient(180deg, transparent, rgba(108,99,255,.04), transparent);">
     <div class="container reveal">
-        <h2>Инструменты</h2>
-        <p class="section-sub">Что может наше программное обеспечение</p>
+        <h2>📦 Инструменты</h2>
+        <p class="section-sub">Мощные инструменты для построения точных звёздных карт</p>
         <div class="features-grid">
             <div class="feature-card">
+                <div class="feature-icon fi-1">🌐</div>
                 <h3>Стереографическая проекция</h3>
                 <p>Классическая проекция всего неба, доступного к наблюдению в указанном месте и в указанное время.</p>
             </div>
             <div class="feature-card">
+                <div class="feature-icon fi-2">👁️</div>
                 <h3>Камера-обскура</h3>
                 <p>Режим для определённой небольшой области неба в указанном направлении — выбранное созвездие крупным планом.</p>
             </div>
             <div class="feature-card">
+                <div class="feature-icon fi-3">📐</div>
                 <h3>Опорные элементы</h3>
                 <p>Координатные сетки, большие круги (эклиптика, галактический и небесный экватор), стороны света, зенит и небесные полюса.</p>
             </div>
             <div class="feature-card">
+                <div class="feature-icon fi-4">✨</div>
                 <h3>Контуры созвездий</h3>
                 <p>Контуры всех видимых или отдельных выбранных созвездий, а также их подписи прямо на карте.</p>
             </div>
-            <div class="feature-card" style="border-color:rgba(34,211,238,.3);background:linear-gradient(135deg,rgba(34,211,238,.06),var(--bg-card));">
-                <h3 style="color:var(--cyan);">Обучающие игры</h3>
-                <p>Пять интерактивных режимов: созвездия, звёзды, объекты Мессье, рисование контуров и астро-триvia. Система очков, стриков и рангов.</p>
-                <a href="/game/" class="game-link-btn">🎮 В лобби</a>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Games -->
-<section id="games">
-    <div class="container reveal">
-        <h2>Обучающие игры</h2>
-        <p class="section-sub">Пять режимов для изучения астрономии в игровой форме. Выбери сложность, набирай очки, расти в ранге.</p>
-        <div class="features-grid">
-
-            <div class="feature-card" style="border-color:rgba(108,99,255,.4);">
-                <h3>Созвездия</h3>
-                <p>Угадай созвездие по участку карты неба. Четыре варианта ответа, три уровня сложности.</p>
-                <a href="/game/constellation" class="game-link-btn">Играть</a>
-            </div>
-
-            <div class="feature-card" style="border-color:rgba(251,191,36,.35);">
-                <h3>Звёзды</h3>
-                <p>Узнай яркую звезду по виду неба вокруг неё — Бетельгейзе, Вега, Сириус и другие.</p>
-                <a href="/game/star" class="game-link-btn">Играть</a>
-            </div>
-
-            <div class="feature-card" style="border-color:rgba(34,211,238,.35);">
-                <h3>Объекты Мессье</h3>
-                <p>Угадай номер объекта каталога Мессье (M1–M110) по pinhole-проекции участка неба.</p>
-                <a href="/game/messier" class="game-link-btn">Играть</a>
-            </div>
-
-            <div class="feature-card" style="border-color:rgba(167,139,250,.35);">
-                <h3>Нарисуй созвездие</h3>
-                <p>Соедини звёзды линиями, чтобы получился правильный контур созвездия. Проверяется точность рисунка.</p>
-                <a href="/game/draw" class="game-link-btn">Играть</a>
-            </div>
-
-            <div class="feature-card" style="border-color:rgba(52,211,153,.35);">
-                <h3>Астро-триvia</h3>
-                <p>Вопросы о физике звёзд, истории астрономии и мифологии созвездий. Учись через истории!</p>
-                <a href="/game/trivia" class="game-link-btn">Играть</a>
-            </div>
-
-            <div class="feature-card" style="border-color:rgba(248,113,113,.25);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
-                <h3>Система рангов</h3>
-                <p style="font-size:.9rem;color:var(--text-dim);">
-                    Beginner · Night Apprentice<br>
-                    Sky Watcher · Star Navigator<br>
-                    Galactic Explorer
-                </p>
-                <a href="/game/" style="margin-top:14px;padding:8px 20px;border-radius:50px;border:1px solid var(--border);color:var(--text-dim);font-size:.85rem;text-decoration:none;transition:border-color .2s,color .2s;">Лобби →</a>
-            </div>
-
         </div>
     </div>
 </section>
@@ -770,7 +654,7 @@
 <!-- Examples -->
 <section id="examples">
     <div class="container reveal">
-        <h2>Примеры</h2>
+        <h2>👍 Примеры</h2>
         <p class="section-sub">Карты, сгенерированные с помощью AstraGeek</p>
         <div class="examples-grid">
             <div class="example-card">
@@ -796,12 +680,12 @@
 <!-- How to Use -->
 <section id="howto" style="background: linear-gradient(180deg, transparent, rgba(34,211,238,.03), transparent);">
     <div class="container reveal">
-        <h2>Как использовать</h2>
+        <h2>📘 Как использовать</h2>
         <p class="section-sub">Два способа: готовые наборы карт или самостоятельная генерация</p>
         <div class="accordion">
             <div class="acc-item open">
                 <button class="acc-header">
-                    <span></span> Использовать готовые наборы карт
+                    <span>📥</span> Использовать готовые наборы карт
                     <span class="chevron">▼</span>
                 </button>
                 <div class="acc-body">
@@ -811,12 +695,14 @@
                         </ol>
 
                         <div class="card-types" style="margin-top:12px; margin-bottom:20px;">
-                            <a href="https://drive.google.com/file/d/1vKbKHd-mUmRpZUtu5LBAlKSq5t33tbKl/view?usp=sharing" class="card-type" target="_blank" download>
+                            <a href="https://drive.google.com/file/d/1U64yRHpjnYezxvwEd9gIKWrKeQKHCYm_/view?usp=sharing" class="card-type" target="_blank" download>
+                                <div class="emoji-label">👁️</div>
                                 <div class="ct-title">⬇️ pinhole_samples.zip</div>
                                 <div class="ct-desc">Камера-обскура — карты участков неба</div>
                             </a>
-                            <a href="https://drive.google.com/file/d/1whet5Vnz-nkXLS6mhUJu-fm2hguw1eoy/view?usp=sharing" class="card-type" target="_blank" download>
-                                <div class="ct-title">⬇️ samples.zip</div>
+                            <a href="https://drive.google.com/file/d/1P6SPF-6P1moCK6nUiBJdM57zCmMOv5ze/view?usp=sharing" class="card-type" target="_blank" download>
+                                <div class="emoji-label">🌐</div>
+                                <div class="ct-title">⬇️ stereographic_samples.zip</div>
                                 <div class="ct-desc">Стереографические скайчарты всего неба</div>
                             </a>
                         </div>
@@ -832,18 +718,21 @@
                             &nbsp;&nbsp;├─ <span class="folder">📂 constellations/</span> — карты для каждого из 88 созвездий<br>
                             &nbsp;&nbsp;└─ <span class="folder">📂 random_sky/</span> — 10 примеров с произвольным центральным созвездием
                         </div>
-                        <p style="margin-top:16px;">Папка <strong>samples</strong> содержит скайчарты на произвольные дату и место.</p>
+                        <p style="margin-top:16px;">Папка <strong>stereographic_samples</strong> содержит скайчарты на произвольные дату и место.</p>
                         <p style="margin-top:16px;"><strong>Каждая группа состоит из трёх файлов:</strong></p>
                         <div class="card-types">
                             <div class="card-type">
+                                <div class="emoji-label">😶‍🌫️</div>
                                 <div class="ct-title">student.pdf</div>
                                 <div class="ct-desc">Для ученика — пустой скайчарт без планет</div>
                             </div>
                             <div class="card-type">
+                                <div class="emoji-label">🪐</div>
                                 <div class="ct-title">student_with_planets.pdf</div>
                                 <div class="ct-desc">Для ученика — скайчарт с планетами</div>
                             </div>
                             <div class="card-type">
+                                <div class="emoji-label">🎓</div>
                                 <div class="ct-title">teacher.pdf</div>
                                 <div class="ct-desc">Для учителя — заполненная карта с ответами</div>
                             </div>
@@ -854,24 +743,31 @@
             </div>
             <div class="acc-item">
                 <button class="acc-header">
-                    <span></span> Генерировать карты самостоятельно
+                    <span>⚙️</span> Генерировать карты самостоятельно
                     <span class="chevron">▼</span>
                 </button>
                 <div class="acc-body">
                     <div class="acc-body-inner">
-                        <p>Создавайте карты под свои параметры прямо в браузере — без установки программ.</p>
-                        <div class="card-types" style="margin-top: 16px;">
-                            <a href="/generator" class="card-type">
-                                <div class="emoji-label">🗺️</div>
-                                <div class="ct-title">Открыть генератор</div>
-                                <div class="ct-desc">Задайте место, время и тип карты — получите PDF</div>
-                            </a>
-                            <a href="https://github.com/04Maksimka/AstraGeek/blob/main/DOCUMENTATION.md" class="card-type" target="_blank">
-                                <div class="emoji-label">📖</div>
-                                <div class="ct-title">Документация</div>
-                                <div class="ct-desc">Все параметры генерации с примерами</div>
-                            </a>
-                        </div>
+                        <p><em>Удобный интерфейс пока в разработке. Ниже — общий алгоритм:</em></p>
+                        <ol style="margin-top:12px;">
+                            <li>
+                                <strong>Выберите тип проекции:</strong>
+                                <ul>
+                                    <li>🌐 <strong>Стереографическая проекция</strong> — вид всего неба в данный момент в данном месте.</li>
+                                    <li>👁️ <strong>Камера-обскура</strong> — небольшой участок, как глазами или в телескоп.</li>
+                                </ul>
+                            </li>
+                            <li style="margin-top:10px;">
+                                <strong>Настройте параметры:</strong>
+                                <ul>
+                                    <li>🌏 Местоположение (широта, долгота) и местное время наблюдения.</li>
+                                    <li>💫 Пределы видимой звёздной величины.</li>
+                                    <li>☑️ Флаги для дополнительных элементов или готовые наборы «учитель / ученик».</li>
+                                </ul>
+                            </li>
+                            <li style="margin-top:10px;"><strong>Получите карты!</strong></li>
+                        </ol>
+                        <div class="code-block">./astrageek --mode pinhole --constellation Orion --fov 40 --lat 55.75 --lon 37.62</div>
                     </div>
                 </div>
             </div>
@@ -882,10 +778,10 @@
 <!-- Docs -->
 <section id="docs">
     <div class="container reveal">
-        <h2>Документация и ссылки</h2>
-        <p class="section-sub">Руководства, исходный код и способы связи с авторами работы</p>
+        <h2>📚 Документация и ссылки</h2>
+        <p class="section-sub">Всё, что нужно для начала работы</p>
         <div class="docs-grid">
-            <a href="https://github.com/04Maksimka/AstraGeek/blob/main/DOCUMENTATION.md" class="doc-link" target="_blank">
+            <a href="https://04maksimka.github.io/AstraGeek/" class="doc-link" target="_blank">
                 <span class="emoji">📚</span>
                 <div>
                     <div class="dl-label">Документация</div>
@@ -917,7 +813,14 @@
                 <span class="emoji">🗺️</span>
                 <div>
                     <div class="dl-label">skychart.astrageek.ru</div>
-                    <div class="dl-desc">Создание небесных карт онлайн</div>
+                    <div class="dl-desc">Создание небесных карт онлайн (скоро)</div>
+                </div>
+            </a>
+            <a href="https://skyatlas.app/star-charts/" class="doc-link" target="_blank">
+                <span class="emoji">⭐</span>
+                <div>
+                    <div class="dl-label">Образец скайчартов</div>
+                    <div class="dl-desc">Сайт-ориентир при разработке</div>
                 </div>
             </a>
         </div>
@@ -926,7 +829,7 @@
 
 <footer>
     <div class="container">
-        <p>© 2026 <a href="https://astrageek.ru/" target="_blank">AstraGeek</a> · Звёздный атлас</p>
+        <p>© 2024–2025 <a href="https://astrageek.ru/" target="_blank">AstraGeek</a> · Звёздный атлас · Сделано с ❤️ для астрономии</p>
     </div>
 </footer>
 
