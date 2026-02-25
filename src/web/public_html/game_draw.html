@@ -224,16 +224,16 @@
     ctx.fillStyle = '#020208';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 1. Background (non-constellation) stars — small, dim, not clickable
+    // 1. Background (non-constellation) stars — brighter and slightly larger
     stars.forEach(s => {
       if (s.is_constellation) return;
       const { x, y } = toCanvas(s.x, s.y);
-      const r = Math.max(0.8, magToRadius(s.v_mag) * 0.55);
+      const r = Math.max(1.0, magToRadius(s.v_mag) * 0.7);
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
-      // Vary brightness slightly by magnitude
-      const alpha = Math.max(0.15, 0.5 - s.v_mag * 0.05);
-      ctx.fillStyle = `rgba(80,90,140,${alpha})`;
+      // Vary brightness by magnitude — min 0.35, max ~0.75
+      const alpha = Math.max(0.35, 0.75 - s.v_mag * 0.06);
+      ctx.fillStyle = `rgba(160,170,220,${alpha})`;
       ctx.fill();
     });
 
