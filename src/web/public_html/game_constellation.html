@@ -57,6 +57,7 @@
     .sky-loader{
       position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
       background:var(--bg);font-size:.9rem;color:var(--muted);gap:10px;
+      flex-direction:column;
     }
     .spinner{
       width:24px;height:24px;border:3px solid rgba(123,97,255,.3);
@@ -165,7 +166,11 @@
 
     <div class="sky-wrap" id="sky-wrap">
       <div class="sky-loader" id="sky-loader">
-        <div class="spinner"></div> Генерируем карту неба…
+        <div class="spinner"></div>
+        <span id="sky-loader-text">
+          Генерируем карту неба…<br>
+          <small style="opacity:.6">При первом запуске может занять до 30 сек</small>
+        </span>
       </div>
       <img id="sky-img" src="" alt="Карта неба" style="display:none" />
     </div>
@@ -238,6 +243,20 @@
     const resp = await fetch(`/game/api/question?session_id=${sessionId}`);
     const data = await resp.json();
 
+    // ── FIX: обработка ошибки загрузки вопроса ──
+    if (data.error) {
+      document.getElementById('sky-loader').style.display = 'none';
+      document.getElementById('result-area').innerHTML =
+        `<div style="color:#f87171;text-align:center;padding:24px">
+           ⚠️ Ошибка загрузки вопроса: ${data.error}.<br>
+           <button onclick="loadQuestion()" style="margin-top:12px;padding:8px 20px;border-radius:8px;
+             border:none;background:#7b61ff;color:#fff;cursor:pointer;font-size:.9rem;">
+             Повторить
+           </button>
+         </div>`;
+      return;
+    }
+
     if (data.finished) {
       showFinish(data);
       return;
@@ -290,11 +309,10 @@
         time_seconds: parseFloat(timeSec),
       }),
     });
-    const data = await resp.json();   // или r.json() в game_messier
+    const data = await resp.json();
     // Обработка ошибки сервера (например "No active question")
     if (data.error) {
       console.error('Ошибка ответа:', data.error);
-      // Сброс флага и перезагрузка вопроса
       answered = false;
       document.querySelectorAll('.opt-btn').forEach(b => b.disabled = false);
       document.getElementById('result-area').innerHTML =
@@ -355,8 +373,8 @@
     el.innerHTML = `
       <div class="result-card ${cls}">
         <div class="result-title">${icon} ${data.correct ? 'Верно!' : 'Неверно.'} ${pts}</div>
-        ${!data.correct ? `<div style="font-size:.9rem;margin-top:4px">Правильный ответ: <b>${data.correct_answer}</b></div>` : ''}
-        <div class="result-fact">${data.fun_fact}</div>
+        ${!data.correct ? `<div style="font-size:.9rem;margin-top:4px">Правильный ответ: <b>${data.correct_answer || '—'}</b></div>` : ''}
+        <div class="result-fact">${data.fun_fact || ''}</div>
       </div>`;
   }
 

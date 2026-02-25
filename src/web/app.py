@@ -1,6 +1,7 @@
 import os
 import uuid
 import tempfile
+import threading
 
 import matplotlib
 matplotlib.use('Agg')
@@ -25,7 +26,6 @@ app = Flask(__name__, static_folder="public_html", static_url_path="")
 app.register_blueprint(messier_bp)
 app.register_blueprint(game_bp)
 
-import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # BASE_DIR = корень проекта AstraGeek/
 
@@ -33,6 +33,33 @@ CATALOG = Catalog(
     catalog_name=os.path.join(BASE_DIR, "src", "hip_catalog", "hip_data.tsv"),
     use_cache=True,
 )
+
+
+# ── Прогрев каталогов при старте (чтобы первый игровой запрос не лагал) ──────
+def _warmup_catalogs():
+    """
+    Загружаем все каталоги игры в фоновом потоке сразу после старта сервера.
+    Это устраняет задержку 15–40 секунд при первом открытии игры,
+    когда Hipparcos / Мессье / matplotlib ещё не инициализированы.
+    """
+    try:
+        print("[warmup] Прогрев каталогов игры...")
+        from src.game.question_factory import (
+            _get_catalog,
+            _get_messier_catalog,
+            _get_named_stars,
+        )
+        _get_catalog()
+        _get_messier_catalog()
+        _get_named_stars()
+        # Первый plt.subplots() всегда медленный — прогреваем заранее
+        fig, _ax = plt.subplots()
+        plt.close(fig)
+        print("[warmup] Каталоги загружены ✓")
+    except Exception as exc:
+        print(f"[warmup] Предупреждение: не удалось прогреть каталоги: {exc}")
+
+threading.Thread(target=_warmup_catalogs, daemon=True).start()
 
 
 # ── Основные страницы ─────────────────────────────────────────────────────────

@@ -282,7 +282,11 @@
 
     <div class="sky-wrap" id="sky-wrap">
       <div class="sky-loader" id="sky-loader">
-        <div class="spinner"></div> Генерируем карту неба…
+        <div class="spinner"></div>
+        <span id="sky-loader-text">
+          Генерируем карту неба…<br>
+          <small style="opacity:.6">При первом запуске может занять до 30 сек</small>
+        </span>
       </div>
       <img id="sky-img" src="" alt="Карта неба" style="display:none" />
     </div>
@@ -411,6 +415,21 @@
 
     const resp = await fetch(`/game/api/question?session_id=${sessionId}`);
     const data = await resp.json();
+
+    // ── FIX: обработка ошибки загрузки вопроса ──
+    if (data.error) {
+      document.getElementById('sky-loader').style.display = 'none';
+      document.getElementById('result-area').innerHTML =
+        `<div style="color:#f87171;text-align:center;padding:24px">
+           ⚠️ Ошибка загрузки вопроса: ${data.error}.<br>
+           <button onclick="loadQuestion()" style="margin-top:12px;padding:8px 20px;border-radius:8px;
+             border:none;background:#7b61ff;color:#fff;cursor:pointer;font-size:.9rem;">
+             Повторить
+           </button>
+         </div>`;
+      return;
+    }
+
     if (data.finished) { showFinish(data); return; }
 
     updateHeader(data.session);
@@ -500,6 +519,18 @@
       }),
     });
     const data = await resp.json();
+
+    // ── FIX: обработка ошибки сервера (например "No active question") ──
+    if (data.error) {
+      console.error('Ошибка ответа (easy):', data.error);
+      answered = false;
+      document.querySelectorAll('.opt-btn').forEach(b => b.disabled = false);
+      document.getElementById('result-area').innerHTML =
+        `<div style="color:#f87171;text-align:center">⚠️ Ошибка: ${data.error}. Перезагрузка...</div>`;
+      setTimeout(() => loadQuestion(), 1500);
+      return;
+    }
+
     updateHeader(data);
 
     // Highlight correct / wrong buttons
@@ -574,13 +605,11 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const data = await resp.json();   // или r.json() в game_messier
+    const data = await resp.json();
     // Обработка ошибки сервера (например "No active question")
     if (data.error) {
       console.error('Ошибка ответа:', data.error);
-      // Сброс флага и перезагрузка вопроса
       answered = false;
-      document.querySelectorAll('.opt-btn').forEach(b => b.disabled = false);
       document.getElementById('result-area').innerHTML =
         `<div style="color:#f87171;text-align:center">⚠️ Ошибка: ${data.error}. Перезагрузка...</div>`;
       setTimeout(() => loadQuestion(), 1500);
@@ -612,7 +641,7 @@
         coordsFeedback = `
           <div style="font-size:.85rem;margin-top:8px;display:flex;flex-direction:column;gap:4px">
             <div class="partial-result ${nameOk ? 'partial-correct' : 'partial-wrong'}">
-              ${nameOk ? '✅' : '❌'} Название: ${nameOk ? 'верно' : `неверно — правильно <b>${data.correct_answer}</b>`}
+              ${nameOk ? '✅' : '❌'} Название: ${nameOk ? 'верно' : `неверно — правильно <b>${data.correct_answer || '—'}</b>`}
             </div>
             <div class="partial-result ${raOk ? 'partial-correct' : 'partial-wrong'}">
               ${raOk ? '✅' : '❌'} RA: ваш ${cf.user_ra}° — правильный ${cf.correct_ra}°
@@ -630,7 +659,7 @@
           </div>`;
       }
     } else if (!data.correct) {
-      coordsFeedback = `<div style="font-size:.9rem;margin-top:4px">Правильный ответ: <b>${data.correct_answer}</b></div>`;
+      coordsFeedback = `<div style="font-size:.9rem;margin-top:4px">Правильный ответ: <b>${data.correct_answer || '—'}</b></div>`;
     }
 
     el.innerHTML = `

@@ -35,7 +35,11 @@
     .map-label{text-align:center;font-size:.88rem;color:var(--muted);margin-bottom:12px;}
     .sky-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid rgba(123,97,255,.25);margin-bottom:24px;background:#020208;text-align:center;}
     .sky-wrap img{width:100%;max-height:440px;object-fit:contain;display:block;}
-    .sky-loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);font-size:.9rem;color:var(--muted);gap:10px;}
+    .sky-loader{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      background:var(--bg);font-size:.9rem;color:var(--muted);gap:10px;
+      flex-direction:column;
+    }
     .spinner{width:24px;height:24px;border:3px solid rgba(123,97,255,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
     @keyframes spin{to{transform:rotate(360deg);}}
 
@@ -114,7 +118,13 @@
     <!-- Sky map with labels -->
     <div class="map-label">🔭 На карте видны подписи созвездий — найди описанное выше</div>
     <div class="sky-wrap">
-      <div class="sky-loader" id="sky-loader"><div class="spinner"></div> Генерируем карту…</div>
+      <div class="sky-loader" id="sky-loader">
+        <div class="spinner"></div>
+        <span>
+          Генерируем карту…<br>
+          <small style="opacity:.6">При первом запуске может занять до 30 сек</small>
+        </span>
+      </div>
       <img id="sky-img" src="" alt="Карта неба" style="display:none" />
     </div>
 
@@ -176,6 +186,22 @@
 
     const resp = await fetch(`/game/api/question?session_id=${sessionId}`);
     const data = await resp.json();
+
+    // ── FIX: обработка ошибки загрузки вопроса ──
+    if (data.error) {
+      document.getElementById('sky-loader').style.display = 'none';
+      document.getElementById('trivia-text').textContent = '';
+      document.getElementById('result-area').innerHTML =
+        `<div style="color:#f87171;text-align:center;padding:24px">
+           ⚠️ Ошибка загрузки вопроса: ${data.error}.<br>
+           <button onclick="loadQuestion()" style="margin-top:12px;padding:8px 20px;border-radius:8px;
+             border:none;background:#7b61ff;color:#fff;cursor:pointer;font-size:.9rem;">
+             Повторить
+           </button>
+         </div>`;
+      return;
+    }
+
     if (data.finished) { showFinish(data); return; }
 
     updateHeader(data.session);
@@ -215,11 +241,10 @@
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: sessionId, answer, used_hint: usedHint, time_seconds: parseFloat(timeSec) }),
     });
-    const data = await resp.json();   // или r.json() в game_messier
+    const data = await resp.json();
     // Обработка ошибки сервера (например "No active question")
     if (data.error) {
       console.error('Ошибка ответа:', data.error);
-      // Сброс флага и перезагрузка вопроса
       answered = false;
       document.querySelectorAll('.opt-btn').forEach(b => b.disabled = false);
       document.getElementById('result-area').innerHTML =
@@ -236,8 +261,8 @@
     document.getElementById('result-area').innerHTML = `
       <div class="result-card ${data.correct ? 'correct-card' : 'wrong-card'}">
         <div class="result-title">${data.correct ? '✅ Верно!' : '❌ Неверно.'} ${pts}</div>
-        ${!data.correct ? `<div style="font-size:.9rem;margin-top:4px">Правильный ответ: <b>${data.correct_answer}</b></div>` : ''}
-        <div class="result-fact">${data.fun_fact}</div>
+        ${!data.correct ? `<div style="font-size:.9rem;margin-top:4px">Правильный ответ: <b>${data.correct_answer || '—'}</b></div>` : ''}
+        <div class="result-fact">${data.fun_fact || ''}</div>
       </div>`;
     document.getElementById('btn-next').disabled = false;
   }
