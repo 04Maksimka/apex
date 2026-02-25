@@ -385,6 +385,18 @@
       }),
     });
     const data = await resp.json();
+
+    // Обработка ошибки сервера (например "No active question")
+    if (data.error) {
+      console.error('Ошибка ответа:', data.error);
+      // Сброс флага и перезагрузка вопроса
+      answered = false;
+      document.querySelectorAll('.opt-btn').forEach(b => b.disabled = false);
+      document.getElementById('result-area').innerHTML =
+        `<div style="color:#f87171;text-align:center">⚠️ Ошибка: ${data.error}. Перезагрузка...</div>`;
+      setTimeout(() => loadQuestion(), 1500);
+      return;
+    }
     updateHeader(data);
 
     // Store reference edges from server

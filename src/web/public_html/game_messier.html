@@ -125,7 +125,7 @@
   }
 
   async function loadQuestion(){
-    answered=false;usedHint=false;
+    answered=false; usedHint=false;
     document.getElementById('hint-box').style.display='none';
     document.getElementById('result-area').innerHTML='';
     document.getElementById('btn-hint').disabled=false;
@@ -137,51 +137,70 @@
     const r=await fetch(`/game/api/question?session_id=${sessionId}`);
     const data=await r.json();
     if(data.finished){showFinish(data);return;}
+    if(data.error){
+        document.getElementById('result-area').innerHTML=
+            `<div style="color:#f87171;text-align:center">⚠️ ${data.error}</div>`;
+        return;
+    }
+
     updateHeader(data.session);
     document.getElementById('question-label').textContent=data.question;
+
+    // Надёжная загрузка картинки
     const img=document.getElementById('sky-img');
-    const img = document.getElementById('sky-img');
-    const _showImg = () => {
-      document.getElementById('sky-loader').style.display = 'none';
-      img.style.display = 'block';
+    const _showImg=()=>{
+        document.getElementById('sky-loader').style.display='none';
+        img.style.display='block';
     };
-    img.onload = _showImg;
-    img.onerror = _showImg;   // показать область даже при ошибке декодирования
-    img.src = '';             // сброс состояния "complete" в браузере
-    img.src = 'data:image/png;base64,' + data.image;
-    // Fallback: браузер уже декодировал изображение синхронно
-    if (img.complete && img.naturalHeight > 0) _showImg();
+    img.onload=_showImg;
+    img.onerror=_showImg;
+    img.src='';
+    img.src='data:image/png;base64,'+data.image;
+    if(img.complete&&img.naturalHeight>0)_showImg();
+
     const optEl=document.getElementById('options');
-    data.options.forEach(opt=>{
-      const btn=document.createElement('button');
-      btn.className='opt-btn';btn.textContent=opt;
-      btn.onclick=()=>submitAnswer(opt);optEl.appendChild(btn);
+    (data.options||[]).forEach(opt=>{
+        const btn=document.createElement('button');
+        btn.className='opt-btn'; btn.textContent=opt;
+        btn.onclick=()=>submitAnswer(opt); optEl.appendChild(btn);
     });
     questionStartTime=Date.now();
-  }
+}
 
   async function submitAnswer(answer){
-    if(answered)return;answered=true;
+    if(answered)return; answered=true;
     document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
     document.getElementById('btn-hint').disabled=true;
     const timeSec=((Date.now()-questionStartTime)/1000).toFixed(1);
     const r=await fetch('/game/api/answer',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({session_id:sessionId,answer,used_hint:usedHint,time_seconds:parseFloat(timeSec)})});
+        body:JSON.stringify({session_id:sessionId,answer,used_hint:usedHint,time_seconds:parseFloat(timeSec)})});
     const data=await r.json();
+
+    // Обработка ошибки сервера
+    if(data.error){
+        console.error('submitAnswer error:',data.error);
+        answered=false;
+        document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=false);
+        document.getElementById('result-area').innerHTML=
+            `<div style="color:#f87171;text-align:center">⚠️ Ошибка: ${data.error}. Перезагрузка...</div>`;
+        setTimeout(()=>loadQuestion(),1500);
+        return;
+    }
+
     updateHeader(data);
     document.querySelectorAll('.opt-btn').forEach(btn=>{
-      if(btn.textContent===data.correct_answer)btn.classList.add('correct');
-      else if(btn.textContent===answer&&!data.correct)btn.classList.add('wrong');
+        if(btn.textContent===data.correct_answer)btn.classList.add('correct');
+        else if(btn.textContent===answer&&!data.correct)btn.classList.add('wrong');
     });
     const el=document.getElementById('result-area');
     const pts=data.correct?`<span class="points-badge">+${data.points_earned}</span>`:'';
     el.innerHTML=`<div class="result-card ${data.correct?'correct-card':'wrong-card'}">
-      <div class="result-title">${data.correct?'✅ Верно!':'❌ Неверно.'} ${pts}</div>
-      ${!data.correct?`<div style="font-size:.9rem;margin-top:4px">Правильный ответ: <b>${data.correct_answer}</b></div>`:''}
-      <div class="result-fact">${data.fun_fact}</div>
+        <div class="result-title">${data.correct?'✅ Верно!':'❌ Неверно.'} ${pts}</div>
+        ${!data.correct?`<div style="font-size:.9rem;margin-top:4px">Правильный ответ: <b>${data.correct_answer}</b></div>`:''}
+        <div class="result-fact">${data.fun_fact||''}</div>
     </div>`;
     document.getElementById('btn-next').disabled=false;
-  }
+}
 
   async function useHint(){
     document.getElementById('btn-hint').disabled=true;usedHint=true;
@@ -193,13 +212,13 @@
 
   async function nextQuestion(){document.getElementById('btn-next').disabled=true;await loadQuestion();}
 
-  function updateHeader(s){
+function updateHeader(s){
     document.getElementById('hdr-round').textContent=s.round||0;
     document.getElementById('hdr-total').textContent=s.total_rounds||ROUNDS;
-    document.getElementById('hdr-score').textContent=s.score||0;
+    document.getElementById('hdr-score').textContent=s.total_score??s.score??0;
     document.getElementById('hdr-streak').textContent=s.streak||0;
     document.getElementById('progress-fill').style.width=((s.round||0)/(s.total_rounds||ROUNDS)*100)+'%';
-  }
+}
 
   function showFinish(data){
     document.getElementById('game-area').style.display='none';

@@ -574,7 +574,18 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const data = await resp.json();
+    const data = await resp.json();   // или r.json() в game_messier
+    // Обработка ошибки сервера (например "No active question")
+    if (data.error) {
+      console.error('Ошибка ответа:', data.error);
+      // Сброс флага и перезагрузка вопроса
+      answered = false;
+      document.querySelectorAll('.opt-btn').forEach(b => b.disabled = false);
+      document.getElementById('result-area').innerHTML =
+        `<div style="color:#f87171;text-align:center">⚠️ Ошибка: ${data.error}. Перезагрузка...</div>`;
+      setTimeout(() => loadQuestion(), 1500);
+      return;
+    }
     updateHeader(data);
 
     // Highlight input field
@@ -651,7 +662,7 @@
   function updateHeader(s) {
     document.getElementById('hdr-round').textContent  = s.round || 0;
     document.getElementById('hdr-total').textContent  = s.total_rounds || ROUNDS;
-    document.getElementById('hdr-score').textContent  = s.score || 0;
+    document.getElementById('hdr-score').textContent = s.total_score ?? s.score ?? 0;
     document.getElementById('hdr-streak').textContent = s.streak || 0;
     const pct = ((s.round || 0) / (s.total_rounds || ROUNDS)) * 100;
     document.getElementById('progress-fill').style.width = pct + '%';
