@@ -20,10 +20,7 @@ import uuid
 from threading import Lock
 from typing import Any, Dict
 
-# Использовать Agg-бэкенд ДО импорта pyplot, чтобы matplotlib не требовал GUI
 import matplotlib
-
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from flask import Flask, jsonify, request, send_file
 
@@ -37,6 +34,8 @@ from src.pinhole_projection.pinhole_projector import (
     ShotConditions,
 )
 from src.planets_catalog.planet_catalog import PlanetCatalog
+
+matplotlib.use("Agg")
 
 app = Flask(__name__)
 

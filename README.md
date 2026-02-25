@@ -14,17 +14,17 @@ Also visit [astrageek.ru](https://astrageek.ru/) for educational videos on astro
 
 ---
 
-## Release plan. **Current release 0.2**
+## Release plan
 
-During the development process, the interface uses software to generate maps via the command line. While it is being developed, you can use ready-made generated maps of random areas of the sky or use the source code yourself under a license.
+1. Stereographic projection of the starry sky (skychart) according to a 
+   given geographical position and time. Also available is the representation of planets, great circles (ecliptic, celestial equator and galactic equator). Available to display horizontal and equatorial coordinate grid, cardinal directions. For example, here the [site](https://skyatlas.app/star-charts/) we were targeting.
 
-0.1 Stereographic projection of the starry sky (skychart) according to a given geographical position and time. Also available is the representation of planets, great circles (ecliptic, celestial equator and galactic equator). Available to display horizontal and equatorial coordinate grid, cardinal directions. For example, here the [site](https://skyatlas.app/star-charts/) we were targeting.
+2. Add plotting particular parts of the sky using pinhole projection mode. 
+   This mode provides all the same features listed in 0.1, but in a different sky projection. It's available to plot constellations by the name, set FOV, camera rotation angle and size of the resulting image.
 
-0.2 Add plotting particular parts of the sky using pinhole projection mode. This mode provides all the same features listed in 0.1, but in a different sky projection. It's available to plot constellations by the name, set FOV, camera rotation angle and size of the resulting image.
+3. Animations of planets' transits (gif and static image sequences)
 
-0.3 Animations of planets' transits (gif and static image sequences)
-
-0.4 Add precession of the Earth's rotation
+4. Add precession of the Earth's rotation
 
 ---
 
@@ -41,20 +41,23 @@ During the development process, the interface uses software to generate maps via
 
 Pinhole projection example (without a legend) with parameters: ...
 
-<img width="1246" height="838" alt="image" src="https://github.com/user-attachments/assets/c73f3266-20ec-4617-b763-e1647df4d081" />
+<img alt="image" src="https://github.com/user-attachments/assets/c73f3266-20ec-4617-b763-e1647df4d081" style="max-width: 100%; height: auto;" />
 
-Full: [pinhole_local_logo.pdf](https://github.com/user-attachments/files/24474532/pinhole_local_logo.pdf)
+Full: [pinhole.pdf](https://github.com/user-attachments/files/24474532/pinhole_local_logo.pdf)
 
 
 Stereographic projection example (without a legend) with parameters: ...
 
-<img width="1086" height="1065" alt="image" src="https://github.com/user-attachments/assets/dfd66621-1e12-43cb-b6c1-06ad275bdd12" />
+<img alt="image" src="https://github.com/user-attachments/assets/dfd66621-1e12-43cb-b6c1-06ad275bdd12" style="max-width: 100%; height: auto;" />
 
-Full: [polar_scatter_local_logo.pdf](https://github.com/user-attachments/files/24474544/polar_scatter_local_logo.pdf)
+Full: [stereographic.pdf](https://github.com/user-attachments/files/24474544/polar_scatter_local_logo.pdf)
 
 ---
 
 ## How to use
+
+
+**If wou want to generate new maps by yourself, follow the documentation section below**
 
 You can use the ready-made sets of starry sky maps that we have already generated. To do this, you need:
 
@@ -82,36 +85,11 @@ The student's file contains only assignments and a "bare" map. The file for the 
 
 ---
 
-But if use want to generate new maps by yourself, do this (it is in the process of being developed):
-
-1.  Choose your type of required projection:
-
-    1. You want the view of the entire sky available at this location at this time - choose **stereographic projection mode**
-    2. If you want to see a specific small area of the sky, as if you were observing it with your eyes or a small telescope - choose **pinhole projection mode**
-
-2. Configure your catalog and projector:
-
-    1. Set position (latitude and longitude) and local observation time.
-    2. Set the visual magnitude limits
-    3. Use flags to set the additional functions and properties you want to display. Or, for educational purposes, you can use ready-made teacher and student sets (see the section below) 
-
-3. Get the resulting star maps
-
-Example of usage:
-
-```cmd
-./....
-```
-
----
-
 ## Documentation
-
-On the [website](https://04maksimka.github.io/AstraGeek/) you will be able soon to get full functional documentation of the project.
 
 | Section          | Link                                                                                      |
 | ---------------- |-------------------------------------------------------------------------------------------|
-| Learn More       | [Usage documentation](https://github.com/04Maksimka/AstraGeek/blob/main/DOCUMENTATION.md) |
+| Learn More       | [Usage documentation](https://04maksimka.github.io/AstraGeek/) |
 | Project on GitHub| [GitHub Repo](https://github.com/04Maksimka/AstraGeek)                                    |
 | Submit Issue     | [Report](https://github.com/04Maksimka/AstraGeek/issues/new)                              |
 
