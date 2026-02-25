@@ -140,8 +140,17 @@
     updateHeader(data.session);
     document.getElementById('question-label').textContent=data.question;
     const img=document.getElementById('sky-img');
-    img.onload=()=>{document.getElementById('sky-loader').style.display='none';img.style.display='block';};
-    img.src='data:image/png;base64,'+data.image;
+    const img = document.getElementById('sky-img');
+    const _showImg = () => {
+      document.getElementById('sky-loader').style.display = 'none';
+      img.style.display = 'block';
+    };
+    img.onload = _showImg;
+    img.onerror = _showImg;   // показать область даже при ошибке декодирования
+    img.src = '';             // сброс состояния "complete" в браузере
+    img.src = 'data:image/png;base64,' + data.image;
+    // Fallback: браузер уже декодировал изображение синхронно
+    if (img.complete && img.naturalHeight > 0) _showImg();
     const optEl=document.getElementById('options');
     data.options.forEach(opt=>{
       const btn=document.createElement('button');
