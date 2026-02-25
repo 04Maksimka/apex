@@ -35,7 +35,6 @@ from __future__ import annotations
 
 import os
 import threading
-import time
 from typing import Any, Dict
 
 from flask import Blueprint, abort, jsonify, request, send_from_directory
@@ -171,10 +170,12 @@ def _generate_question(session):
 # Prefetch logic — background pre-generation of next question
 # ---------------------------------------------------------------------------
 
+
 def _prefetch_worker(session) -> None:
     """
     Runs in a daemon thread. Generates the next question and stores it in
-    session.current_question. Sets session.prefetch_event when done (or on error).
+    session.current_question. Sets session.prefetch_event when done
+    (or on error).
     """
     try:
         if session.is_finished:
@@ -247,9 +248,7 @@ def api_start():
         return _err("rounds must be between 1 and 30")
 
     session = create_session(
-      mode=mode,
-      difficulty=difficulty,
-      total_rounds=rounds
+        mode=mode, difficulty=difficulty, total_rounds=rounds
     )
 
     # ── Сразу запускаем генерацию первого вопроса в фоне ──────────────────
@@ -291,15 +290,22 @@ def api_question():
     # ── Ждём фоновой генерации (максимум 90 секунд) ────────────────────────
     prefetch_ready = session.prefetch_event.wait(timeout=90.0)
 
-    if prefetch_ready and not session.prefetch_error and session.current_question is not None:
+    if (
+        prefetch_ready
+        and not session.prefetch_error
+        and session.current_question is not None
+    ):
         # Изображение уже сгенерировано — используем готовый вопрос.
         question = session.current_question
     else:
         # Запасной путь: генерируем синхронно.
-        # Срабатывает если: таймаут, ошибка в фоне, или prefetch не был запущен.
+        # Срабатывает если: таймаут, ошибка в фоне, или prefetch не был
+        # запущен.
         if session.prefetch_error:
-            print(f"[prefetch] Ошибка предгенерации для {session.session_id}: "
-                  f"{session.prefetch_error} — генерируем синхронно")
+            print(
+                f"[prefetch] Ошибка предгенерации для {session.session_id}:"
+                f" {session.prefetch_error} — генерируем синхронно"
+            )
             session.prefetch_error = None
         try:
             question = _generate_question(session)
@@ -353,7 +359,7 @@ def api_answer():
     coord_feedback = None
     draw_details = None
 
-    # ── Draw mode ────────────────────────────────────────────────────────────
+    # ── Draw mode ───────────────────────────────────────────────────────────
     if session.current_question["type"] == "draw":
         drawn_edges = data.get("drawn_edges", [])
         result = _factory.check_draw_answer(session, drawn_edges)
@@ -363,7 +369,7 @@ def api_answer():
         fun_fact = result.get("fun_fact", "")
         draw_details = result
 
-    # ── All other modes ──────────────────────────────────────────────────────
+    # ── All other modes ─────────────────────────────────────────────────────
     else:
         player_answer = str(data.get("answer", "")).strip()
         correct_answer = session.current_question.get("correct", "")
@@ -406,7 +412,7 @@ def api_answer():
         else:
             correct = name_correct
 
-    # ── Scoring ──────────────────────────────────────────────────────────────
+    # ── Scoring ─────────────────────────────────────────────────────────────
     points = calculate_score(
         difficulty=session.difficulty,
         correct=correct,
@@ -417,18 +423,20 @@ def api_answer():
     session.score += points
     session.round += 1
     if correct:
-        session.streak        += 1
+        session.streak += 1
         session.correct_count += 1
-        session.best_streak    = max(session.best_streak, session.streak)
+        session.best_streak = max(session.best_streak, session.streak)
     else:
         session.streak = 0
 
-    session.history.append({
-        "round":   session.round,
-        "correct": correct,
-        "points":  points,
-        "answer":  player_answer,
-    })
+    session.history.append(
+        {
+            "round": session.round,
+            "correct": correct,
+            "points": points,
+            "answer": player_answer,
+        }
+    )
     session.current_question = None  # сбрасываем перед запуском prefetch
 
     # ── Запускаем предгенерацию следующего вопроса прямо сейчас ──────────────

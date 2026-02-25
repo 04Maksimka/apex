@@ -1,13 +1,11 @@
 import os
 import tempfile
-import uuid
 import threading
-
-import matplotlib
-
-matplotlib.use("Agg")
+import uuid
 from datetime import datetime
 
+import matplotlib
+import matplotlib.pyplot as plt
 from flask import Flask, redirect, request, send_file
 
 from src.constellations_metadata.constellations_data import (
@@ -33,12 +31,15 @@ from src.stereographic_projection.stereographic_projector import (
 from src.web.game_blueprint import game_bp
 from src.web.messier_blueprint import messier_bp
 
+matplotlib.use("Agg")
+
 app = Flask(__name__, static_folder="public_html", static_url_path="")
 app.register_blueprint(messier_bp)
 app.register_blueprint(game_bp)
 
 BASE_DIR = os.path.dirname(
-  os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 # BASE_DIR = корень проекта AstraGeek/
 
 CATALOG = Catalog(
@@ -61,6 +62,7 @@ def _warmup_catalogs():
             _get_messier_catalog,
             _get_named_stars,
         )
+
         _get_catalog()
         _get_messier_catalog()
         _get_named_stars()
@@ -71,10 +73,12 @@ def _warmup_catalogs():
     except Exception as exc:
         print(f"[warmup] Предупреждение: не удалось прогреть каталоги: {exc}")
 
+
 threading.Thread(target=_warmup_catalogs, daemon=True).start()
 
 
-# ── Основные страницы ─────────────────────────────────────────────────────────
+# ── Основные страницы ────────────────────────────────────────────────────────
+
 
 @app.route("/")
 def index():
