@@ -5,6 +5,8 @@ import numpy as np
 import pathlib
 import hashlib
 import json
+import tempfile
+import warnings
 from typing import Dict, Optional, Any
 
 
@@ -50,7 +52,7 @@ class Catalog(object):
         """
         :param catalog_name: file star catalog name
         :type catalog_name: str
-        :param cache_dir: caching directory
+        :param cache_dir: caching directory (если None — используется /tmp/astrageek_cache)
         :type cache_dir: str
         :param use_cache: flag enable/disable caching
         :type use_cache: bool
@@ -59,15 +61,24 @@ class Catalog(object):
         self.catalog_name = catalog_name
         self.catalog_path = pathlib.Path(__file__).parent.absolute() / self.catalog_name
 
-        # Make pathlib object for cache directory if not exist
         self.use_cache = use_cache
         if use_cache:
-            if cache_dir is None:
-                self.cache_dir = pathlib.Path(__file__).parent.absolute() / 'cache'
-            else:
+            if cache_dir is not None:
                 self.cache_dir = pathlib.Path(cache_dir)
-            # Create directory, if exists do nothing
-            self.cache_dir.mkdir(exist_ok=True)
+            else:
+                # Используем /tmp — всегда доступен для записи на любом сервере.
+                # В отличие от директории проекта, не требует особых прав.
+                self.cache_dir = pathlib.Path(tempfile.gettempdir()) / "astrageek_cache"
+
+            try:
+                self.cache_dir.mkdir(parents=True, exist_ok=True)
+            except PermissionError as e:
+                # Если даже /tmp недоступен — отключаем кэш и работаем без него.
+                warnings.warn(
+                    f"Cannot create cache directory '{self.cache_dir}': {e}. "
+                    "Caching disabled — catalog will be loaded from file on every request."
+                )
+                self.use_cache = False
 
         # internal storage
         self._data = None
@@ -185,7 +196,7 @@ class Catalog(object):
 
     def _load_raw_data(self) -> NDArray:
         """Loads raw data from file
-        
+
         :returns: cleaned raw data
         """
 
@@ -210,60 +221,27 @@ class Catalog(object):
         :param constraints: constraints
         :param data: NDArray:
         :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray:
-        :param constraints: CatalogConstraints:
-        :param data: NDArray: 
-        :param constraints: CatalogConstraints: 
+
         :returns: filtered data
 
         """
-
-        masks = []
-
-        # Magnitude filtering
+        mask = data['v_mag'] <= constraints.max_magnitude
         if constraints.min_magnitude is not None:
-            mask_mag = (data['v_mag'] >= constraints.min_magnitude) & (data['v_mag'] <= constraints.max_magnitude)
-            masks.append(mask_mag)
-        else:
-            mask_mag = (data['v_mag'] <= constraints.max_magnitude)
-            masks.append(mask_mag)
+            mask &= data['v_mag'] >= constraints.min_magnitude
+        return data[mask]
 
-        # Combine all the masks
-        if masks:
-            combined_mask = np.all(masks, axis=0)
-            filtered_data = data[combined_mask]
-        else:
-            filtered_data = data
-
-        return filtered_data
-
-    def _convert_to_structured_numpy(self, raw_data: NDArray):
-        """Converts raw data to structured numpy array of STAR_DTYPEs
+    @staticmethod
+    def _convert_to_structured_numpy(raw_data: NDArray) -> NDArray:
+        """Converts raw genfromtxt data to structured numpy array
 
         :param raw_data: raw data
         :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray:
-        :param raw_data: NDArray: 
+
+        :returns: structured numpy array
 
         """
-
         number_of_stars = raw_data.shape[0]
-        structured_data = np.zeros(number_of_stars, dtype=self.STAR_DTYPE)
+        structured_data = np.zeros(number_of_stars, dtype=Catalog.STAR_DTYPE)
 
         structured_data['v_mag'] = raw_data['Vmag'].astype(np.float32)
 
@@ -289,13 +267,8 @@ class Catalog(object):
 
         :param constraints: constraints, optional, defaults to None
         :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
-        :param constraints: Optional[CatalogConstraints]:  (Default value = None)
+
+        :returns: structured numpy array of stars
 
         """
         if constraints is None:

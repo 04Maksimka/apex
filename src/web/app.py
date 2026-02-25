@@ -4,6 +4,7 @@ import tempfile
 
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from flask import Flask, request, send_file, jsonify, redirect, url_for
 from datetime import datetime
 
@@ -107,6 +108,7 @@ def generate():
             footer_text="skychart.astrageek.ru",
             print_skychart_info=print_skychart_info,
         )
+        plt.close(fig)
 
     elif mode == "pinhole":
         constellation = data.get("constellation", "ORI").upper()
@@ -130,6 +132,7 @@ def generate():
         save_figure_pinhole(fig=fig, filename=tmp_path,
                             logo_path="src/helpers/pdf_helpers/logo_astrageek.png",
                             footer_text="skychart.astrageek.ru")
+        plt.close(fig)
 
     return send_file(tmp_path, mimetype="application/pdf",
                      as_attachment=True, download_name="skychart.pdf")
