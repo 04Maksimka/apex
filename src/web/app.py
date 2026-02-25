@@ -1,32 +1,44 @@
 import os
-import uuid
 import tempfile
+import uuid
 
 import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from flask import Flask, request, send_file, jsonify, redirect, url_for
+
+matplotlib.use("Agg")
 from datetime import datetime
 
-from src.web.messier_blueprint import messier_bp
+from flask import Flask, redirect, request, send_file
+
+from src.constellations_metadata.constellations_data import (
+    get_constellation_center,
+)
+from src.helpers.pdf_helpers.figure2pdf import (
+    save_figure_pinhole,
+    save_figure_skychart,
+)
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from src.pinhole_projection.pinhole_projector import (
+    CameraConfig,
+    Pinhole,
+    PinholeConfig,
+    ShotConditions,
+)
 from src.planets_catalog.planet_catalog import PlanetCatalog
 from src.stereographic_projection.stereographic_projector import (
-    StereoProjector, StereoProjConfig, ConstellationConfig
+    ConstellationConfig,
+    StereoProjConfig,
+    StereoProjector,
 )
-from src.pinhole_projection.pinhole_projector import (
-    PinholeConfig, CameraConfig, ShotConditions, Pinhole
-)
-from src.helpers.pdf_helpers.figure2pdf import save_figure_skychart, save_figure_pinhole
-from src.constellations_metadata.constellations_data import get_constellation_center
 from src.web.game_blueprint import game_bp
+from src.web.messier_blueprint import messier_bp
 
 app = Flask(__name__, static_folder="public_html", static_url_path="")
 app.register_blueprint(messier_bp)
 app.register_blueprint(game_bp)
 
-import os
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 # BASE_DIR = корень проекта AstraGeek/
 
 CATALOG = Catalog(
@@ -35,7 +47,8 @@ CATALOG = Catalog(
 )
 
 
-# ── Основные страницы ─────────────────────────────────────────────────────────
+# ── Основные страницы ────────────────────────────────────────────────────────
+
 
 @app.route("/")
 def index():
@@ -49,6 +62,7 @@ def generator():
 
 # ── Игры ─────────────────────────────────────────────────────────────────────
 
+
 @app.route("/games")
 def games_redirect():
     """Удобный алиас /games → /game/ (лобби игр)."""
@@ -57,42 +71,51 @@ def games_redirect():
 
 @app.route("/messier.html")
 def messier_html_redirect():
-    """Обратная совместимость: старые ссылки на /messier.html → /game/messier."""
+    """
+    Обратная совместимость: старые ссылки на /messier.html → /game/messier.
+    """
     return redirect("/game/messier", code=301)
 
 
-# ── Генерация карт ────────────────────────────────────────────────────────────
+# ── Генерация карт ───────────────────────────────────────────────────────────
+
 
 @app.route("/generate", methods=["POST"])
 def generate():
     data = request.json
     mode = data.get("mode", "stereo")
 
-    dtime = datetime.fromisoformat(data["datetime"]) if data.get("datetime") else datetime.utcnow()
+    dtime = (
+        datetime.fromisoformat(data["datetime"])
+        if data.get("datetime")
+        else datetime.utcnow()
+    )
     v_mag_limit = float(data.get("v_mag_limit", 6.5))
     constraints = CatalogConstraints(max_magnitude=v_mag_limit)
 
     flags = {
-        "add_ecliptic":        data.get("add_ecliptic", False),
-        "add_equator":         data.get("add_equator", False),
-        "add_galactic_equator":data.get("add_galactic_equator", False),
-        "add_planets":         data.get("add_planets", False),
+        "add_ecliptic": data.get("add_ecliptic", False),
+        "add_equator": data.get("add_equator", False),
+        "add_galactic_equator": data.get("add_galactic_equator", False),
+        "add_planets": data.get("add_planets", False),
         "add_equatorial_grid": data.get("add_equatorial_grid", False),
-        "add_constellations":  data.get("add_constellations", False),
+        "add_constellations": data.get("add_constellations", False),
         "add_constellations_names": data.get("add_constellation_names", False),
     }
 
     # Whether to print observation info block on the task page (stereo only)
     print_skychart_info = bool(data.get("print_skychart_info", False))
 
-    tmp_path = os.path.join(tempfile.gettempdir(), f"skychart_{uuid.uuid4().hex}.pdf")
+    tmp_path = os.path.join(
+        tempfile.gettempdir(), f"skychart_{uuid.uuid4().hex}.pdf"
+    )
 
     if mode == "stereo":
         config = StereoProjConfig(
             local_time=dtime,
             latitude=float(data["latitude"]),
             longitude=float(data["longitude"]),
-            **flags
+            **flags,
         )
         proj = StereoProjector(
             config=config,
@@ -102,13 +125,16 @@ def generate():
         )
         fig, ax = proj.generate(constraints=constraints)
         save_figure_skychart(
-            fig=fig, filename=tmp_path,
-            config=config, location_name="",
-            logo_path=os.path.join(BASE_DIR, "src", "helpers", "pdf_helpers", "logo_astrageek.png"),
+            fig=fig,
+            filename=tmp_path,
+            config=config,
+            location_name="",
+            logo_path=os.path.join(
+                BASE_DIR, "src", "helpers", "pdf_helpers", "logo_astrageek.png"
+            ),
             footer_text="skychart.astrageek.ru",
             print_skychart_info=print_skychart_info,
         )
-        plt.close(fig)
 
     elif mode == "pinhole":
         constellation = data.get("constellation", "ORI").upper()
@@ -124,18 +150,28 @@ def generate():
         )
         config = PinholeConfig(local_time=dtime, **flags)
         projector = Pinhole(
-            shot_cond=shot_cond, camera_cfg=camera_cfg,
-            config=config, constellation_config=ConstellationConfig(),
-            catalog=CATALOG, planet_catalog=PlanetCatalog(),
+            shot_cond=shot_cond,
+            camera_cfg=camera_cfg,
+            config=config,
+            constellation_config=ConstellationConfig(),
+            catalog=CATALOG,
+            planet_catalog=PlanetCatalog(),
         )
         fig, ax = projector.generate(constraints=constraints)
-        save_figure_pinhole(fig=fig, filename=tmp_path,
-                            logo_path="src/helpers/pdf_helpers/logo_astrageek.png",
-                            footer_text="skychart.astrageek.ru")
-        plt.close(fig)
+        save_figure_pinhole(
+            fig=fig,
+            filename=tmp_path,
+            logo_path="src/helpers/pdf_helpers/logo_astrageek.png",
+            footer_text="skychart.astrageek.ru",
+        )
 
-    return send_file(tmp_path, mimetype="application/pdf",
-                     as_attachment=True, download_name="skychart.pdf")
+    return send_file(
+        tmp_path,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name="skychart.pdf",
+    )
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=False)

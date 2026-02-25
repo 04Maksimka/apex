@@ -1,24 +1,25 @@
 """
 Module implementing cylindrical (equirectangular) projection.
 
-The cylindrical projection maps the celestial sphere onto a rectangular plane,
-where right ascension maps to x-coordinate and declination maps to y-coordinate.
-This is particularly useful for visualizing the entire sky at once and tracking
-object movements across the celestial sphere.
+The cylindrical projection maps the celestial sphere onto
+a rectangular plane,where right ascension maps to x-coordinate and declination
+maps to y-coordinate. This is particularly useful for visualizing the entire
+sky at once and tracking object movements across the celestial sphere.
 """
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, List, Dict, Tuple
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
-from numpy.typing import NDArray
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
+from numpy.typing import NDArray
 
 from src.constellations_metadata.constellations_data import (
     get_available_constellations,
     get_constellation_center,
-    get_constellation_lines
+    get_constellation_lines,
 )
 from src.helpers.geometry.geometry import mag_to_radius
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
@@ -34,13 +35,13 @@ class CylindricConfig:
     longitude: float = 0.0
 
     # Display range in degrees
-    ra_min: float = 0.0      # Right Ascension minimum (degrees)
-    ra_max: float = 360.0    # Right Ascension maximum (degrees)
-    dec_min: float = -90.0   # Declination minimum (degrees)
-    dec_max: float = 90.0    # Declination maximum (degrees)
+    ra_min: float = 0.0  # Right Ascension minimum (degrees)
+    ra_max: float = 360.0  # Right Ascension maximum (degrees)
+    dec_min: float = -90.0  # Declination minimum (degrees)
+    dec_max: float = 90.0  # Declination maximum (degrees)
 
     # Grid settings
-    grid_ra_step: float = 30.0   # RA grid step in degrees
+    grid_ra_step: float = 30.0  # RA grid step in degrees
     grid_dec_step: float = 15.0  # Dec grid step in degrees
 
     # Feature flags
@@ -63,8 +64,10 @@ class CylindricConfig:
 class ConstellationConfig:
     """Configuration for constellation rendering."""
 
-    constellations_list: Optional[List[str]] = None  # If None, render all available
-    constellation_color: str = 'gray'
+    constellations_list: Optional[List[str]] = (
+        None  # If None, render all available
+    )
+    constellation_color: str = "gray"
     constellation_linewidth: float = 0.8
     constellation_alpha: float = 0.7
     constellation_color_map: Optional[Dict[str, str]] = None
@@ -75,25 +78,11 @@ def _wrap_ra(ra_deg: float, ra_center: float) -> float:
     This ensures continuity of lines that cross the RA boundary.
 
     :param ra_deg: RA in degrees (can be any value)
+    :type ra_deg: float
     :param ra_center: Center of the RA display range in degrees
-    :param ra_deg: float:
-    :param ra_center: float:
-    :param ra_deg: float:
-    :param ra_center: float:
-    :param ra_deg: float:
-    :param ra_center: float:
-    :param ra_deg: float:
-    :param ra_center: float:
-    :param ra_deg: float:
-    :param ra_center: float:
-    :param ra_deg: float:
-    :param ra_center: float:
-    :param ra_deg: float:
-    :param ra_center: float:
-    :param ra_deg: float: 
-    :param ra_center: float: 
-    :returns: Wrapped RA value
-
+    :type ra_center: float
+    :return: Wrapped RA value
+    :rtype: float
     """
     diff = ra_deg - ra_center
     diff = (diff + 180.0) % 360.0 - 180.0
@@ -107,7 +96,7 @@ def _split_segments_at_boundary(
     ra_max: float,
     dec_min: float,
     dec_max: float,
-    ra_wrap_threshold: float = 180.0
+    ra_wrap_threshold: float = 180.0,
 ) -> List[NDArray]:
     """
     Split a continuous curve into segments, breaking at points where the curve
@@ -129,7 +118,8 @@ def _split_segments_at_boundary(
     :param ra_wrap_threshold: Maximum allowed RA jump before splitting
     :type ra_wrap_threshold: float
 
-    :return: List of Nx2 arrays, each representing a continuous segment [[ra, dec], ...]
+    :return: List of Nx2 arrays, each representing
+        a continuous segment [[ra, dec], ...]
     :rtype: List[NDArray]
     """
 
@@ -162,12 +152,13 @@ def _split_segments_at_boundary(
 
                     # Determine which boundary was crossed
                     boundary_points = _interpolate_ra_wrap(
-                        prev_ra, prev_dec, curr_ra, curr_dec,
-                        ra_min, ra_max
+                        prev_ra, prev_dec, curr_ra, curr_dec, ra_min, ra_max
                     )
 
                     if boundary_points is not None:
-                        exit_ra, exit_dec, entry_ra, entry_dec = boundary_points
+                        exit_ra, exit_dec, entry_ra, entry_dec = (
+                            boundary_points
+                        )
 
                         # Add exit point to current segment
                         if dec_min <= exit_dec <= dec_max:
@@ -231,9 +222,12 @@ def _split_segments_at_boundary(
 
 
 def _interpolate_ra_wrap(
-    ra1: float, dec1: float,
-    ra2: float, dec2: float,
-    ra_min: float, ra_max: float
+    ra1: float,
+    dec1: float,
+    ra2: float,
+    dec2: float,
+    ra_min: float,
+    ra_max: float,
 ) -> Optional[Tuple[float, float, float, float]]:
     """Interpolate the point where a line segment crosses the RA wrap boundary.
 
@@ -250,7 +244,8 @@ def _interpolate_ra_wrap(
     :param ra_max: Right ascension high boundary
     :type ra_max: float
 
-    :return: interpolation result in format Tuple (exit_ra, exit_dec, entry_ra, entry_dec)
+    :return: interpolation result in format (exit_ra, exit_dec,
+        entry_ra, entry_dec)
     :rtype: Tuple[float, float, float, float] | None
     """
 
@@ -278,13 +273,16 @@ def _interpolate_ra_wrap(
 
 
 def _interpolate_dec_boundary(
-    ra1: float, dec1: float,
-    ra2: float, dec2: float,
-    dec_min: float, dec_max: float
+    ra1: float,
+    dec1: float,
+    ra2: float,
+    dec2: float,
+    dec_min: float,
+    dec_max: float,
 ) -> Optional[List[float]]:
     """Linear interpolation the point where a line crosses a dec boundary.
 
-        :param ra1: Right ascension of the start point
+    :param ra1: Right ascension of the start point
     :type ra1: float
     :param dec1: Declination of the start point
     :type dec1: float
@@ -315,10 +313,13 @@ def _interpolate_dec_boundary(
 
 
 def _make_pair_segments_with_wrapping(
-    ra1: float, dec1: float,
-    ra2: float, dec2: float,
-    ra_min: float, ra_max: float,
-    ra_wrap_threshold: float = 180.0
+    ra1: float,
+    dec1: float,
+    ra2: float,
+    dec2: float,
+    ra_min: float,
+    ra_max: float,
+    ra_wrap_threshold: float = 180.0,
 ) -> List[NDArray]:
     """Create line segments for a pair of points, handling RA wrap-around.
     If the RA difference is larger than the threshold, splits into two segments
@@ -349,44 +350,42 @@ def _make_pair_segments_with_wrapping(
         return [np.array([[ra1, dec1], [ra2, dec2]])]
 
     # Wrapping needed — split into two segments
-    boundary_points = _interpolate_ra_wrap(ra1, dec1, ra2, dec2, ra_min, ra_max)
+    boundary_points = _interpolate_ra_wrap(
+        ra1, dec1, ra2, dec2, ra_min, ra_max
+    )
     if boundary_points is None:
         return [np.array([[ra1, dec1], [ra2, dec2]])]
 
     exit_ra, exit_dec, entry_ra, entry_dec = boundary_points
 
     segments = [
-        np.array([[ra1, dec1], [exit_ra, exit_dec]]),   # Segment from point1 to exit boundary
-        np.array([[entry_ra, entry_dec], [ra2, dec2]])  # Segment from entry boundary to point2
+        np.array(
+            [[ra1, dec1], [exit_ra, exit_dec]]
+        ),  # Segment from point1 to exit boundary
+        np.array(
+            [[entry_ra, entry_dec], [ra2, dec2]]
+        ),  # Segment from entry boundary to point2
     ]
 
     return segments
 
 
 class CylindricProjector:
-    """Class for cylindrical (equirectangular) projection of the celestial sphere."""
+    """
+    Class for cylindrical (equirectangular)projection of the celestial sphere.
+    """
 
     def __init__(
-            self,
-            config: CylindricConfig,
-            catalog: Catalog,
-            planets_catalog: PlanetCatalog,
-            constellation_config: Optional[ConstellationConfig] = None,
+        self,
+        config: CylindricConfig,
+        catalog: Catalog,
+        planets_catalog: PlanetCatalog,
+        constellation_config: Optional[ConstellationConfig] = None,
     ):
-        """
-        Initialize cylindrical projector.
-
-        :param config: Projection configuration
-        :type config: CylindricConfig
-        :param catalog: Star catalog instance
-        :type catalog: Catalog
-        :param planets_catalog: Planet catalog instance
-        :type planets_catalog: PlanetCatalog
-        :param constellation_config: Constellation rendering configuration
-        :type constellation_config: ConstellationConfig
-        """
         self.config = config
-        self.constellation_config = constellation_config or ConstellationConfig()
+        self.constellation_config = (
+            constellation_config or ConstellationConfig()
+        )
         self.catalog = catalog
         self.planets_catalog = planets_catalog
         self._groups = {}  # Legend groups
@@ -405,11 +404,13 @@ class CylindricProjector:
         """Span of the RA display range."""
         return self.config.ra_max - self.config.ra_min
 
-    def generate(self, constraints: Optional[CatalogConstraints] = None) -> Tuple[plt.Figure, plt.Axes]:
+    def generate(
+        self, constraints: Optional[CatalogConstraints] = None
+    ) -> Tuple[plt.Figure, plt.Axes]:
         """Generate a cylindrical projection visualization.
 
         :param constraints: Catalog constraints for star selection
-        :type constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :type constraints: CatalogConstraints | None
         :return: Tuple of (figure, axes)
         :rtype: Tuple[plt.Figure, plt.Axes]
         """
@@ -451,7 +452,7 @@ class CylindricProjector:
         """Project astronomical objects onto the cylindrical plane.
 
         :param constraints: Catalog constraints for star selection
-        :type constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :type constraints: CatalogConstraints | None
         """
 
         # Get stars
@@ -459,8 +460,7 @@ class CylindricProjector:
 
         # Project stars
         self._star_projections = self._make_cylindric_projection(
-            data=stars_data,
-            object_type='star'
+            data=stars_data, object_type="star"
         )
 
         # Plot stars
@@ -468,15 +468,19 @@ class CylindricProjector:
 
         # Add planets if requested
         if self.config.add_planets:
-            planets_data = self.planets_catalog.get_planets(self.config.local_time)
+            planets_data = self.planets_catalog.get_planets(
+                self.config.local_time
+            )
             self._planets_projections = self._make_cylindric_projection(
-                data=planets_data,
-                object_type='planet'
+                data=planets_data, object_type="planet"
             )
             self._add_planets(self._planets_projections)
 
-    def _make_cylindric_projection(self, data: NDArray, object_type: str = 'star') -> NDArray:
-        """Convert equatorial coordinates to cylindrical projection coordinates.
+    def _make_cylindric_projection(
+        self, data: NDArray, object_type: str = "star"
+    ) -> NDArray:
+        """
+        Convert equatorial coordinates to cylindrical projection coordinates.
 
         :param data: Object data with RA/Dec coordinates
         :type data: NDArray
@@ -486,17 +490,19 @@ class CylindricProjector:
         :return: Structured array with projection data
         :rtype: NDArray
         """
-        PROJECTION_DTYPE = np.dtype([
-            ('x', np.float32),      # RA in degrees
-            ('y', np.float32),      # Dec in degrees
-            ('v_mag', np.float32),  # Visual magnitude
-            ('size', np.float32),   # Display size
-            ('id', np.int32),       # Object ID
-        ])
+        PROJECTION_DTYPE = np.dtype(
+            [
+                ("x", np.float32),  # RA in degrees
+                ("y", np.float32),  # Dec in degrees
+                ("v_mag", np.float32),  # Visual magnitude
+                ("size", np.float32),  # Display size
+                ("id", np.int32),  # Object ID
+            ]
+        )
 
         # Extract coordinates
-        ra = data['ra']   # Already in radians
-        dec = data['dec'] # Already in radians
+        ra = data["ra"]  # Already in radians
+        dec = data["dec"]  # Already in radians
 
         # Convert to degrees for plotting
         ra_deg = np.rad2deg(ra) % 360.0
@@ -504,52 +510,52 @@ class CylindricProjector:
 
         # Filter by display range
         mask = (
-                (ra_deg >= self.config.ra_min) &
-                (ra_deg <= self.config.ra_max) &
-                (dec_deg >= self.config.dec_min) &
-                (dec_deg <= self.config.dec_max)
+            (ra_deg >= self.config.ra_min)
+            & (ra_deg <= self.config.ra_max)
+            & (dec_deg >= self.config.dec_min)
+            & (dec_deg <= self.config.dec_max)
         )
 
         # Create projection data
         n_visible = np.sum(mask)
         projection_data = np.zeros(n_visible, dtype=PROJECTION_DTYPE)
 
-        projection_data['x'] = ra_deg[mask]
-        projection_data['y'] = dec_deg[mask]
-        projection_data['v_mag'] = data['v_mag'][mask]
+        projection_data["x"] = ra_deg[mask]
+        projection_data["y"] = dec_deg[mask]
+        projection_data["v_mag"] = data["v_mag"][mask]
 
         # Calculate display size based on magnitude
-        projection_data['size'] = mag_to_radius(
-            magnitude=projection_data['v_mag'],
+        projection_data["size"] = mag_to_radius(
+            magnitude=projection_data["v_mag"],
             max_magnitude=self.catalog.constraints.max_magnitude,
-            min_magnitude=self.catalog.constraints.min_magnitude
+            min_magnitude=self.catalog.constraints.min_magnitude,
         )
 
         # Store object IDs
-        if object_type == 'star':
-            projection_data['id'] = data['hip_id'][mask]
-        elif object_type == 'planet':
-            projection_data['id'] = data['planet_id'][mask]
+        if object_type == "star":
+            projection_data["id"] = data["hip_id"][mask]
+        elif object_type == "planet":
+            projection_data["id"] = data["planet_id"][mask]
 
         return projection_data
 
     def _create_figure(self):
         """Create and configure the matplotlib figure."""
         import matplotlib
+
         matplotlib.rcdefaults()
 
         if self.config.use_dark_mode:
-            self._bg_color   = 'black'
-            self._grid_color = 'gray'
-            self._text_color = 'white'
+            self._bg_color = "black"
+            self._grid_color = "gray"
+            self._text_color = "white"
         else:
-            self._bg_color   = 'white'
-            self._grid_color = 'lightgray'
-            self._text_color = 'black'
+            self._bg_color = "white"
+            self._grid_color = "lightgray"
+            self._text_color = "black"
 
         self._fig, self._ax = plt.subplots(
-            figsize=self.config.figsize,
-            dpi=self.config.dpi
+            figsize=self.config.figsize, dpi=self.config.dpi
         )
 
         # Явно устанавливаем цвета только для этой фигуры
@@ -559,12 +565,17 @@ class CylindricProjector:
         # Labels
         self._ax.set_xlim(self.config.ra_min, self.config.ra_max)
         self._ax.set_ylim(self.config.dec_min, self.config.dec_max)
-        self._ax.set_xlabel('Right Ascension (degrees)', fontsize=12, color=self._text_color)
-        self._ax.set_ylabel('Declination (degrees)', fontsize=12, color=self._text_color)
+        self._ax.set_xlabel(
+            "Right Ascension (degrees)", fontsize=12, color=self._text_color
+        )
+        self._ax.set_ylabel(
+            "Declination (degrees)", fontsize=12, color=self._text_color
+        )
         self._ax.set_title(
-            f'Celestial Sphere - {self.config.local_time.strftime("%Y-%m-%d %H:%M")}',
+            f"Celestial Sphere - "
+            f"{self.config.local_time.strftime('%Y-%m-%d %H:%M')}",
             fontsize=14,
-            color=self._text_color
+            color=self._text_color,
         )
         self._ax.tick_params(colors=self._text_color)
         self._ax.spines[:].set_color(self._text_color)
@@ -580,24 +591,25 @@ class CylindricProjector:
         if len(projection_data) == 0:
             return
 
-        x = projection_data['x']
-        y = projection_data['y']
-        sizes = projection_data['size'] * 3  # Scale for visibility
+        x = projection_data["x"]
+        y = projection_data["y"]
+        sizes = projection_data["size"] * 3  # Scale for visibility
 
-        color = 'white' if self.config.use_dark_mode else 'black'
+        color = "white" if self.config.use_dark_mode else "black"
 
         self._ax.scatter(
-            x, y,
+            x,
+            y,
             s=sizes,
             c=color,
             alpha=0.8,
-            edgecolors='none',
+            edgecolors="none",
             zorder=2,
-            label='Stars'
+            label="Stars",
         )
 
-        self._groups['Objects'] = self._groups.get('Objects', []) + [
-            (self._ax.scatter([], [], c=color, s=50), 'Stars')
+        self._groups["Objects"] = self._groups.get("Objects", []) + [
+            (self._ax.scatter([], [], c=color, s=50), "Stars")
         ]
 
     def _add_planets(self, projection_data: NDArray):
@@ -615,26 +627,27 @@ class CylindricProjector:
                 break
 
             planet_data = projection_data[i]
-            x = planet_data['x']
-            y = planet_data['y']
+            x = planet_data["x"]
+            y = planet_data["y"]
 
             # Get planet color
             color = self.planets_catalog.get_planet_color(planet_enum)
 
             # Plot planet
             scatter = self._ax.scatter(
-                x, y,
+                x,
+                y,
                 s=200,
                 c=color,
-                edgecolors='white' if self.config.use_dark_mode else 'black',
+                edgecolors="white" if self.config.use_dark_mode else "black",
                 linewidths=1.5,
                 alpha=0.9,
                 zorder=5,
-                label=planet_enum.name.capitalize()
+                label=planet_enum.name.capitalize(),
             )
 
             # Add to legend
-            self._groups['Planets'] = self._groups.get('Planets', []) + [
+            self._groups["Planets"] = self._groups.get("Planets", []) + [
                 (scatter, planet_enum.name.capitalize())
             ]
 
@@ -643,15 +656,15 @@ class CylindricProjector:
                 planet_enum.name.capitalize(),
                 xy=(x, y),
                 xytext=(5, 5),
-                textcoords='offset points',
+                textcoords="offset points",
                 fontsize=8,
                 color=self._text_color,
                 bbox=dict(
-                    boxstyle='round,pad=0.3',
+                    boxstyle="round,pad=0.3",
                     facecolor=color,
                     alpha=0.6,
-                    edgecolor='none'
-                )
+                    edgecolor="none",
+                ),
             )
 
     def _add_grid(self):
@@ -659,15 +672,27 @@ class CylindricProjector:
 
         # RA grid lines (vertical)
         ra_lines = []
-        for ra in np.arange(self.config.ra_min, self.config.ra_max + 1, self.config.grid_ra_step):
-            dec_points = np.linspace(self.config.dec_min, self.config.dec_max, 100)
+        for ra in np.arange(
+            self.config.ra_min,
+            self.config.ra_max + 1,
+            self.config.grid_ra_step,
+        ):
+            dec_points = np.linspace(
+                self.config.dec_min, self.config.dec_max, 100
+            )
             ra_points = np.full_like(dec_points, ra)
             ra_lines.append(np.column_stack([ra_points, dec_points]))
 
         # Dec grid lines (horizontal)
         dec_lines = []
-        for dec in np.arange(self.config.dec_min, self.config.dec_max + 1, self.config.grid_dec_step):
-            ra_points = np.linspace(self.config.ra_min, self.config.ra_max, 100)
+        for dec in np.arange(
+            self.config.dec_min,
+            self.config.dec_max + 1,
+            self.config.grid_dec_step,
+        ):
+            ra_points = np.linspace(
+                self.config.ra_min, self.config.ra_max, 100
+            )
             dec_points = np.full_like(ra_points, dec)
             dec_lines.append(np.column_stack([ra_points, dec_points]))
 
@@ -677,13 +702,13 @@ class CylindricProjector:
             colors=self._grid_color,
             alpha=0.3,
             linewidth=0.5,
-            linestyle='--',
-            zorder=1
+            linestyle="--",
+            zorder=1,
         )
         self._ax.add_collection(grid_collection)
 
-        self._groups['Grids'] = self._groups.get('Grids', []) + [
-            (grid_collection, 'Coordinate Grid')
+        self._groups["Grids"] = self._groups.get("Grids", []) + [
+            (grid_collection, "Coordinate Grid")
         ]
 
     def _plot_curve_with_wrapping(
@@ -693,9 +718,9 @@ class CylindricProjector:
         color: str,
         alpha: float = 0.7,
         linewidth: float = 2.0,
-        linestyle: str = '--',
+        linestyle: str = "--",
         zorder: int = 3,
-        label: str = ''
+        label: str = "",
     ) -> Optional[LineCollection]:
         """Plot a curve on the cylindrical projection, correctly handling
         RA wrap-around and dec boundary clipping.
@@ -721,10 +746,13 @@ class CylindricProjector:
         :rtype: LineCollection | None
         """
         segments = _split_segments_at_boundary(
-            ra_points, dec_points,
-            self.config.ra_min, self.config.ra_max,
-            self.config.dec_min, self.config.dec_max,
-            ra_wrap_threshold=self._ra_span * 0.5
+            ra_points,
+            dec_points,
+            self.config.ra_min,
+            self.config.ra_max,
+            self.config.dec_min,
+            self.config.dec_max,
+            ra_wrap_threshold=self._ra_span * 0.5,
         )
 
         if not segments:
@@ -737,7 +765,7 @@ class CylindricProjector:
             linewidths=linewidth,
             linestyle=linestyle,
             zorder=zorder,
-            label=label
+            label=label,
         )
         self._ax.add_collection(collection)
         return collection
@@ -750,22 +778,23 @@ class CylindricProjector:
         ra_points = np.linspace(0, 360, 1000)
         dec_points = obliquity * np.sin(np.deg2rad(ra_points))
 
-        color = 'yellow' if self.config.use_dark_mode else 'orange'
+        color = "yellow" if self.config.use_dark_mode else "orange"
 
         collection = self._plot_curve_with_wrapping(
-            ra_points, dec_points,
+            ra_points,
+            dec_points,
             color=color,
             alpha=0.7,
             linewidth=2,
-            linestyle='--',
+            linestyle="--",
             zorder=3,
-            label='Ecliptic'
+            label="Ecliptic",
         )
 
         if collection:
-            self._groups['Reference Lines'] = self._groups.get('Reference Lines', []) + [
-                (collection, 'Ecliptic')
-            ]
+            self._groups["Reference Lines"] = self._groups.get(
+                "Reference Lines", []
+            ) + [(collection, "Ecliptic")]
 
     def _add_equator(self):
         """Add the celestial equator to the projection."""
@@ -773,56 +802,58 @@ class CylindricProjector:
         ra_points = np.linspace(self.config.ra_min, self.config.ra_max, 1000)
         dec_points = np.zeros_like(ra_points)
 
-        color = 'cyan' if self.config.use_dark_mode else 'blue'
+        color = "cyan" if self.config.use_dark_mode else "blue"
 
         collection = self._plot_curve_with_wrapping(
-            ra_points, dec_points,
+            ra_points,
+            dec_points,
             color=color,
             alpha=0.7,
             linewidth=2,
-            linestyle='-',
+            linestyle="-",
             zorder=3,
-            label='Celestial Equator'
+            label="Celestial Equator",
         )
 
         if collection:
-            self._groups['Reference Lines'] = self._groups.get('Reference Lines', []) + [
-                (collection, 'Celestial Equator')
-            ]
+            self._groups["Reference Lines"] = self._groups.get(
+                "Reference Lines", []
+            ) + [(collection, "Celestial Equator")]
 
     def _add_galactic_equator(self):
         """Add the galactic equator to the projection."""
-        # Simplified representation - actual galactic equator requires coordinate transformation
-        # The galactic equator passes through RA~192°, Dec~27° (north galactic pole)
+        # Simplified representation
+        # actual galactic equator requires coordinate transformation
 
         # Generate approximate galactic equator curve
         ra_points = np.linspace(0, 360, 1000)
-        # Very simplified - actual calculation requires proper coordinate transformation
+        # Very simplified
+        # actual calculation requires proper coordinate transformation
         dec_points = 27 * np.sin(np.deg2rad(ra_points - 192))
 
         # Filter by display range
         mask = (
-                (ra_points >= self.config.ra_min) &
-                (ra_points <= self.config.ra_max) &
-                (dec_points >= self.config.dec_min) &
-                (dec_points <= self.config.dec_max)
+            (ra_points >= self.config.ra_min)
+            & (ra_points <= self.config.ra_max)
+            & (dec_points >= self.config.dec_min)
+            & (dec_points <= self.config.dec_max)
         )
 
-        color = 'magenta' if self.config.use_dark_mode else 'purple'
-        line, = self._ax.plot(
+        color = "magenta" if self.config.use_dark_mode else "purple"
+        (line,) = self._ax.plot(
             ra_points[mask],
             dec_points[mask],
             color=color,
             alpha=0.6,
             linewidth=1.5,
-            linestyle=':',
+            linestyle=":",
             zorder=3,
-            label='Galactic Equator (approx.)'
+            label="Galactic Equator (approx.)",
         )
 
-        self._groups['Reference Lines'] = self._groups.get('Reference Lines', []) + [
-            (line, 'Galactic Equator')
-        ]
+        self._groups["Reference Lines"] = self._groups.get(
+            "Reference Lines", []
+        ) + [(line, "Galactic Equator")]
 
     def _add_horizon(self):
         """Add the local horizon line to the projection."""
@@ -831,8 +862,7 @@ class CylindricProjector:
 
         # Calculate local sidereal time
         sidereal_time = vequinox_hour_angle(
-            longitude=self.config.longitude,
-            local=self.config.local_time
+            longitude=self.config.longitude, local=self.config.local_time
         )
 
         # Generate azimuth points for horizon circle
@@ -865,29 +895,32 @@ class CylindricProjector:
         ra_deg = ra_deg[sort_idx]
         dec_deg = dec_deg[sort_idx]
 
-        color = 'lime' if self.config.use_dark_mode else 'green'
+        color = "lime" if self.config.use_dark_mode else "green"
 
         collection = self._plot_curve_with_wrapping(
-            ra_deg, dec_deg,
+            ra_deg,
+            dec_deg,
             color=color,
             alpha=0.6,
             linewidth=2,
-            linestyle='-.',
+            linestyle="-.",
             zorder=3,
-            label='Horizon'
+            label="Horizon",
         )
 
         if collection:
-            self._groups['Reference Lines'] = self._groups.get('Reference Lines', []) + [
-                (collection, 'Horizon')
-            ]
+            self._groups["Reference Lines"] = self._groups.get(
+                "Reference Lines", []
+            ) + [(collection, "Horizon")]
 
     def _add_constellations(self):
         """Add constellation line patterns to the projection."""
 
         # Determine which constellations to render
         if self.constellation_config.constellations_list is not None:
-            constellations_to_render = self.constellation_config.constellations_list
+            constellations_to_render = (
+                self.constellation_config.constellations_list
+            )
         else:
             constellations_to_render = get_available_constellations()
 
@@ -897,9 +930,9 @@ class CylindricProjector:
         # Create a mapping from HIP ID to star coordinates in degrees
         hip_to_star = {}
         for star in stars_data:
-            hip_id = star['hip_id']
-            ra_deg = np.rad2deg(star['ra']) % 360.0
-            dec_deg = np.rad2deg(star['dec'])
+            hip_id = star["hip_id"]
+            ra_deg = np.rad2deg(star["ra"]) % 360.0
+            dec_deg = np.rad2deg(star["dec"])
             hip_to_star[hip_id] = (ra_deg, dec_deg)
 
         # Process each constellation
@@ -914,11 +947,18 @@ class CylindricProjector:
                     continue
 
                 # Get color for this constellation
-                if (self.constellation_config.constellation_color_map and
-                        constellation in self.constellation_config.constellation_color_map):
-                    color = self.constellation_config.constellation_color_map[constellation]
+                """
+                FIX ME: How to use color here?
+                if (
+                    self.constellation_config.constellation_color_map
+                    and constellation
+                    in self.constellation_config.constellation_color_map
+                ):
+                    color = self.constellation_config.constellation_color_map[
+                        constellation
+                    ]
                 else:
-                    color = self.constellation_config.constellation_color
+                    color = self.constellation_config.constellation_color"""
 
                 # Process each line (chain of stars) in the constellation
                 for line in lines:
@@ -932,15 +972,22 @@ class CylindricProjector:
                             # Star not found — break the chain
                             if len(chain_points) >= 2:
                                 # Process the chain we have so far
-                                self._add_constellation_chain(chain_points, all_segments)
+                                self._add_constellation_chain(
+                                    chain_points, all_segments
+                                )
                             chain_points = []
 
                     # Process remaining chain
                     if len(chain_points) >= 2:
-                        self._add_constellation_chain(chain_points, all_segments)
+                        self._add_constellation_chain(
+                            chain_points, all_segments
+                        )
 
             except Exception as e:
-                print(f"Warning: Could not render constellation {constellation}: {e}")
+                print(
+                    f"Warning: Could not render constellation"
+                    f"{constellation}: {e}"
+                )
                 continue
 
         # Create LineCollection for all constellation segments
@@ -951,18 +998,18 @@ class CylindricProjector:
                 alpha=self.constellation_config.constellation_alpha,
                 linewidths=self.constellation_config.constellation_linewidth,
                 zorder=4,
-                label='Constellations'
+                label="Constellations",
             )
             self._ax.add_collection(constellation_collection)
 
-            self._groups['Constellations'] = self._groups.get('Constellations', []) + [
-                (constellation_collection, 'Constellation Lines')
-            ]
+            self._groups["Constellations"] = self._groups.get(
+                "Constellations", []
+            ) + [(constellation_collection, "Constellation Lines")]
 
     def _add_constellation_chain(
         self,
         chain_points: List[Tuple[float, float]],
-        all_segments: List[NDArray]
+        all_segments: List[NDArray],
     ):
         """Process a chain of constellation stars into line segments,
         handling RA wrap-around correctly.
@@ -986,9 +1033,13 @@ class CylindricProjector:
 
             # Handle RA wrap-around for this pair
             pair_segments = _make_pair_segments_with_wrapping(
-                ra1, dec1, ra2, dec2,
-                self.config.ra_min, self.config.ra_max,
-                ra_wrap_threshold=self._ra_span * 0.5
+                ra1,
+                dec1,
+                ra2,
+                dec2,
+                self.config.ra_min,
+                self.config.ra_max,
+                ra_wrap_threshold=self._ra_span * 0.5,
             )
 
             for seg in pair_segments:
@@ -998,7 +1049,9 @@ class CylindricProjector:
                     all_segments.append(clipped)
 
     def _clip_segment_to_range(self, segment: NDArray) -> Optional[NDArray]:
-        """Clip a 2-point segment to the display range, interpolating at boundaries.
+        """
+        Clip a 2-point segment to the display range,
+        interpolating at boundaries.
 
         :param segment: Nx2 array of [ra, dec] points
         :type segment: NDArray
@@ -1015,31 +1068,39 @@ class CylindricProjector:
         for i in range(len(segment)):
             ra, dec = segment[i]
             in_range = (
-                self.config.ra_min <= ra <= self.config.ra_max and
-                self.config.dec_min <= dec <= self.config.dec_max
+                self.config.ra_min <= ra <= self.config.ra_max
+                and self.config.dec_min <= dec <= self.config.dec_max
             )
 
             if i > 0:
                 prev_ra, prev_dec = segment[i - 1]
                 prev_in_range = (
-                    self.config.ra_min <= prev_ra <= self.config.ra_max and
-                    self.config.dec_min <= prev_dec <= self.config.dec_max
+                    self.config.ra_min <= prev_ra <= self.config.ra_max
+                    and self.config.dec_min <= prev_dec <= self.config.dec_max
                 )
 
                 # Handle transitions in/out of range
                 if in_range and not prev_in_range:
                     # Entering the range — add boundary point
                     edge = _interpolate_dec_boundary(
-                        prev_ra, prev_dec, ra, dec,
-                        self.config.dec_min, self.config.dec_max
+                        prev_ra,
+                        prev_dec,
+                        ra,
+                        dec,
+                        self.config.dec_min,
+                        self.config.dec_max,
                     )
                     if edge:
                         clipped_points.append(edge)
                 elif not in_range and prev_in_range:
                     # Leaving the range — add boundary point
                     edge = _interpolate_dec_boundary(
-                        prev_ra, prev_dec, ra, dec,
-                        self.config.dec_min, self.config.dec_max
+                        prev_ra,
+                        prev_dec,
+                        ra,
+                        dec,
+                        self.config.dec_min,
+                        self.config.dec_max,
                     )
                     if edge:
                         clipped_points.append(edge)
@@ -1056,7 +1117,9 @@ class CylindricProjector:
         """Add constellation names to the projection."""
 
         if self.constellation_config.constellations_list is not None:
-            constellations_to_render = self.constellation_config.constellations_list
+            constellations_to_render = (
+                self.constellation_config.constellations_list
+            )
         else:
             constellations_to_render = get_available_constellations()
 
@@ -1072,20 +1135,21 @@ class CylindricProjector:
             dec_deg = np.rad2deg(dec)
 
             # Check if in display range
-            if (self.config.ra_min <= ra_deg <= self.config.ra_max and
-                    self.config.dec_min <= dec_deg <= self.config.dec_max):
-
+            if (
+                self.config.ra_min <= ra_deg <= self.config.ra_max
+                and self.config.dec_min <= dec_deg <= self.config.dec_max
+            ):
                 self._ax.annotate(
                     constellation,
                     xy=(ra_deg, dec_deg),
                     xytext=(0, 0),
-                    textcoords='offset points',
+                    textcoords="offset points",
                     fontsize=10,
-                    color='gray',
+                    color="gray",
                     alpha=0.7,
-                    ha='center',
-                    va='center',
-                    weight='bold'
+                    ha="center",
+                    va="center",
+                    weight="bold",
                 )
 
     def _create_grouped_legend(self):
@@ -1096,7 +1160,9 @@ class CylindricProjector:
             return
 
         # Sort groups by size
-        groups = dict(sorted(groups.items(), key=lambda x: len(x[1]), reverse=True))
+        groups = dict(
+            sorted(groups.items(), key=lambda x: len(x[1]), reverse=True)
+        )
 
         # Determine layout
         n_groups = len(groups)
@@ -1118,16 +1184,17 @@ class CylindricProjector:
             bbox_y = -0.15 if i >= n_columns else -0.05
 
             legend = self._ax.legend(
-                handles, labels,
+                handles,
+                labels,
                 title=title,
-                loc='upper left',
+                loc="upper left",
                 fontsize=8,
                 bbox_to_anchor=(bbox_x, bbox_y),
                 frameon=True,
                 fancybox=True,
-                borderaxespad=0.2
+                borderaxespad=0.2,
             )
 
-            legend.get_title().set_fontweight('bold')
+            legend.get_title().set_fontweight("bold")
             legend.get_title().set_fontsize(9)
             self._ax.add_artist(legend)

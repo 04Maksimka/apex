@@ -18,16 +18,19 @@ class DependentOption(click.Option):
         # Check only if flag explicitly changed by user
         if current_value != default_value:
             active_deps = [
-                dep for dep in self.depends_on
-                if opts.get(dep) is True
+                dep for dep in self.depends_on if opts.get(dep) is True
             ]
             blocked_deps = [
-                dep for dep in self.depends_on
-                if opts.get(dep) is False  # explicitly got --no-add-equatorial-grid
+                dep
+                for dep in self.depends_on
+                if opts.get(dep)
+                is False  # explicitly got --no-add-equatorial-grid
             ]
 
             if not active_deps and len(blocked_deps) == len(self.depends_on):
-                dep_names = [f"--{d.replace('_', '-')}" for d in self.depends_on]
+                dep_names = [
+                    f"--{d.replace('_', '-')}" for d in self.depends_on
+                ]
                 raise click.UsageError(
                     f"'--{self.name.replace('_', '-')}' requires "
                     f"one of: {', '.join(dep_names)}."

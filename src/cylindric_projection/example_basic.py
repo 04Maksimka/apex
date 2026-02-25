@@ -1,6 +1,9 @@
 from matplotlib import pyplot as plt
 
-from src.cylindric_projection.cylidric_projector import CylindricConfig, CylindricProjector
+from src.cylindric_projection.cylidric_projector import (
+    CylindricConfig,
+    CylindricProjector,
+)
 from src.helpers.pdf_helpers.figure2pdf import save_figure
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from src.planets_catalog.planet_catalog import PlanetCatalog
@@ -19,29 +22,27 @@ def example_basic_usage():
         add_planets=True,
         add_constellations_names=True,
         use_dark_mode=True,
-        figsize=(18, 9)
+        figsize=(18, 9),
     )
 
     # Create catalogs
-    star_catalog = Catalog(catalog_name='hip_data.tsv', use_cache=False)
+    star_catalog = Catalog(catalog_name="hip_data.tsv", use_cache=False)
     planet_catalog = PlanetCatalog()
 
     # Create projector
     projector = CylindricProjector(
-        config=config,
-        catalog=star_catalog,
-        planets_catalog=planet_catalog
+        config=config, catalog=star_catalog, planets_catalog=planet_catalog
     )
 
     # Generate visualization
     constraints = CatalogConstraints(max_magnitude=6.0)
     fig, ax = projector.generate(constraints=constraints)
 
-    save_figure(fig, 'cylindric_proj')
+    save_figure(fig, "cylindric_proj")
 
     plt.tight_layout()
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     example_basic_usage()

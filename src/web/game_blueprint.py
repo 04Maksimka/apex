@@ -30,20 +30,22 @@ GET  /game/api/score       — текущий счёт сессии
 POST /game/api/finish      — явно завершить сессию
 GET  /game/api/modes       — список доступных режимов (мета-информация)
 """
+
 from __future__ import annotations
 
-import time
+import os
 from typing import Any, Dict
 
-from flask import Blueprint, jsonify, request, send_from_directory, abort
-import os
+from flask import Blueprint, abort, jsonify, request, send_from_directory
 
-from src.game.session import (
-    create_session, get_session, delete_session, cleanup_old_sessions,
-    DIFFICULTY_CONSTELLATIONS,
-)
 from src.game.question_factory import QuestionFactory
-from src.game.scoring import calculate_score, get_rank, build_result
+from src.game.scoring import build_result, calculate_score, get_rank
+from src.game.session import (
+    cleanup_old_sessions,
+    create_session,
+    delete_session,
+    get_session,
+)
 
 game_bp = Blueprint("game", __name__, url_prefix="/game")
 _factory = QuestionFactory()
@@ -61,39 +63,44 @@ _STATIC_DIR = os.path.join(os.path.dirname(__file__), "public_html")
 # ---------------------------------------------------------------------------
 MODES_META = [
     {
-        "id":          "constellation",
-        "title":       "Созвездия",
-        "icon":        "🌟",
-        "description": "Угадай созвездие по участку карты неба. 4 варианта ответа.",
-        "tags":        ["Карта неба", "4 варианта"],
+        "id": "constellation",
+        "title": "Созвездия",
+        "icon": "🌟",
+        "description": "Угадай созвездие по участку карты неба. "
+        "4 варианта ответа.",
+        "tags": ["Карта неба", "4 варианта"],
     },
     {
-        "id":          "star",
-        "title":       "Звёзды",
-        "icon":        "⭐",
-        "description": "Угадай название яркой звезды по изображению неба вокруг неё.",
-        "tags":        ["Яркие звёзды", "4 варианта / ввод"],
+        "id": "star",
+        "title": "Звёзды",
+        "icon": "⭐",
+        "description": "Угадай название яркой звезды по изображению "
+        "неба вокруг неё.",
+        "tags": ["Яркие звёзды", "4 варианта / ввод"],
     },
     {
-        "id":          "messier",
-        "title":       "Объекты Мессье",
-        "icon":        "🌌",
-        "description": "Угадай номер объекта каталога Мессье (M1–M110) по pinhole-проекции.",
-        "tags":        ["M1–M110", "Ввод числа"],
+        "id": "messier",
+        "title": "Объекты Мессье",
+        "icon": "🌌",
+        "description": "Угадай номер объекта каталога Мессье (M1–M110) "
+        "по pinhole-проекции.",
+        "tags": ["M1–M110", "Ввод числа"],
     },
     {
-        "id":          "draw",
-        "title":       "Нарисуй созвездие",
-        "icon":        "✏️",
-        "description": "Соедини звёзды линиями так, чтобы получился правильный контур созвездия.",
-        "tags":        ["Рисование", "Память"],
+        "id": "draw",
+        "title": "Нарисуй созвездие",
+        "icon": "✏️",
+        "description": "Соедини звёзды линиями так, чтобы получился "
+        "правильный контур созвездия.",
+        "tags": ["Рисование", "Память"],
     },
     {
-        "id":          "trivia",
-        "title":       "Астро-trivia",
-        "icon":        "🔭",
-        "description": "Ответь на вопросы о физике, истории и мифологии астрономии.",
-        "tags":        ["Мифология", "Факты", "4 варианта"],
+        "id": "trivia",
+        "title": "Астро-trivia",
+        "icon": "🔭",
+        "description": "Ответь на вопросы о физике, "
+        "истории и мифологии астрономии.",
+        "tags": ["Мифология", "Факты", "4 варианта"],
     },
 ]
 
@@ -101,6 +108,7 @@ MODES_META = [
 # ---------------------------------------------------------------------------
 # Static page routes
 # ---------------------------------------------------------------------------
+
 
 @game_bp.route("/")
 @game_bp.route("/lobby")
@@ -135,6 +143,7 @@ def game_page(mode: str):
 # API helpers
 # ---------------------------------------------------------------------------
 
+
 def _err(msg: str, status: int = 400):
     return jsonify({"error": msg}), status
 
@@ -160,6 +169,7 @@ def _generate_question(session):
 # Meta endpoint
 # ---------------------------------------------------------------------------
 
+
 @game_bp.route("/api/modes", methods=["GET"])
 def api_modes():
     """
@@ -173,6 +183,7 @@ def api_modes():
 # Game session endpoints
 # ---------------------------------------------------------------------------
 
+
 @game_bp.route("/api/start", methods=["POST"])
 def api_start():
     """
@@ -180,14 +191,15 @@ def api_start():
     Тело запроса:
         { "mode": "constellation", "difficulty": "easy", "rounds": 10 }
     Ответ:
-        { "session_id": "...", "mode": ..., "difficulty": ..., "total_rounds": ... }
+        { "session_id": "...", "mode": ...,
+        "difficulty": ..., "total_rounds": ... }
     """
     cleanup_old_sessions()
     data: Dict[str, Any] = request.get_json(force=True, silent=True) or {}
 
-    mode       = data.get("mode", "constellation")
+    mode = data.get("mode", "constellation")
     difficulty = data.get("difficulty", "easy")
-    rounds     = int(data.get("rounds", 10))
+    rounds = int(data.get("rounds", 10))
 
     if mode not in VALID_MODES:
         return _err(f"Invalid mode. Choose from: {sorted(VALID_MODES)}")
@@ -196,7 +208,9 @@ def api_start():
     if not (1 <= rounds <= 30):
         return _err("rounds must be between 1 and 30")
 
-    session = create_session(mode=mode, difficulty=difficulty, total_rounds=rounds)
+    session = create_session(
+        mode=mode, difficulty=difficulty, total_rounds=rounds
+    )
     return jsonify(session.to_dict()), 201
 
 
@@ -211,16 +225,18 @@ def api_question():
     server-side answer validation.
     """
     session_id = request.args.get("session_id", "")
-    session    = get_session(session_id)
+    session = get_session(session_id)
     if not session:
         return _err("Session not found", 404)
 
     if session.is_finished:
-        return jsonify({
-            "finished": True,
-            **session.to_dict(),
-            "rank": get_rank(session.score),
-        })
+        return jsonify(
+            {
+                "finished": True,
+                **session.to_dict(),
+                "rank": get_rank(session.score),
+            }
+        )
 
     try:
         question = _generate_question(session)
@@ -228,17 +244,17 @@ def api_question():
         return _err(f"Failed to generate question: {exc}", 500)
 
     resp = {
-        "session":       session.to_dict(),
+        "session": session.to_dict(),
         "question_type": question["type"],
-        "question":      question["question"],
-        "hint":          question.get("hint", ""),
-        "round":         session.round + 1,
+        "question": question["question"],
+        "hint": question.get("hint", ""),
+        "round": session.round + 1,
     }
 
     if question["type"] == "draw":
-        resp["stars"]   = question["stars"]
+        resp["stars"] = question["stars"]
     else:
-        resp["image"]   = question["image"]
+        resp["image"] = question["image"]
         resp["options"] = question["options"]
 
     return jsonify(resp)
@@ -250,71 +266,74 @@ def api_answer():
     POST /game/api/answer
 
     Normal modes body:
-        { "session_id": "...", "answer": "Orion", "used_hint": false, "time_seconds": 7 }
+        { "session_id": "...", "answer": "Orion",
+        "used_hint": false, "time_seconds": 7 }
 
     Star hard mode extra fields:
         { ..., "answer_ra": 101.3, "answer_dec": -16.7 }
 
     Draw mode body:
-        { "session_id": "...", "drawn_edges": [[hip1,hip2],...], "used_hint": false, "time_seconds": 30 }
+        { "session_id": "...", "drawn_edges": [[hip1,hip2],...],
+        "used_hint": false, "time_seconds": 30 }
     """
     data: Dict[str, Any] = request.get_json(force=True, silent=True) or {}
     session_id = data.get("session_id", "")
-    session    = get_session(session_id)
+    session = get_session(session_id)
     if not session:
         return _err("Session not found", 404)
     if not session.current_question:
         return _err("No active question; call /api/question first")
 
-    used_hint    = bool(data.get("used_hint", False))
+    used_hint = bool(data.get("used_hint", False))
     time_seconds = data.get("time_seconds")
 
     coord_feedback = None
-    draw_details   = None
+    draw_details = None
 
     # ── Draw mode ────────────────────────────────────────────────────────────
     if session.current_question["type"] == "draw":
-        drawn_edges    = data.get("drawn_edges", [])
-        result         = _factory.check_draw_answer(session, drawn_edges)
-        correct        = result.get("correct", False)
+        drawn_edges = data.get("drawn_edges", [])
+        result = _factory.check_draw_answer(session, drawn_edges)
+        correct = result.get("correct", False)
         correct_answer = result.get("correct_answer", "")
-        player_answer  = f"{result.get('score_pct', 0):.0f}% линий совпало"
-        fun_fact       = result.get("fun_fact", "")
-        draw_details   = result
+        player_answer = f"{result.get('score_pct', 0):.0f}% линий совпало"
+        fun_fact = result.get("fun_fact", "")
+        draw_details = result
 
-    # ── All other modes ───────────────────────────────────────────────────────
+    # ── All other modes ──────────────────────────────────────────────────────
     else:
-        player_answer  = str(data.get("answer", "")).strip()
+        player_answer = str(data.get("answer", "")).strip()
         correct_answer = session.current_question.get("correct", "")
-        fun_fact       = session.current_question.get("fun_fact", "")
-        name_correct   = player_answer.lower() == correct_answer.lower()
+        fun_fact = session.current_question.get("fun_fact", "")
+        name_correct = player_answer.lower() == correct_answer.lower()
 
         # Star hard-mode: also validate equatorial coordinates (±10°)
-        if (session.current_question.get("type") == "star"
-                and session.difficulty == "hard"):
-
-            correct_ra  = session.current_question.get("correct_ra_deg")
+        if (
+            session.current_question.get("type") == "star"
+            and session.difficulty == "hard"
+        ):
+            correct_ra = session.current_question.get("correct_ra_deg")
             correct_dec = session.current_question.get("correct_dec_deg")
 
             if correct_ra is not None and correct_dec is not None:
                 try:
-                    answer_ra  = float(data["answer_ra"])
+                    answer_ra = float(data["answer_ra"])
                     answer_dec = float(data["answer_dec"])
                     # RA is circular (0–360°) — use shortest arc
-                    ra_diff  = abs(((answer_ra - correct_ra + 180) % 360) - 180)
+                    ra_diff = abs(((answer_ra - correct_ra + 180) % 360) - 180)
                     dec_diff = abs(answer_dec - correct_dec)
-                    ra_ok    = ra_diff  <= 10.0
-                    dec_ok   = dec_diff <= 10.0
-                    correct  = name_correct and ra_ok and dec_ok
+                    ra_ok = ra_diff <= 10.0
+                    dec_ok = dec_diff <= 10.0
+                    correct = name_correct and ra_ok and dec_ok
                     coord_feedback = {
-                        "ra_ok":       ra_ok,
-                        "dec_ok":      dec_ok,
-                        "user_ra":     round(answer_ra,  1),
-                        "user_dec":    round(answer_dec, 1),
-                        "correct_ra":  round(correct_ra,  1),
+                        "ra_ok": ra_ok,
+                        "dec_ok": dec_ok,
+                        "user_ra": round(answer_ra, 1),
+                        "user_dec": round(answer_dec, 1),
+                        "correct_ra": round(correct_ra, 1),
                         "correct_dec": round(correct_dec, 1),
-                        "ra_diff":     round(ra_diff,  1),
-                        "dec_diff":    round(dec_diff, 1),
+                        "ra_diff": round(ra_diff, 1),
+                        "dec_diff": round(dec_diff, 1),
                     }
                 except (KeyError, TypeError, ValueError):
                     # Coordinates not provided or invalid — mark only name
@@ -324,7 +343,7 @@ def api_answer():
         else:
             correct = name_correct
 
-    # ── Scoring ───────────────────────────────────────────────────────────────
+    # ── Scoring ──────────────────────────────────────────────────────────────
     points = calculate_score(
         difficulty=session.difficulty,
         correct=correct,
@@ -335,18 +354,20 @@ def api_answer():
     session.score += points
     session.round += 1
     if correct:
-        session.streak       += 1
+        session.streak += 1
         session.correct_count += 1
-        session.best_streak   = max(session.best_streak, session.streak)
+        session.best_streak = max(session.best_streak, session.streak)
     else:
         session.streak = 0
 
-    session.history.append({
-        "round":   session.round,
-        "correct": correct,
-        "points":  points,
-        "answer":  player_answer,
-    })
+    session.history.append(
+        {
+            "round": session.round,
+            "correct": correct,
+            "points": points,
+            "answer": player_answer,
+        }
+    )
     session.current_question = None
 
     resp = build_result(
@@ -362,7 +383,7 @@ def api_answer():
         resp["draw_details"] = draw_details
     if coord_feedback is not None:
         resp["coord_feedback"] = coord_feedback
-        resp["name_correct"]   = name_correct
+        resp["name_correct"] = name_correct
 
     return jsonify(resp)
 
@@ -377,7 +398,7 @@ def api_hint():
     Ответ: { "hint": "Это созвездие зимнего неба..." }
     """
     session_id = request.args.get("session_id", "")
-    session    = get_session(session_id)
+    session = get_session(session_id)
     if not session:
         return _err("Session not found", 404)
     if not session.current_question:
@@ -392,7 +413,7 @@ def api_score():
     Возвращает текущий счёт и статистику сессии.
     """
     session_id = request.args.get("session_id", "")
-    session    = get_session(session_id)
+    session = get_session(session_id)
     if not session:
         return _err("Session not found", 404)
     return jsonify({**session.to_dict(), "rank": get_rank(session.score)})
@@ -407,15 +428,15 @@ def api_finish():
 
     Тело запроса: { "session_id": "..." }
     """
-    data       = request.get_json(force=True, silent=True) or {}
+    data = request.get_json(force=True, silent=True) or {}
     session_id = data.get("session_id", "")
-    session    = get_session(session_id)
+    session = get_session(session_id)
     if not session:
         return _err("Session not found", 404)
 
     summary = {
         **session.to_dict(),
-        "rank":    get_rank(session.score),
+        "rank": get_rank(session.score),
         "history": session.history,
     }
     delete_session(session_id)

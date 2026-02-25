@@ -1,16 +1,17 @@
 """Module with astronomical time functions."""
 
 from datetime import datetime, time, timedelta
-import numpy as np
 
+import numpy as np
 
 SECONDS_IN_HOUR = 3600.0
 MINUTES_IN_HOUR = 60.0
 SECONDS_IN_DAY = 86400.0
 
+
 def get_sidereal_time(longitude: float, local: datetime) -> time:
     """Calculate local sidereal time
-    See in "Practical Astronomy with your Calculator", Peter Duffett-Smith, 1979
+    "Practical Astronomy with your Calculator", Peter Duffett-Smith, 1979
 
     :param longitude: place longitude in radians
     :type longitude: float
@@ -111,7 +112,8 @@ def get_time(total_hours: float) -> time:
 
 
 def julian_date(date_time: datetime):
-    """Returns the Julian date, number of days since 1 January 4713 BC 12:00 UTC.
+    """
+    Returns the Julian date, number of days since 1 January 4713 BC 12:00 UTC.
 
     :param date_time: time to convert
     :type date_time: datetime
@@ -141,6 +143,6 @@ def julian_date(date_time: datetime):
         a = int(y / 100)
         b = 2 - a + int(a / 4)
 
-    jd = int(365.25*y) + int(30.6001*(m+1)) + d + b + 1720994.5
+    jd = int(365.25 * y) + int(30.6001 * (m + 1)) + d + b + 1720994.5
 
     return jd

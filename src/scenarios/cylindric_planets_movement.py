@@ -1,22 +1,25 @@
-"""Implementation of cylindrical projection showing planets' movement across the sky.
+"""Implementation of cylindrical projection showing planets'
+movement across the sky.
 
-This module creates visualizations (gif) of planetary motion using a cylindrical (equirectangular)
-projection, which maps the celestial sphere onto a flat rectangle. This is useful for
-tracking planetary positions over time and visualizing their paths through the zodiac.
-On the visualisation there is a  scatter plot for each planet at each tic of time of given interval.
+This module creates visualizations (gif) of planetary motion
+using a cylindrical (equirectangular) projection, which maps the celestial
+sphere onto a flat rectangle. This is useful for tracking planetary
+positions over time and visualizing their paths through the zodiac.
+On the visualization there is a  scatter plot for each planet at each
+tic of time of given interval.
 """
 
-from datetime import datetime, timedelta
-from typing import List, Tuple, Dict
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation, PillowWriter
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Dict, List, Tuple
 
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.animation import FuncAnimation, PillowWriter
 from numpy._typing import NDArray
 
-from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 
 
 @dataclass
@@ -52,7 +55,9 @@ class CylindricPlanetsMovement:
         """
         self.config = config
         self.planet_catalog = PlanetCatalog()
-        self.star_catalog = Catalog(catalog_name='hip_data.tsv', use_cache=False)
+        self.star_catalog = Catalog(
+            catalog_name="hip_data.tsv", use_cache=False
+        )
 
         # Generate time steps
         self.times = self._generate_time_steps()
@@ -60,7 +65,8 @@ class CylindricPlanetsMovement:
         # Pre-compute star positions (they don't change over short periods)
         if self.config.show_stars:
             constraints = CatalogConstraints(
-                max_magnitude=self.config.star_max_magnitude)
+                max_magnitude=self.config.star_max_magnitude
+            )
             self.stars = self.star_catalog.get_stars(constraints)
         else:
             self.stars = None
@@ -76,7 +82,9 @@ class CylindricPlanetsMovement:
 
         return times
 
-    def _ra_dec_to_cylindric(self, ra: NDArray, dec: NDArray) -> Tuple[NDArray, NDArray]:
+    def _ra_dec_to_cylindric(
+        self, ra: NDArray, dec: NDArray
+    ) -> Tuple[NDArray, NDArray]:
         """Convert RA/Dec to cylindrical projection coordinates.
 
         :param ra: Right ascension in radians
@@ -95,32 +103,40 @@ class CylindricPlanetsMovement:
         """Create and configure the figure for animation."""
 
         if self.config.dark_mode:
-            plt.style.use('dark_background')
-            bg_color = 'black'
-            grid_color = 'gray'
-            text_color = 'white'
+            plt.style.use("dark_background")
+            bg_color = "black"
+            grid_color = "gray"
+            text_color = "white"
         else:
-            plt.style.use('default')
-            bg_color = 'white'
-            grid_color = 'lightgray'
-            text_color = 'black'
+            plt.style.use("default")
+            bg_color = "white"
+            grid_color = "lightgray"
+            text_color = "black"
 
-        fig, ax = plt.subplots(figsize=self.config.figsize, dpi=self.config.dpi)
+        fig, ax = plt.subplots(
+            figsize=self.config.figsize, dpi=self.config.dpi
+        )
 
         # Set limits and aspect
         ax.set_xlim(0, 360)
         ax.set_ylim(-90, 90)
-        ax.set_aspect('equal')
+        ax.set_aspect("equal")
 
         # Labels
-        ax.set_xlabel('Right Ascension (degrees)', fontsize=12,
-                      color=text_color)
-        ax.set_ylabel('Declination (degrees)', fontsize=12, color=text_color)
+        ax.set_xlabel(
+            "Right Ascension (degrees)", fontsize=12, color=text_color
+        )
+        ax.set_ylabel("Declination (degrees)", fontsize=12, color=text_color)
 
         # Grid
         if self.config.show_grid:
-            ax.grid(True, alpha=0.3, color=grid_color, linestyle='--',
-                    linewidth=0.5)
+            ax.grid(
+                True,
+                alpha=0.3,
+                color=grid_color,
+                linestyle="--",
+                linewidth=0.5,
+            )
             ax.set_xticks(np.arange(0, 361, self.config.grid_spacing))
             ax.set_yticks(np.arange(-90, 91, self.config.grid_spacing))
 
@@ -138,16 +154,16 @@ class CylindricPlanetsMovement:
         if self.stars is None:
             return
 
-        ra = self.stars['ra']
-        dec = self.stars['dec']
-        v_mag = self.stars['v_mag']
+        ra = self.stars["ra"]
+        dec = self.stars["dec"]
+        v_mag = self.stars["v_mag"]
 
         x, y = self._ra_dec_to_cylindric(ra, dec)
 
         # Star sizes based on magnitude
         sizes = (6.0 - v_mag) ** 1.8
 
-        color = 'white' if self.config.dark_mode else 'black'
+        color = "white" if self.config.dark_mode else "black"
         ax.scatter(x, y, s=sizes, c=color, alpha=0.6, zorder=1)
 
     def _plot_ecliptic(self, ax: plt.Axes):
@@ -157,25 +173,35 @@ class CylindricPlanetsMovement:
         :type ax: plt.Axes
         """
 
-        # The ecliptic is at roughly 23.5 degrees inclination to the celestial equator
+        # The ecliptic is at roughly 23.5 degrees inclination to the equator
         # For simplicity, we'll draw a sinusoidal curve
         ra_points = np.linspace(0, 360, 1000)
 
         # Approximate ecliptic: dec = 23.5 * sin(ra)
-        # This is simplified - proper calculation would use obliquity and convert from ecliptic coords
+        # This is simplifiedproper calculation
+        # would use obliquity and convert from ecliptic coords
         obliquity = 23.44  # degrees
         dec_points = obliquity * np.sin(np.deg2rad(ra_points))
 
-        color = 'yellow' if self.config.dark_mode else 'orange'
-        ax.plot(ra_points, dec_points, color=color, alpha=0.5,
-                linewidth=1.5, linestyle='--', label='Ecliptic', zorder=2)
+        color = "yellow" if self.config.dark_mode else "orange"
+        ax.plot(
+            ra_points,
+            dec_points,
+            color=color,
+            alpha=0.5,
+            linewidth=1.5,
+            linestyle="--",
+            label="Ecliptic",
+            zorder=2,
+        )
 
     def _get_planet_positions(self, time: datetime) -> Dict:
         """Get positions of all planets at given time.
 
         :param time: date and time
         :type time: datetime
-        :return: the positions of the planets in the format (planet id: x, y, magnitude)
+        :return: the positions of the planets in the format
+            (planet id: x, y, magnitude)
         :rtype: Dict
         """
         planets_data = self.planet_catalog.get_planets(time)
@@ -183,14 +209,14 @@ class CylindricPlanetsMovement:
         positions = {}
         for i, planet_enum in enumerate(Planets):
             planet_data = planets_data[i]
-            ra = planet_data['ra']
-            dec = planet_data['dec']
+            ra = planet_data["ra"]
+            dec = planet_data["dec"]
             x, y = self._ra_dec_to_cylindric(np.array([ra]), np.array([dec]))
 
             positions[planet_enum] = {
-                'x': x[0],
-                'y': y[0],
-                'v_mag': planet_data['v_mag']
+                "x": x[0],
+                "y": y[0],
+                "v_mag": planet_data["v_mag"],
             }
 
         return positions
@@ -210,27 +236,39 @@ class CylindricPlanetsMovement:
 
         for planet in Planets:
             color = self.planet_catalog.get_planet_color(planet)
-            scatter = ax.scatter([], [], s=150, c=color,
-                                 label=planet.name.capitalize(),
-                                 edgecolors='white' if self.config.dark_mode else 'black',
-                                 linewidths=1, zorder=5, alpha=0.9)
+            scatter = ax.scatter(
+                [],
+                [],
+                s=150,
+                c=color,
+                label=planet.name.capitalize(),
+                edgecolors="white" if self.config.dark_mode else "black",
+                linewidths=1,
+                zorder=5,
+                alpha=0.9,
+            )
             planet_scatters[planet] = scatter
 
         # Add legend
-        ax.legend(loc='upper right', fontsize=8, framealpha=0.8)
+        ax.legend(loc="upper right", fontsize=8, framealpha=0.8)
 
         # Time text
-        time_text = ax.text(0.02, 0.98, '', transform=ax.transAxes,
-                            verticalalignment='top', fontsize=10,
-                            bbox=dict(boxstyle='round', facecolor='wheat',
-                                      alpha=0.5))
+        time_text = ax.text(
+            0.02,
+            0.98,
+            "",
+            transform=ax.transAxes,
+            verticalalignment="top",
+            fontsize=10,
+            bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
+        )
 
         def init():
             """Initialize animation."""
 
             for scatter in planet_scatters.values():
                 scatter.set_offsets(np.empty((0, 2)))
-            time_text.set_text('')
+            time_text.set_text("")
             return list(planet_scatters.values()) + [time_text]
 
         def update(frame_idx):
@@ -246,30 +284,37 @@ class CylindricPlanetsMovement:
             # Update planet positions
             for planet, scatter in planet_scatters.items():
                 pos = positions[planet]
-                x, y = pos['x'], pos['y']
+                x, y = pos["x"], pos["y"]
 
                 # Update scatter
                 scatter.set_offsets([[x, y]])
 
             # Update time text
-            time_text.set_text(f'Date: {time.strftime("%Y-%m-%d %H:%M")}')
+            time_text.set_text(f"Date: {time.strftime('%Y-%m-%d %H:%M')}")
 
             return list(planet_scatters.values()) + [time_text]
 
         # Create animation
-        anim = FuncAnimation(fig, update, init_func=init,
-                             frames=len(self.times),
-                             interval=1000 / self.config.fps,
-                             blit=True, repeat=True)
+        anim = FuncAnimation(
+            fig,
+            update,
+            init_func=init,
+            frames=len(self.times),
+            interval=1000 / self.config.fps,
+            blit=True,
+            repeat=True,
+        )
 
         # Save animation
         writer = PillowWriter(fps=self.config.fps)
         print(f"Saving animation to {self.config.output_filename}...")
-        anim.save(self.config.output_filename, writer=writer,
-                  dpi=self.config.dpi)
-        print(f"Animation saved successfully!")
+        anim.save(
+            self.config.output_filename, writer=writer, dpi=self.config.dpi
+        )
+        print("Animation saved successfully!")
 
         return fig, anim
+
 
 def example_planets():
     """Example: Track planets over a few months."""
@@ -284,7 +329,7 @@ def example_planets():
         show_ecliptic=True,
         show_grid=True,
         dark_mode=True,
-        figsize=(18, 9)
+        figsize=(18, 9),
     )
 
     animator = CylindricPlanetsMovement(config)
@@ -292,6 +337,6 @@ def example_planets():
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Run the example
     example_planets()

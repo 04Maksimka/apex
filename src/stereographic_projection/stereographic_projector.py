@@ -1,24 +1,33 @@
 """Module implementing main stereographic projection."""
+
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, List, Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 
-from numpy.typing import NDArray
-import numpy as np
 import matplotlib
+import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.patches import Circle
-
-from src.constellations_metadata.constellations_data import get_available_constellations, get_constellation_center
-from src.helpers.geometry.geometry import (
-    get_horizontal_coords, make_stereo_projection, make_points_stereo_projection, generate_small_circle, mag_to_radius,
-)
-from src.hip_catalog.hip_catalog import CatalogConstraints, Catalog
-from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 from matplotlib.collections import LineCollection
+from matplotlib.patches import Circle
+from numpy.typing import NDArray
 
-from src.helpers.constellations.constellation_renderer_stereo import ConstellationRendererStereo, \
-    draw_multiple_constellations
+from src.constellations_metadata.constellations_data import (
+    get_available_constellations,
+    get_constellation_center,
+)
+from src.helpers.constellations.constellation_renderer_stereo import (
+    ConstellationRendererStereo,
+    draw_multiple_constellations,
+)
+from src.helpers.geometry.geometry import (
+    generate_small_circle,
+    get_horizontal_coords,
+    mag_to_radius,
+    make_points_stereo_projection,
+    make_stereo_projection,
+)
+from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from src.planets_catalog.planet_catalog import PlanetCatalog, Planets
 
 
 @dataclass
@@ -54,9 +63,11 @@ class StereoProjConfig(object):
 @dataclass
 class ConstellationConfig(object):
     """ """
-    constellations_list: Optional[
-        List[str]] = None  # If None, render all available
-    constellation_color: str = 'gray'
+
+    constellations_list: Optional[List[str]] = (
+        None  # If None, render all available
+    )
+    constellation_color: str = "gray"
     constellation_linewidth: float = 0.8
     constellation_alpha: float = 0.7
     constellation_color_map: Optional[Dict[str, str]] = None
@@ -65,39 +76,52 @@ class ConstellationConfig(object):
 @dataclass
 class ProjectionResult:
     """Result of pinhole projection."""
-    stars: NDArray      # Structured array with star projections
-    planets: NDArray    # Structured array with planet projections
+
+    stars: NDArray  # Structured array with star projections
+    planets: NDArray  # Structured array with planet projections
 
 
 class StereoProjector(object):
     """Class of the stereographic projector."""
 
     def __init__(
-            self,
-            config: StereoProjConfig,
-            catalog: Catalog,
-            planets_catalog: PlanetCatalog,
-            constellations_renderer: Optional[ConstellationRendererStereo] = None,  # не создаём объект в сигнатуре
-            constellation_config: Optional[ConstellationConfig] = None,
-            random_angle: Optional[float] = None,   # генерируем внутри __init__, не в сигнатуре
+        self,
+        config: StereoProjConfig,
+        catalog: Catalog,
+        planets_catalog: PlanetCatalog,
+        constellations_renderer: Optional[
+            ConstellationRendererStereo
+        ] = None,  # не создаём объект в сигнатуре
+        constellation_config: Optional[ConstellationConfig] = None,
+        random_angle: Optional[
+            float
+        ] = None,  # генерируем внутри __init__, не в сигнатуре
     ):
         self.config = config
         self.constellation_config = constellation_config
         # Создаём renderer здесь, если не передан — это безопасно
-        self.constellations_renderer = constellations_renderer or ConstellationRendererStereo()
+        self.constellations_renderer = (
+            constellations_renderer or ConstellationRendererStereo()
+        )
         self.catalog = catalog
         self.planets_catalog = planets_catalog
         # Каждый экземпляр получает свой случайный угол
-        self.random_angle = random_angle if random_angle is not None else np.random.uniform(0.0, 2 * np.pi)
+        self.random_angle = (
+            random_angle
+            if random_angle is not None
+            else np.random.uniform(0.0, 2 * np.pi)
+        )
         self._groups = {}
         self._star_projections = None
         self._planets_projections = None
 
-    def generate(self, constraints: Optional[CatalogConstraints]=None) -> Tuple[plt.Figure, plt.Axes]:
+    def generate(
+        self, constraints: Optional[CatalogConstraints] = None
+    ) -> Tuple[plt.Figure, plt.Axes]:
         """Generate a stereographic projection image.
 
         :param constraints: Catalog constraints
-        :type constraints: Optional[CatalogConstraints]:  (Default value = None)
+        :type constraints: CatalogConstraints | None
         :return: figure
         :rtype: Tuple[plt.Figure, plt.Axes]
         """
@@ -158,8 +182,7 @@ class StereoProjector(object):
 
         # From equatorial to horizontal
         star_hor_view_data = self._make_horizontal_views(
-            data=stars_data,
-            object_type='star'
+            data=stars_data, object_type="star"
         )
         # Make projections
         star_view_data = self._make_stereo_views(
@@ -172,10 +195,11 @@ class StereoProjector(object):
 
         # Add planets
         if self.config.add_planets:
-            planet_data = self.planets_catalog.get_planets(self.config.local_time)
+            planet_data = self.planets_catalog.get_planets(
+                self.config.local_time
+            )
             planet_hor_view_data = self._make_horizontal_views(
-                data=planet_data,
-                object_type='planet'
+                data=planet_data, object_type="planet"
             )
             planet_view_data = self._make_stereo_views(
                 data=planet_hor_view_data,
@@ -192,31 +216,33 @@ class StereoProjector(object):
         :rtype: NDArray
         """
 
-        VIEW_DTYPE = np.dtype([
-            ('size', np.float32),
-            ('v_mag', np.float32),
-            ('radius', np.float32),
-            ('angle', np.float32),
-            ('id', np.int32),
-        ])
-        projection_data = make_stereo_projection(
-            view_data=data
+        VIEW_DTYPE = np.dtype(
+            [
+                ("size", np.float32),
+                ("v_mag", np.float32),
+                ("radius", np.float32),
+                ("angle", np.float32),
+                ("id", np.int32),
+            ]
         )
+        projection_data = make_stereo_projection(view_data=data)
 
         view_data = np.zeros(len(data), dtype=VIEW_DTYPE)
-        view_data['radius'] = projection_data['radius']
-        view_data['angle'] = projection_data['angle']
-        view_data['v_mag'] = projection_data['v_mag']
-        view_data['size'] = mag_to_radius(
-            magnitude=projection_data['v_mag'],
+        view_data["radius"] = projection_data["radius"]
+        view_data["angle"] = projection_data["angle"]
+        view_data["v_mag"] = projection_data["v_mag"]
+        view_data["size"] = mag_to_radius(
+            magnitude=projection_data["v_mag"],
             max_magnitude=self.catalog.constraints.max_magnitude,
-            min_magnitude=self.catalog.constraints.min_magnitude
+            min_magnitude=self.catalog.constraints.min_magnitude,
         )
-        view_data['id'] = projection_data['id']
+        view_data["id"] = projection_data["id"]
 
         return view_data
 
-    def _make_horizontal_views(self, data: NDArray, object_type: str = 'star') -> NDArray:
+    def _make_horizontal_views(
+        self, data: NDArray, object_type: str = "star"
+    ) -> NDArray:
         """Returns horizontal coordinates.
 
         :param data: objects equatorial coordinates
@@ -227,29 +253,31 @@ class StereoProjector(object):
         :rtype: NDArray
         """
 
-        VIEW_DTYPE = np.dtype([
-            ('v_mag', np.float32),
-            ('zenith', np.float32),
-            ('azimuth', np.float32),
-            ('id', np.int32),
-        ])
+        VIEW_DTYPE = np.dtype(
+            [
+                ("v_mag", np.float32),
+                ("zenith", np.float32),
+                ("azimuth", np.float32),
+                ("id", np.int32),
+            ]
+        )
 
         valid_mask, horizontal_coords = get_horizontal_coords(
             longitude=self.config.longitude,
             latitude=self.config.latitude,
             local_time=self.config.local_time,
-            data=data
+            data=data,
         )
 
         view_data = np.zeros(np.sum(valid_mask), dtype=VIEW_DTYPE)
-        view_data['v_mag'] = data['v_mag'][valid_mask]
-        view_data['zenith'] = horizontal_coords['zenith'][valid_mask]
-        view_data['azimuth'] = horizontal_coords['azimuth'][valid_mask]
+        view_data["v_mag"] = data["v_mag"][valid_mask]
+        view_data["zenith"] = horizontal_coords["zenith"][valid_mask]
+        view_data["azimuth"] = horizontal_coords["azimuth"][valid_mask]
 
-        if object_type == 'star':
-            view_data['id'] = data['hip_id'][valid_mask]
-        elif object_type == 'planet':
-            view_data['id'] = data['planet_id'][valid_mask]
+        if object_type == "star":
+            view_data["id"] = data["hip_id"][valid_mask]
+        elif object_type == "planet":
+            view_data["id"] = data["planet_id"][valid_mask]
 
         return view_data
 
@@ -259,24 +287,26 @@ class StereoProjector(object):
         point = self._ax.scatter(
             x=0,
             y=0,
-            c='red',
+            c="red",
             sizes=[5],
         )
         self._ax.annotate(
-            'Z',
+            "Z",
             xy=(0, 0),
             xytext=(3, 3),
             fontsize=14,
-            textcoords='offset points',
-            color='black',
-            fontweight='bold'
+            textcoords="offset points",
+            color="black",
+            fontweight="bold",
         )
-        self._groups['Points'] = self._groups.get('Points', []) + [(point, 'Zenith')]
+        self._groups["Points"] = self._groups.get("Points", []) + [
+            (point, "Zenith")
+        ]
 
     def _add_poles(self):
         """Adds pole projection point on skychart."""
 
-        POINT_DTYPE = np.dtype([('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
+        POINT_DTYPE = np.dtype([("x", "f4"), ("y", "f4"), ("z", "f4")])
         north_pole = np.array([(0, 0, 1)], dtype=POINT_DTYPE)
         south_pole = np.array([(0, 0, -1)], dtype=POINT_DTYPE)
 
@@ -284,56 +314,66 @@ class StereoProjector(object):
             longitude=self.config.longitude,
             latitude=self.config.latitude,
             local_time=self.config.local_time,
-            data=north_pole
+            data=north_pole,
         )
-        if north_horizontal['zenith'] < np.pi / 2:
+        if north_horizontal["zenith"] < np.pi / 2:
             north_projection = make_points_stereo_projection(
                 points=north_horizontal
             )
             north = self._ax.scatter(
-                north_projection['angle'],
-                north_projection['radius'],
-                c='blue',
+                north_projection["angle"],
+                north_projection["radius"],
+                c="blue",
                 s=5,
             )
             self._ax.annotate(
-                text='P',
-                xy=(north_projection['angle'][0], north_projection['radius'][0]),
+                text="P",
+                xy=(
+                    north_projection["angle"][0],
+                    north_projection["radius"][0],
+                ),
                 xytext=(3, -10),
                 fontsize=14,
-                textcoords='offset points',
-                color='black',
-                fontweight='bold'
+                textcoords="offset points",
+                color="black",
+                fontweight="bold",
             )
-            self._groups['Points'] = self._groups.get('Points', []) + [(north, 'North Pole')]
+            self._groups["Points"] = self._groups.get("Points", []) + [
+                (north, "North Pole")
+            ]
 
         _, south_horizontal = get_horizontal_coords(
             longitude=self.config.longitude,
             latitude=self.config.latitude,
             local_time=self.config.local_time,
-            data=south_pole
+            data=south_pole,
         )
 
-        if south_horizontal['zenith'] < np.pi / 2:
+        if south_horizontal["zenith"] < np.pi / 2:
             south_projection = make_points_stereo_projection(
                 points=south_horizontal
             )
             south = self._ax.scatter(
-                south_projection['angle'],
-                south_projection['radius'],
-                c='blue',
+                south_projection["angle"],
+                south_projection["radius"],
+                c="blue",
                 s=5,
             )
             self._ax.annotate(
-                text='P',
-                xy=(south_projection['angle'][0], south_projection['radius'][0]),
+                text="P",
+                xy=(
+                    south_projection["angle"][0],
+                    south_projection["radius"][0],
+                ),
                 xytext=(3, -10),
                 fontsize=14,
-                textcoords='offset points',
-                color='black',
-                fontweight='bold'
+                textcoords="offset points",
+                color="black",
+                fontweight="bold",
             )
-            self._groups['Points'] = self._groups.get('Points', []) + [(south, 'South Pole')]
+            self._groups["Points"] = self._groups.get("Points", []) + [
+                (south, "South Pole")
+            ]
 
     def _add_ecliptic(self):
         """Add ecliptic on skychart."""
@@ -344,25 +384,27 @@ class StereoProjector(object):
         ecliptic_eci_coords = generate_small_circle(
             spheric_normal_deg=np.array([90.0 - DEC, RA]),
             alpha_deg=90.0,
-            num_points=1000
+            num_points=1000,
         )
         _, horizontal_coords = get_horizontal_coords(
             longitude=self.config.longitude,
             latitude=self.config.latitude,
             local_time=self.config.local_time,
-            data=ecliptic_eci_coords
+            data=ecliptic_eci_coords,
         )
         projection_coords = make_points_stereo_projection(
             points=horizontal_coords
         )
-        line, = self._ax.plot(
-            projection_coords['angle'],
-            projection_coords['radius'],
-            c='green',
+        (line,) = self._ax.plot(
+            projection_coords["angle"],
+            projection_coords["radius"],
+            c="green",
             linewidth=1,
         )
         # Add to the legend groups
-        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Ecliptic')]
+        self._groups["Great circles"] = self._groups.get(
+            "Great circles", []
+        ) + [(line, "Ecliptic")]
 
     def _add_equator(self):
         """Add celestial equator on skychart"""
@@ -370,25 +412,27 @@ class StereoProjector(object):
         equator_eci_coords = generate_small_circle(
             spheric_normal_deg=np.array([0.0, 0.0]),
             alpha_deg=90.0,
-            num_points=1000
+            num_points=1000,
         )
         _, horizontal_coords = get_horizontal_coords(
             longitude=self.config.longitude,
             latitude=self.config.latitude,
             local_time=self.config.local_time,
-            data=equator_eci_coords
+            data=equator_eci_coords,
         )
         projection_coords = make_points_stereo_projection(
             points=horizontal_coords
         )
-        line, = self._ax.plot(
-            projection_coords['angle'],
-            projection_coords['radius'],
-            c='red',
+        (line,) = self._ax.plot(
+            projection_coords["angle"],
+            projection_coords["radius"],
+            c="red",
             linewidth=1,
         )
         # Add to the legend groups
-        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Celestial equator')]
+        self._groups["Great circles"] = self._groups.get(
+            "Great circles", []
+        ) + [(line, "Celestial equator")]
 
     def _add_galactic_equator(self):
         """Add galactic equator on skychart"""
@@ -400,25 +444,27 @@ class StereoProjector(object):
         galactic_eci_coords = generate_small_circle(
             spheric_normal_deg=np.array([90.0 - DEC, RA]),
             alpha_deg=90.0,
-            num_points=1000
+            num_points=1000,
         )
         _, horizontal_coords = get_horizontal_coords(
             longitude=self.config.longitude,
             latitude=self.config.latitude,
             local_time=self.config.local_time,
-            data=galactic_eci_coords
+            data=galactic_eci_coords,
         )
         projection_coords = make_points_stereo_projection(
             points=horizontal_coords
         )
-        line, = self._ax.plot(
-            projection_coords['angle'],
-            projection_coords['radius'],
-            c='blue',
+        (line,) = self._ax.plot(
+            projection_coords["angle"],
+            projection_coords["radius"],
+            c="blue",
             linewidth=1,
         )
         # Add to the legend groups
-        self._groups['Great circles'] = self._groups.get('Great circles', []) + [(line, 'Galactic equator')]
+        self._groups["Great circles"] = self._groups.get(
+            "Great circles", []
+        ) + [(line, "Galactic equator")]
 
     def _add_planets(self, projection_data: NDArray):
         """Add planets to the scatter plot.
@@ -429,26 +475,34 @@ class StereoProjector(object):
 
         # Draw each planet separately
         for planet_data in projection_data:
-            if planet_data['v_mag'] < self.catalog.constraints.max_magnitude:
-                planet = Planets(planet_data['id'])
+            if planet_data["v_mag"] < self.catalog.constraints.max_magnitude:
+                planet = Planets(planet_data["id"])
                 name = planet.name.capitalize()
                 color = self.planets_catalog.get_planet_color(planet)
                 scatter = self._ax.scatter(
-                    planet_data['angle'],
-                    planet_data['radius'],
+                    planet_data["angle"],
+                    planet_data["radius"],
                     c=color,
-                    s=max(planet_data['size'] * 3, 0.5),  # make planets larger for visibility
+                    s=max(
+                        planet_data["size"] * 3, 0.5
+                    ),  # make planets larger for visibility
                     alpha=0.8,
                     linewidth=0.5,
                 )
                 # Add to the legend groups
-                self._groups['Planets'] = self._groups.get('Planets', []) + [(scatter, name)]
+                self._groups["Planets"] = self._groups.get("Planets", []) + [
+                    (scatter, name)
+                ]
 
     def _add_horizontal_grid(self):
         """Add horizontal grid to skychart"""
 
-        zeniths = np.arange(-90.0, 90.0, self.config.grid_theta_step, dtype=np.float64)
-        azimuths = np.arange(0, 180.0, self.config.grid_phi_step, dtype=np.float64)
+        zeniths = np.arange(
+            -90.0, 90.0, self.config.grid_theta_step, dtype=np.float64
+        )
+        azimuths = np.arange(
+            0, 180.0, self.config.grid_phi_step, dtype=np.float64
+        )
 
         array_grid = []
 
@@ -459,14 +513,12 @@ class StereoProjector(object):
                 alpha_deg=90.0,
                 num_points=250,
             )
-            projection = make_points_stereo_projection(
-                points=circle
-            )
+            projection = make_points_stereo_projection(points=circle)
             array_grid.append(
                 np.column_stack(
                     [
-                        projection['angle'].astype(np.float64),
-                        projection['radius'].astype(np.float64),
+                        projection["angle"].astype(np.float64),
+                        projection["radius"].astype(np.float64),
                     ]
                 )
             )
@@ -477,33 +529,37 @@ class StereoProjector(object):
                 alpha_deg=zenith,
                 num_points=250,
             )
-            projection = make_points_stereo_projection(
-                points=circle
-            )
+            projection = make_points_stereo_projection(points=circle)
             array_grid.append(
                 np.column_stack(
                     [
-                        projection['angle'].astype(np.float64),
-                        projection['radius'].astype(np.float64),
+                        projection["angle"].astype(np.float64),
+                        projection["radius"].astype(np.float64),
                     ]
                 )
             )
 
         grid = LineCollection(
             segments=array_grid,
-            label='Azimuthal grid',
-            colors='olive',
+            label="Azimuthal grid",
+            colors="olive",
             alpha=0.25,
-            linewidth=0.5
+            linewidth=0.5,
         )
         self._ax.add_collection(grid)
-        self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Azimuthal grid')]
+        self._groups["Grids"] = self._groups.get("Grids", []) + [
+            (grid, "Azimuthal grid")
+        ]
 
     def _add_equatorial_grid(self):
         """Add equatorial grid to skychart"""
 
-        declinations = np.arange(-90.0, 90.0, self.config.grid_theta_step, dtype=np.float64)
-        right_ascensions = np.arange(0, 180.0, self.config.grid_phi_step, dtype=np.float64)
+        declinations = np.arange(
+            -90.0, 90.0, self.config.grid_theta_step, dtype=np.float64
+        )
+        right_ascensions = np.arange(
+            0, 180.0, self.config.grid_phi_step, dtype=np.float64
+        )
 
         array_grid = []
         # Draw great circles right ascension
@@ -525,8 +581,8 @@ class StereoProjector(object):
             array_grid.append(
                 np.column_stack(
                     [
-                        projection['angle'].astype(np.float64),
-                        projection['radius'].astype(np.float64),
+                        projection["angle"].astype(np.float64),
+                        projection["radius"].astype(np.float64),
                     ]
                 )
             )
@@ -537,7 +593,7 @@ class StereoProjector(object):
                 alpha_deg=(90.0 - dec),
                 num_points=250,
             )
-            _, horizontal_coords =get_horizontal_coords(
+            _, horizontal_coords = get_horizontal_coords(
                 longitude=self.config.longitude,
                 latitude=self.config.latitude,
                 local_time=self.config.local_time,
@@ -549,36 +605,42 @@ class StereoProjector(object):
             array_grid.append(
                 np.column_stack(
                     [
-                        projection['angle'].astype(np.float64),
-                        projection['radius'].astype(np.float64),
+                        projection["angle"].astype(np.float64),
+                        projection["radius"].astype(np.float64),
                     ]
                 )
             )
 
         grid = LineCollection(
             array_grid,
-            label='Equatorial grid',
-            colors='magenta',
+            label="Equatorial grid",
+            colors="magenta",
             alpha=0.25,
-            linewidth=0.5
+            linewidth=0.5,
         )
         self._ax.add_collection(grid)
-        self._groups['Grids'] = self._groups.get('Grids', []) + [(grid, 'Equatorial grid')]
+        self._groups["Grids"] = self._groups.get("Grids", []) + [
+            (grid, "Equatorial grid")
+        ]
 
     def _add_constellations(self):
         """Adds constellation line patterns to the projection."""
 
         if self.constellation_config.constellations_list is not None:
             separate = True
-            constellations_to_render = self.constellation_config.constellations_list
+            constellations_to_render = (
+                self.constellation_config.constellations_list
+            )
         else:
             separate = False
             constellations_to_render = get_available_constellations()
 
         # Get constellation segments
-        constellation_segments = self.constellations_renderer.get_multiple_constellation_segments(
-            constellations=constellations_to_render,
-            projection_data=self._star_projections
+        constellation_segments = (
+            self.constellations_renderer.get_multiple_constellation_segments(
+                constellations=constellations_to_render,
+                projection_data=self._star_projections,
+            )
         )
 
         if not constellation_segments:
@@ -592,57 +654,64 @@ class StereoProjector(object):
             linewidth=self.constellation_config.constellation_linewidth,
             alpha=self.constellation_config.constellation_alpha,
             color_map=self.constellation_config.constellation_color_map,
-            use_collection=True
+            use_collection=True,
         )
 
         # Add to legend groups
         if lcs:
             if separate:
                 for name, params in lcs.items():
-                    self._groups['Constellations'] = self._groups.get('Constellations', []) +\
-                                                     [(params['lc'], f"{params['name']}")]
+                    self._groups["Constellations"] = self._groups.get(
+                        "Constellations", []
+                    ) + [(params["lc"], f"{params['name']}")]
             else:
                 # Get first line collection for legend
-                first_lc = list(lcs.values())[0]['lc']
-                self._groups['Constellations'] = self._groups.get('Constellations', []) + \
-                                                 [(first_lc, f'Constellations ({len(lcs)})')]
+                first_lc = list(lcs.values())[0]["lc"]
+                self._groups["Constellations"] = self._groups.get(
+                    "Constellations", []
+                ) + [(first_lc, f"Constellations ({len(lcs)})")]
 
     def _add_constellations_names(self):
         """Adds constellation names on skychart."""
 
-        POINT_DTYPE = np.dtype([('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
+        POINT_DTYPE = np.dtype([("x", "f4"), ("y", "f4"), ("z", "f4")])
 
         if self.constellation_config.constellations_list is not None:
-            constellations_to_render = self.constellation_config.constellations_list
+            constellations_to_render = (
+                self.constellation_config.constellations_list
+            )
         else:
             constellations_to_render = get_available_constellations()
 
         for constellation in constellations_to_render:
             eci_center = np.array(
                 [tuple(get_constellation_center(constellation))],
-                dtype=POINT_DTYPE
+                dtype=POINT_DTYPE,
             )
             _, center_horizontal = get_horizontal_coords(
                 longitude=self.config.longitude,
                 latitude=self.config.latitude,
                 local_time=self.config.local_time,
-                data=eci_center
+                data=eci_center,
             )
 
             # If we can observe constellation
-            if center_horizontal['zenith'] < np.pi / 2:
+            if center_horizontal["zenith"] < np.pi / 2:
                 center_projection = make_points_stereo_projection(
                     points=center_horizontal
                 )
                 self._ax.annotate(
                     text=constellation,
-                    xy=(center_projection['angle'][0], center_projection['radius'][0]),
+                    xy=(
+                        center_projection["angle"][0],
+                        center_projection["radius"][0],
+                    ),
                     xytext=(0, 0),
                     fontsize=7,
-                    textcoords='offset points',
-                    color='gray',
-                    ha = 'center',
-                    va = 'center',
+                    textcoords="offset points",
+                    color="gray",
+                    ha="center",
+                    va="center",
                 )
 
     def _create_polar_scatter(self, projection_data: NDArray):
@@ -650,7 +719,7 @@ class StereoProjector(object):
 
         :param projection_data: projection points to place on figure
         :type projection_data: NDArray
-        
+
         ВАЖНО: НЕ используем plt.style.use() — это глобальная операция.
         Сбрасываем глобальное состояние через rcdefaults() и явно устанавливаем
         белый фон + чёрные звёзды для каждой новой фигуры.
@@ -661,21 +730,21 @@ class StereoProjector(object):
         matplotlib.rcdefaults()
 
         # ── Создаём фигуру с явным белым фоном ──────────────────────────────
-        self._fig = plt.figure(facecolor='white')
-        self._ax = self._fig.add_subplot(111, projection='polar')
-        self._fig.patch.set_facecolor('white')
-        self._ax.set_facecolor('white')
+        self._fig = plt.figure(facecolor="white")
+        self._ax = self._fig.add_subplot(111, projection="polar")
+        self._fig.patch.set_facecolor("white")
+        self._ax.set_facecolor("white")
 
         # ── Параметры проекции ───────────────────────────────────────────────
-        sizes = projection_data['size']
-        angles = projection_data['angle']
-        radii = projection_data['radius']
+        sizes = projection_data["size"]
+        angles = projection_data["angle"]
+        radii = projection_data["radius"]
 
         # ── Рисуем звёзды (явно чёрный цвет, независимо от глобального стиля)
         self._ax.scatter(
             angles,
             radii,
-            c='black',
+            c="black",
             s=sizes,
             alpha=1,
             linewidth=0.5,
@@ -691,14 +760,16 @@ class StereoProjector(object):
         if self.config.add_ticks:
             angles_deg = [0, 90, 180, 270]
             angles_rad = np.deg2rad(angles_deg)
-            cardinal_labels = ['S', 'W', 'N', 'E']
+            cardinal_labels = ["S", "W", "N", "E"]
 
             self._ax.set_xticks(angles_rad)
-            self._ax.set_xticklabels(cardinal_labels, fontsize=12, fontweight='bold')
+            self._ax.set_xticklabels(
+                cardinal_labels, fontsize=12, fontweight="bold"
+            )
 
             minor_angles_deg = np.arange(0, 360, 30)
             minor_angles_rad = np.deg2rad(minor_angles_deg)
-            numeric_labels = [f'{angle}°' for angle in minor_angles_deg]
+            numeric_labels = [f"{angle}°" for angle in minor_angles_deg]
 
             self._ax.set_xticks(minor_angles_rad, minor=True)
             self._ax.set_xticklabels(numeric_labels, minor=True, fontsize=9)
@@ -717,17 +788,20 @@ class StereoProjector(object):
             self._ax.set_xticks([])
 
         # Remove border
-        self._ax.spines['polar'].set_visible(False)
+        self._ax.spines["polar"].set_visible(False)
 
         # Add circle around skychart, draw border
         r_max = 2.0
-        circle = Circle((0, 0), r_max,
-                        transform=self._ax.transData._b,
-                        fill=False,
-                        edgecolor='black',
-                        linewidth=1.5,
-                        alpha=1.0,
-                        zorder=10)  # поверх всего
+        circle = Circle(
+            (0, 0),
+            r_max,
+            transform=self._ax.transData._b,
+            fill=False,
+            edgecolor="black",
+            linewidth=1.5,
+            alpha=1.0,
+            zorder=10,
+        )  # поверх всего
 
         self._ax.add_patch(circle)
 
@@ -743,7 +817,9 @@ class StereoProjector(object):
             return
 
         # Sort groups by size
-        groups = dict(sorted(groups.items(), key=lambda x: len(x[1]), reverse=True))
+        groups = dict(
+            sorted(groups.items(), key=lambda x: len(x[1]), reverse=True)
+        )
 
         # Determine layout
         n_groups = len(groups)
@@ -777,18 +853,19 @@ class StereoProjector(object):
             bbox_y = -0.05 - (row * vertical_spacing)
 
             legend = self._ax.legend(
-                handles, labels,
+                handles,
+                labels,
                 title=title,
-                loc='upper left',
+                loc="upper left",
                 fontsize=8,
                 bbox_to_anchor=(bbox_x, bbox_y),
                 frameon=True,
                 fancybox=True,
                 borderaxespad=0.2,
-                ncol=1  # Single column per legend group
+                ncol=1,  # Single column per legend group
             )
 
-            legend.get_title().set_fontweight('bold')
+            legend.get_title().set_fontweight("bold")
             legend.get_title().set_fontsize(9)
             self._ax.add_artist(legend)
 

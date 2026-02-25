@@ -1,8 +1,13 @@
-from src.hip_catalog.hip_catalog import CatalogConstraints, Catalog
-from src.planets_catalog.planet_catalog import PlanetCatalog
-from src.stereographic_projection.stereographic_projector import StereoProjector, StereoProjConfig, ConstellationConfig
-from src.helpers.pdf_helpers.figure2pdf import save_figure_skychart
 from datetime import datetime
+
+from src.helpers.pdf_helpers.figure2pdf import save_figure_skychart
+from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
+from src.planets_catalog.planet_catalog import PlanetCatalog
+from src.stereographic_projection.stereographic_projector import (
+    ConstellationConfig,
+    StereoProjConfig,
+    StereoProjector,
+)
 
 
 def main():
@@ -48,7 +53,7 @@ def main():
 
     # Create catalog object (without data)
     catalog = Catalog(
-        catalog_name='hip_data.tsv',
+        catalog_name="hip_data.tsv",
         use_cache=True,
     )
 
@@ -75,6 +80,7 @@ def main():
         text_position=(0.5, 0.01),
         print_skychart_info=False,
     )
+
 
 if __name__ == "__main__":
     main()

@@ -4,20 +4,24 @@ This module extends the Pinhole projector to support drawing constellation
 line patterns by connecting projected stars with their HIP catalog IDs.
 """
 
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 from numpy.typing import NDArray
-from typing import List, Tuple, Optional, Dict
-from dataclasses import dataclass
 
-from src.constellations_metadata.constellations_data import get_constellation_name, get_constellation_lines
+from src.constellations_metadata.constellations_data import (
+    get_constellation_lines,
+    get_constellation_name,
+)
 from src.hip_catalog.hip_catalog import CatalogConstraints
 
 
 @dataclass
 class ConstellationLineSegment:
-    """ Represents a projected line segment of a constellation. """
+    """Represents a projected line segment of a constellation."""
 
     x1: float  # Start point X coordinate in pixels
     y1: float  # Start point Y coordinate in pixels
@@ -35,14 +39,16 @@ class ConstellationRenderer:
     """Renderer for constellation line patterns in pinhole projection."""
 
     def __init__(self):
-        """ Initialize constellation renderer.  """
+        """Initialize constellation renderer."""
 
         self._star_positions_cache: Optional[
-            Dict[int, Tuple[float, float]]] = None
-
+            Dict[int, Tuple[float, float]]
+        ] = None
 
     @staticmethod
-    def _build_star_positions_cache(stars: NDArray) -> Dict[int, Tuple[float, float]]:
+    def _build_star_positions_cache(
+        stars: NDArray,
+    ) -> Dict[int, Tuple[float, float]]:
         """Build a lookup dictionary from HIP ID to pixel coordinates.
 
         :param stars: Structured array of projected stars
@@ -54,17 +60,17 @@ class ConstellationRenderer:
 
         cache = {}
         for star in stars:
-            hip_id = int(star['id'])
-            x_pix = float(star['x_pix'])
-            y_pix = float(star['y_pix'])
+            hip_id = int(star["id"])
+            x_pix = float(star["x_pix"])
+            y_pix = float(star["y_pix"])
             cache[hip_id] = (x_pix, y_pix)
         return cache
 
     def get_constellation_segments(
-            self,
-            constellation: str,
-            stars: Optional[NDArray] = None,
-            constraints: CatalogConstraints = None
+        self,
+        constellation: str,
+        stars: Optional[NDArray] = None,
+        constraints: CatalogConstraints = None,
     ) -> List[ConstellationLineSegment]:
         """Get projected line segments for a constellation.
 
@@ -75,7 +81,8 @@ class ConstellationRenderer:
         :param constellation: constellation name
         :type constellation: str
 
-        :return: List of ConstellationLineSegment objects representing visible lines
+        :return: List of ConstellationLineSegment objects
+            representing visible lines
         :rtype: List[ConstellationLineSegment]
         """
 
@@ -86,7 +93,9 @@ class ConstellationRenderer:
 
         # Build position cache if not already cached or if stars changed
         if self._star_positions_cache is None:
-            self._star_positions_cache = self._build_star_positions_cache(stars)
+            self._star_positions_cache = self._build_star_positions_cache(
+                stars
+            )
 
         # Convert lines to segments
         segments = []
@@ -96,24 +105,29 @@ class ConstellationRenderer:
                 hip_id1 = line[idx1]
                 hip_id2 = line[idx2]
                 # Check if both stars are visible in the projection
-                if hip_id1 in self._star_positions_cache and hip_id2 in self._star_positions_cache:
+                if (
+                    hip_id1 in self._star_positions_cache
+                    and hip_id2 in self._star_positions_cache
+                ):
                     x1, y1 = self._star_positions_cache[hip_id1]
                     x2, y2 = self._star_positions_cache[hip_id2]
 
                     segment = ConstellationLineSegment(
-                        x1=x1, y1=y1,
-                        x2=x2, y2=y2,
+                        x1=x1,
+                        y1=y1,
+                        x2=x2,
+                        y2=y2,
                         hip_id1=hip_id1,
-                        hip_id2=hip_id2
+                        hip_id2=hip_id2,
                     )
                     segments.append(segment)
 
         return segments
 
     def get_multiple_constellation_segments(
-            self,
-            constellations: List[str],
-            stars: Optional[NDArray] = None,
+        self,
+        constellations: List[str],
+        stars: Optional[NDArray] = None,
     ) -> Dict[str, List[ConstellationLineSegment]]:
         """Get projected line segments for multiple constellations.
 
@@ -145,18 +159,19 @@ class ConstellationRenderer:
 
 
 def draw_constellation_lines(
-        ax: plt.Axes,
-        segments: List[ConstellationLineSegment],
-        color: str = 'cyan',
-        linewidth: float = 0.8,
-        alpha: float = 0.7,
-        linestyle: str = '-'
+    ax: plt.Axes,
+    segments: List[ConstellationLineSegment],
+    color: str = "cyan",
+    linewidth: float = 0.8,
+    alpha: float = 0.7,
+    linestyle: str = "-",
 ):
     """Draw constellation line segments on a matplotlib axis.
-    
-    This function correctly handles coordinate systems. If you use ax.invert_xaxis()
-    in your plotting code (common for astronomical visualizations), the lines will
-    automatically adapt to the inverted coordinates.
+
+    This function correctly handles coordinate systems.
+    If you use ax.invert_xaxis() in your plotting code (common for
+    astronomical visualizations), the lines will automatically adapt to the
+    inverted coordinates.
 
     :param ax: Matplotlib axis object
     :type ax: plt.Axes
@@ -180,18 +195,20 @@ def draw_constellation_lines(
             linewidth=linewidth,
             alpha=alpha,
             linestyle=linestyle,
-            zorder=1  # Draw lines below stars
+            zorder=1,  # Draw lines below stars
         )
 
+
 def draw_constellation_lines_collection(
-        ax: plt.Axes,
-        segments: List[ConstellationLineSegment],
-        color: str = 'cyan',
-        linewidth: float = 0.8,
-        alpha: float = 0.7,
-        linestyle: str = '-'
+    ax: plt.Axes,
+    segments: List[ConstellationLineSegment],
+    color: str = "cyan",
+    linewidth: float = 0.8,
+    alpha: float = 0.7,
+    linestyle: str = "-",
 ) -> Optional[LineCollection]:
-    """Draw constellation line segments using LineCollection for better performance.
+    """Draw constellation line segments
+        using LineCollection for better performance.
 
     :param ax: Matplotlib axis object
     :type ax: plt.Axes
@@ -206,7 +223,8 @@ def draw_constellation_lines_collection(
     :param linestyle: Line style ('-', '--', '-.', ':')
     :type linestyle: str:  (Default value = '-')
 
-    :return: Collection of constellations if there are any constellation to show
+    :return: Collection of constellations
+        if there are any constellation to show
     :rtype: LineCollection | None
     """
 
@@ -217,10 +235,9 @@ def draw_constellation_lines_collection(
     lines = []
     for segment in segments:
         lines.append(
-            np.column_stack([
-                [segment.x1, segment.x2],
-                [segment.y1, segment.y2]
-            ])
+            np.column_stack(
+                [[segment.x1, segment.x2], [segment.y1, segment.y2]]
+            )
         )
 
     # Create and add line collection
@@ -230,20 +247,21 @@ def draw_constellation_lines_collection(
         linewidths=linewidth,
         alpha=alpha,
         linestyles=linestyle,
-        zorder=0  # Draw lines below stars
+        zorder=0,  # Draw lines below stars
     )
     ax.add_collection(lc)
     return lc
 
+
 def draw_multiple_constellations(
-        ax: plt.Axes,
-        constellation_segments: Dict[str, List[ConstellationLineSegment]],
-        color: str = 'cyan',
-        linewidth: float = 0.8,
-        alpha: float = 0.7,
-        linestyle: str = '-',
-        color_map: Optional[Dict[str, str]] = None,
-        use_collection: bool = False
+    ax: plt.Axes,
+    constellation_segments: Dict[str, List[ConstellationLineSegment]],
+    color: str = "cyan",
+    linewidth: float = 0.8,
+    alpha: float = 0.7,
+    linestyle: str = "-",
+    color_map: Optional[Dict[str, str]] = None,
+    use_collection: bool = False,
 ) -> Dict:
     """Draw multiple constellation line patterns on a matplotlib axis.
 
@@ -259,8 +277,10 @@ def draw_multiple_constellations(
     :type alpha: float:  (Default value = 0.7)
     :param linestyle: Line style
     :type linestyle: str:  (Default value = '-')
-    :param color_map: Optional dictionary mapping constellations to specific colors
-    :param use_collection: flag for configuring rendering using LineCollection to draw constellations
+    :param color_map: Optional dictionary mapping constellations
+        to specific colors
+    :param use_collection: flag for configuring rendering using
+        LineCollection to draw constellations
     :type use_collection: bool:  (Default value = False)
 
     :return: Dictionary of constellation lines drawn on a matplotlib axis
@@ -275,21 +295,25 @@ def draw_multiple_constellations(
 
         if use_collection:
             lc = draw_constellation_lines_collection(
-                ax, segments,
+                ax,
+                segments,
                 color=line_color,
                 linewidth=linewidth,
                 alpha=alpha,
-                linestyle=linestyle
+                linestyle=linestyle,
             )
-            result[constellation] = {'name': get_constellation_name(constellation), 'lc': lc}
+            result[constellation] = {
+                "name": get_constellation_name(constellation),
+                "lc": lc,
+            }
         else:
             draw_constellation_lines(
-                ax, segments,
+                ax,
+                segments,
                 color=line_color,
                 linewidth=linewidth,
                 alpha=alpha,
-                linestyle=linestyle
+                linestyle=linestyle,
             )
 
     return result
-
