@@ -958,7 +958,8 @@ class CylindricProjector:
                         constellation
                     ]
                 else:
-                    color = self.constellation_config.constellation_color"""
+                    color = self.constellation_config.constellation_color
+                """
 
                 # Process each line (chain of stars) in the constellation
                 for line in lines:

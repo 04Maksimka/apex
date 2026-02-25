@@ -58,6 +58,8 @@ select = ["E", "F", "I"]  # ошибки + pyflakes + сортировка им�
 where = ["."]
 
 [tool.sphinx-pyproject]
+project = "AstraGeek"
+
 extensions = [
   "sphinx.ext.autodoc",
   "sphinx.ext.githubpages",
