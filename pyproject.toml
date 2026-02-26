@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "astrageek"
-version = "0.2.2"
+version = "0.2.3"
 authors = [
     {name = "Ilia Bespyatyy", email = "ilia.bespytatyy@gmail.com"},
     {name = "Maksim Ramenskyy", email = "msramenskiy@edu.hse.ru"},
@@ -33,7 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 docs = [
-    "sphinx",
+    "sphinx>=7.0,<9.0", # mocks errors
     "furo",
     "sphinx-autodoc-typehints",
     "sphinx-click",
