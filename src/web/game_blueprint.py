@@ -114,16 +114,16 @@ MODES_META = [
 @game_bp.route("/")
 @game_bp.route("/lobby")
 def lobby():
-    """Лобби: список всех доступных игр."""
+    """Lobby. All available game modes."""
     return send_from_directory(_STATIC_DIR, "games.html")
 
 
 @game_bp.route("/<mode>")
 def game_page(mode: str):
     """
-    Страница отдельной игры.
-    Для режима messier используется messier.html (отдельный движок).
-    Для остальных режимов — game_<mode>.html.
+    Certain game page.
+    For messier mode using messier.html.
+    For all other  — game_<mode>.html.
     """
     if mode not in VALID_MODES:
         abort(404)
@@ -213,7 +213,7 @@ def _schedule_prefetch(session) -> None:
 def api_modes():
     """
     GET /game/api/modes
-    Возвращает список доступных игровых режимов с описанием.
+    Returns all available game modes with description.
     """
     return jsonify(MODES_META)
 
@@ -227,9 +227,9 @@ def api_modes():
 def api_start():
     """
     POST /game/api/start
-    Тело запроса:
+    Body:
         { "mode": "constellation", "difficulty": "easy", "rounds": 10 }
-    Ответ:
+    Answer:
         { "session_id": "...", "mode": ...,
         "difficulty": ..., "total_rounds": ... }
     """
@@ -251,9 +251,10 @@ def api_start():
         mode=mode, difficulty=difficulty, total_rounds=rounds
     )
 
-    # ── Сразу запускаем генерацию первого вопроса в фоне ──────────────────
-    # К моменту, когда браузер отрисует UI и вызовет /api/question,
-    # изображение уже будет готово (или почти готово).
+    # ── Start generating the first question in the background ─────────────
+    # By the time the browser renders the UI and calls /api/question,
+    # the image will already be ready (or almost ready).
+
     _schedule_prefetch(session)
 
     return jsonify(session.to_dict()), 201
@@ -263,11 +264,11 @@ def api_start():
 def api_question():
     """
     GET /game/api/question?session_id=<id>
-    Возвращает следующий вопрос текущей сессии.
+    Returns the next question for the current session.
 
-    Если фоновая генерация (запущенная из api_start или api_answer) ещё
-    не завершилась — ждём до 90 секунд. Если за это время ничего не произошло
-    или была ошибка — генерируем синхронно как запасной вариант.
+    If background generation (started by api_start or api_answer) has not
+    finished yet — waits up to 90 seconds. If nothing happens within that
+    time or an error occurs — generates synchronously as a fallback.
 
     NOTE: correct_ra_deg / correct_dec_deg are intentionally NOT forwarded
     to the client — they are stored in session.current_question only for
@@ -288,7 +289,7 @@ def api_question():
             }
         )
 
-    # ── Ждём фоновой генерации (максимум 90 секунд) ────────────────────────
+    # ── Waiting for background (max 90 s) ────────────────────────
     prefetch_ready = session.prefetch_event.wait(timeout=90.0)
 
     if (
@@ -296,11 +297,10 @@ def api_question():
         and not session.prefetch_error
         and session.current_question is not None
     ):
-        # Изображение уже сгенерировано — используем готовый вопрос.
+        # If already generated -- use it
         question = session.current_question
     else:
-        # Запасной путь: генерируем синхронно.
-        # Срабатывает если: таймаут, ошибка в фоне, или prefetch не был запущен
+        # Sync generating
         if session.prefetch_error:
             print(
                 f"[prefetch] Ошибка предгенерации для {session.session_id}: "
@@ -437,11 +437,12 @@ def api_answer():
             "answer": player_answer,
         }
     )
-    session.current_question = None  # сбрасываем перед запуском prefetch
+    session.current_question = None  # before prefetch
 
-    # ── Запускаем предгенерацию следующего вопроса прямо сейчас ──────────────
-    # Пока пользователь читает результат и нажимает «Следующий», картинка
-    # уже будет готова в session.current_question.
+    # ── Pregenerating next question ──────────────
+    # Be the time the user reads the result and click Next, the image will be
+    # ready in session.current_question.
+
     if not session.is_finished:
         _schedule_prefetch(session)
 
@@ -467,10 +468,10 @@ def api_answer():
 def api_hint():
     """
     GET /game/api/hint?session_id=<id>
-    Возвращает подсказку к текущему вопросу.
-    Использование подсказки снижает множитель очков на 50%.
+    Returns the hint for the current question.
+    Using a hint reduces the score multiplier by 50%.
 
-    Ответ: { "hint": "Это созвездие зимнего неба..." }
+    Answer: { "hint": "Это созвездие зимнего неба..." }
     """
     session_id = request.args.get("session_id", "")
     session = get_session(session_id)
@@ -485,7 +486,7 @@ def api_hint():
 def api_score():
     """
     GET /game/api/score?session_id=<id>
-    Возвращает текущий счёт и статистику сессии.
+    Returns score and statistics
     """
     session_id = request.args.get("session_id", "")
     session = get_session(session_id)
@@ -498,8 +499,8 @@ def api_score():
 def api_finish():
     """
     POST /game/api/finish
-    Явно завершает сессию и возвращает итоговую статистику.
-    После вызова session_id становится недействительным.
+    Explicitly ends the session and returns the final statistics.
+    After the call, the session_id becomes invalid.
     """
     data: Dict[str, Any] = request.get_json(force=True, silent=True) or {}
     session_id = data.get("session_id", "")

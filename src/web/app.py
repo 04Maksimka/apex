@@ -50,7 +50,7 @@ CATALOG = Catalog(
 
 def _warmup_catalogs():
     try:
-        print("[warmup] Предзапуск каталогов игры...")
+        print("[warmup] Preloading game catalogues...")
         from src.game.question_factory import (
             _get_catalog,
             _get_messier_catalog,
@@ -62,9 +62,9 @@ def _warmup_catalogs():
         _load_named_stars()
         fig, _ax = plt.subplots()
         plt.close(fig)
-        print("[warmup] Каталоги загружены ✓")
+        print("[warmup] Catalogs loaded")
     except Exception as exc:
-        print(f"[warmup] Предупреждение: {exc}")
+        print(f"[warmup] Warning: {exc}")
 
 
 threading.Thread(target=_warmup_catalogs, daemon=True).start()
