@@ -8,9 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- Fixed the Messier objects guessing game
+- Messier objects guessing game
+- Constellation drawing game
+- Constellation lines
 ### Added
 - images for each object in Messier objects guessing game
+
+---
+
+## [0.2.3] - 2026-02-26
+
+### Added
+- New features on website generator interface:
+  - Random center direction and random tilt angle mode for pinhole 
+  - Zenith, poles and ticks flags for stereographic
+  - Grid steps setting for both projections
+
+### Fixed
+- Sphinx compatibility
+
+### Changed
+- The layout and design of the proposed tasks on the first page of the files for our star maps
 
 ---
 
