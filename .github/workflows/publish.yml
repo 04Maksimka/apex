@@ -21,6 +21,9 @@ jobs:
       - name: Install build tools
         run: pip install build twine
 
+      - name: Generate README_PYPI.md   # ← новый шаг
+        run: python tools/make_pypi_readme.py
+
       - name: Build package
         run: python -m build
 

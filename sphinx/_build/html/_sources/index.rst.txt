@@ -20,3 +20,4 @@ Software for building star maps and sky charts, developed for the
    installation
    quickstart
    cli
+   changelog

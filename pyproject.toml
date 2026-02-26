@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "astrageek"
-version = "0.2.1.post1"
+version = "0.2.2"
 authors = [
     {name = "Ilia Bespyatyy", email = "ilia.bespytatyy@gmail.com"},
     {name = "Maksim Ramenskyy", email = "msramenskiy@edu.hse.ru"},
 ]
 description = "Star maps maker"
-readme = "README.md"
+readme = "README_PYPI.md"
 requires-python = ">=3.8"
 keywords = ["skychart", "python", "astronomy", "maps"]
 license = {text = "MIT"}
@@ -39,6 +39,7 @@ docs = [
     "sphinx-click",
     "sphinx-copybutton",
     "sphinx-pyproject",
+    "myst-parser",
 ]
 dev = [
     "build",
@@ -61,13 +62,14 @@ where = ["."]
 project = "AstraGeek"
 
 extensions = [
-  "sphinx.ext.autodoc",
-  "sphinx.ext.githubpages",
-  "sphinx.ext.napoleon",
-  "sphinx.ext.intersphinx",
-  "sphinx_autodoc_typehints",
-  "sphinx_click",
-  "sphinx_copybutton",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.githubpages",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
+    "sphinx_autodoc_typehints",
+    "sphinx_click",
+    "sphinx_copybutton",
+    "myst_parser",
 ]
 
 copybutton_prompt_text = "\\$ |>>> "
