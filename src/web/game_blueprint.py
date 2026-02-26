@@ -174,8 +174,8 @@ def _generate_question(session):
 def _prefetch_worker(session) -> None:
     """
     Runs in a daemon thread. Generates the next question and stores it in
-    session.current_question. Sets session.prefetch_event when done
-    (or on error).
+    session.current_question.
+    Sets session.prefetch_event when done (or on error).
     """
     try:
         if session.is_finished:
@@ -273,6 +273,7 @@ def api_question():
     to the client — they are stored in session.current_question only for
     server-side answer validation.
     """
+
     session_id = request.args.get("session_id", "")
     session = get_session(session_id)
     if not session:
@@ -299,12 +300,11 @@ def api_question():
         question = session.current_question
     else:
         # Запасной путь: генерируем синхронно.
-        # Срабатывает если: таймаут, ошибка в фоне, или prefetch не был
-        # запущен.
+        # Срабатывает если: таймаут, ошибка в фоне, или prefetch не был запущен
         if session.prefetch_error:
             print(
-                f"[prefetch] Ошибка предгенерации для {session.session_id}:"
-                f" {session.prefetch_error} — генерируем синхронно"
+                f"[prefetch] Ошибка предгенерации для {session.session_id}: "
+                f"{session.prefetch_error} — генерируем синхронно"
             )
             session.prefetch_error = None
         try:
@@ -336,7 +336,7 @@ def api_answer():
 
     Normal modes body:
         { "session_id": "...", "answer": "Orion",
-        "used_hint": false, "time_seconds": 7 }
+         "used_hint": false, "time_seconds": 7 }
 
     Star hard mode extra fields:
         { ..., "answer_ra": 101.3, "answer_dec": -16.7 }
@@ -359,7 +359,7 @@ def api_answer():
     coord_feedback = None
     draw_details = None
 
-    # ── Draw mode ───────────────────────────────────────────────────────────
+    # ── Draw mode ────────────────────────────────────────────────────────────
     if session.current_question["type"] == "draw":
         drawn_edges = data.get("drawn_edges", [])
         result = _factory.check_draw_answer(session, drawn_edges)
@@ -369,7 +369,7 @@ def api_answer():
         fun_fact = result.get("fun_fact", "")
         draw_details = result
 
-    # ── All other modes ─────────────────────────────────────────────────────
+    # ── All other modes ──────────────────────────────────────────────────────
     else:
         player_answer = str(data.get("answer", "")).strip()
         correct_answer = session.current_question.get("correct", "")
@@ -412,7 +412,7 @@ def api_answer():
         else:
             correct = name_correct
 
-    # ── Scoring ─────────────────────────────────────────────────────────────
+    # ── Scoring ──────────────────────────────────────────────────────────────
     points = calculate_score(
         difficulty=session.difficulty,
         correct=correct,

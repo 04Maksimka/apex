@@ -26,15 +26,15 @@ from src.pinhole_projection.pinhole_projector import (
 )
 from src.planets_catalog.planet_catalog import PlanetCatalog
 
+matplotlib.use("Agg")
 # ── FIX 1: Закрываем все figure, которые matplotlib мог создать при импорте,
 #           чтобы первый рендер не «унаследовал» мусорное состояние.
-matplotlib.use("Agg")
 plt.close("all")
 
-# ── Blueprint ───────────────────────────────────────────────────────────────
+# ── Blueprint ────────────────────────────────────────────────────────────────
 messier_bp = Blueprint("messier", __name__)
 
-# ── Каталоги (инициализируются один раз при первом запросе) ─────────────────
+# ── Каталоги (инициализируются один раз при первом запросе) ──────────────────
 _star_catalog = None
 _planet_catalog = None
 _messier_catalog = None
@@ -56,12 +56,12 @@ def _get_catalogs():
     return _star_catalog, _planet_catalog, _messier_catalog
 
 
-# ── Хранилище сессий ────────────────────────────────────────────────────────
+# ── Хранилище сессий ─────────────────────────────────────────────────────────
 _sessions: Dict[str, Any] = {}
 _lock = Lock()
 
 
-# ── Вспомогательные функции ─────────────────────────────────────────────────
+# ── Вспомогательные функции ──────────────────────────────────────────────────
 
 
 def _new_session(num_rounds: int) -> dict:
@@ -173,7 +173,7 @@ def _render_png(messier_object) -> bytes:
     return buf.read()
 
 
-# ── CORS ────────────────────────────────────────────────────────────────────
+# ── CORS ─────────────────────────────────────────────────────────────────────
 
 
 @messier_bp.after_request
@@ -189,7 +189,7 @@ def _options(_):
     return jsonify({}), 200
 
 
-# ── Маршруты ────────────────────────────────────────────────────────────────
+# ── Маршруты ─────────────────────────────────────────────────────────────────
 
 
 @messier_bp.route("/api/messier/start", methods=["POST"])

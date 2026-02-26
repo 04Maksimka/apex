@@ -103,11 +103,11 @@ class GameSession:
     history: List[Dict[str, Any]] = field(default_factory=list)
     current_question: Optional[Dict[str, Any]] = None
 
-    # ── Prefetch (pre-generation of next question image) ────────────────────
+    # ── Prefetch (pre-generation of next question image) ─────────────────────
     # prefetch_event is set() when the background generation thread finishes.
     # api/question waits on this event instead of generating synchronously.
     prefetch_event: threading.Event = field(default_factory=threading.Event)
-    # If the background thread raised an exception, the message is stored here
+    # If the background thread raised an exception, the message is stored here.
     prefetch_error: Optional[str] = None
 
     @property

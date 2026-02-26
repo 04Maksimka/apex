@@ -2,7 +2,7 @@ import os
 import tempfile
 import threading
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -48,7 +48,7 @@ CATALOG = Catalog(
 )
 
 
-# ── Прогрев каталогов при старте (чтобы первый игровой запрос не лагал) ──────
+# ── Предзапуск каталогов при старте (чтобы первый игровой запрос не лагал) ───
 def _warmup_catalogs():
     """
     Загружаем все каталоги игры в фоновом потоке сразу после старта сервера.
@@ -56,22 +56,22 @@ def _warmup_catalogs():
     когда Hipparcos / Мессье / matplotlib ещё не инициализированы.
     """
     try:
-        print("[warmup] Прогрев каталогов игры...")
+        print("[warmup] Предзапуск каталогов игры...")
         from src.game.question_factory import (
             _get_catalog,
             _get_messier_catalog,
-            _get_named_stars,
+            _load_named_stars,
         )
 
         _get_catalog()
         _get_messier_catalog()
-        _get_named_stars()
-        # Первый plt.subplots() всегда медленный — прогреваем заранее
+        _load_named_stars()
+        # Первый plt.subplots() всегда медленный — запускаем заранее
         fig, _ax = plt.subplots()
         plt.close(fig)
         print("[warmup] Каталоги загружены ✓")
     except Exception as exc:
-        print(f"[warmup] Предупреждение: не удалось прогреть каталоги: {exc}")
+        print(f"[warmup] Предупреждение: не удалось запустить каталоги: {exc}")
 
 
 threading.Thread(target=_warmup_catalogs, daemon=True).start()
@@ -118,7 +118,7 @@ def generate():
     dtime = (
         datetime.fromisoformat(data["datetime"])
         if data.get("datetime")
-        else datetime.utcnow()
+        else datetime.now(UTC)
     )
     v_mag_limit = float(data.get("v_mag_limit", 6.5))
     constraints = CatalogConstraints(max_magnitude=v_mag_limit)
@@ -165,6 +165,7 @@ def generate():
             footer_text="skychart.astrageek.ru",
             print_skychart_info=print_skychart_info,
         )
+        plt.close(fig)
 
     elif mode == "pinhole":
         constellation = data.get("constellation", "ORI").upper()
@@ -194,6 +195,7 @@ def generate():
             logo_path="src/helpers/pdf_helpers/logo_astrageek.png",
             footer_text="skychart.astrageek.ru",
         )
+        plt.close(fig)
 
     return send_file(
         tmp_path,

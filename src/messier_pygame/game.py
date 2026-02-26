@@ -31,7 +31,8 @@ class MessierGame:
         """
         Initialize the Messier game.
 
-        :param num_rounds: Number of objects to guess
+        :param num_rounds: Number of objects to guess (default 10)
+        :type num_rounds: int
         """
         self.num_rounds = num_rounds
         self.current_round = 0
@@ -59,9 +60,8 @@ class MessierGame:
         """Get a random Messier object that hasn't been used yet.
 
         :return: Tuple of (M number, object data)
-
-
         """
+
         all_objects = self.messier_catalog.get_all_objects()
         available_objects = [
             obj
@@ -86,11 +86,9 @@ class MessierGame:
         :type messier_object: NDArray
         :param show_object_marker: Whether to mark the Messier object location
         :type show_object_marker: bool:  (Default value = True)
-
         :return: Figure and axes
         :rtype: Tuple[plt.Figure, plt.Axes]
         """
-
         # Get the ECI coordinates of the Messier object
         center_direction = np.array(
             [messier_object["x"], messier_object["y"], messier_object["z"]],
@@ -146,7 +144,7 @@ class MessierGame:
             center_y = self.camera_config.height / 2
 
             # Calculate marker size based on object angular size
-            marker_size = max(20, min(200, messier_object["size"] * 2))
+            marker_size = max(20, min(min(messier_object["size"] * 2), 200))
 
             # Choose color based on object type
             color = MessierCatalog.get_type_color(
@@ -177,7 +175,6 @@ class MessierGame:
         :param messier_object: The Messier object data
         :type messier_object: NDArray
         """
-
         print("\n" + "=" * 60)
         print(f"Round {self.current_round + 1}/{self.num_rounds}")
         print("=" * 60)
