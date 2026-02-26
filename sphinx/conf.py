@@ -2,15 +2,13 @@
 import sys
 from pathlib import Path
 
-import sphinx.ext.autodoc as _autodoc
+# Patch for sphinx-click: in Sphinx >= 9.0 mock moved to submodule
+import sphinx_click.ext as _sc_ext  # noqa: E402
+from sphinx.ext.autodoc.mock import mock as _mock_class  # noqa: E402
 
-# Patch for sphinx-click: import mock in Sphinx >= 9.0
-import sphinx.ext.autodoc.mock as _mock_module
+_sc_ext.mock = _mock_class
 
-if not hasattr(_autodoc, "mock"):
-    _autodoc.mock = _mock_module.mock
-
-from sphinx_pyproject import SphinxConfig
+from sphinx_pyproject import SphinxConfig  # noqa: E402
 
 html_theme = "furo"
 
