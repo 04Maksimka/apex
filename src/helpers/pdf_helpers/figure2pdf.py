@@ -26,13 +26,14 @@ COLOR_RULE = "#AAAAAA"
 COLOR_BG = "#FFFFFF"
 
 LOGO_ZOOM = 0.10
-LOGO_POS = (0.02, 0.97)  # top-left corner of task page only
+LOGO_POS = (0.02, 0.97)
 
 
 # ── Internal helpers ─────────────────────────────────────────────────────────
 
 
 def _resolve_logo(logo_path: str | None) -> str | None:
+    """Return an absolute path to the logo file, or None."""
     if logo_path is None:
         default = Path(__file__).resolve().parent / "logo_astrageek.png"
         return str(default) if default.exists() else None
@@ -122,35 +123,19 @@ def _hline(
     x0: float = 0.07,
     x1: float = 0.93,
     color: str = COLOR_RULE,
-    lw: float = 0.6,
 ):
+    """Draw a thin horizontal rule across the figure."""
     ax = fig.add_axes([x0, y, x1 - x0, 0.001], zorder=3)
     ax.set_facecolor(color)
     ax.axis("off")
 
 
-def _answer_line(width_chars: int = 28) -> str:
+def _draw_header(fig: plt.Figure, title: str) -> None:
     """
-    Return a fixed-width answer blank using Unicode underscore characters.
+    Draw title text and a horizontal rule below it.
+    Logo is NOT added here — call add_logo_to_figure separately.
+    Title is offset to x=0.22 to avoid overlapping the logo zone.
     """
-    return "\u00a0" + ("\u2005" + "\u0332" + "\u00a0") * width_chars
-
-
-def _draw_header(
-    fig: plt.Figure,
-    title: str,
-    logo_path: str | None = None,
-    page_size: tuple[float, float] = (8.27, 11.69),
-):
-    """
-    Draw title on the right side, logo on the left.
-    Title is offset right so it never overlaps the logo.
-    """
-    # Logo in top-left
-    if logo_path:
-        add_logo_to_figure(fig, logo_path, position=LOGO_POS, size=LOGO_ZOOM)
-
-    # Title starts well to the right of the logo area (~20% from left)
     fig.text(
         0.22,
         0.955,
@@ -170,21 +155,22 @@ def _draw_task_block(
     y_start: float = 0.910,
     x_left: float = 0.07,
     label_fontsize: int = 10,
-    desc_fontsize: int = 8.5,
-    block_gap: float = 0.058,  # tighter than before
-):
+    desc_fontsize: float = 8.5,
+    block_gap: float = 0.058,
+) -> None:
     """
     Draw numbered task list.
-    Format:  "1.  Label text  ▢"
-    Description on next line, indented, italic grey.
+
+    Each task is rendered as:
+        "N.  Label text  \u25a2"
+        "    italic description..."
     """
     y = y_start
     for i, task in enumerate(tasks, 1):
-        label_line = f"{i}.  {task['label']}  \u25a2"
         fig.text(
             x_left,
             y,
-            label_line,
+            f"{i}.  {task['label']}  \u25a2",
             fontsize=label_fontsize,
             va="top",
             color=COLOR_TEXT,
@@ -205,6 +191,62 @@ def _draw_task_block(
         y -= block_gap
 
 
+def _draw_task_block_two_columns(
+    fig: plt.Figure,
+    tasks: list[dict],
+    y_start: float = 0.855,
+    x_cols: tuple[float, float] = (0.05, 0.52),
+    rows: int = 2,
+    label_fontsize: int = 10,
+    desc_fontsize: float = 8.5,
+    row_gap: float = 0.200,
+) -> None:
+    """
+    Draw numbered task list in two columns.
+
+    Tasks are placed left-to-right, top-to-bottom:
+        col 0, row 0  |  col 1, row 0
+        col 0, row 1  |  col 1, row 1
+        ...
+
+    :param fig: Figure to draw on
+    :param tasks: list of dicts with 'label' and optional 'description'
+    :param y_start: top y position (figure fraction)
+    :param x_cols: x positions for left and right columns
+    :param rows: number of rows per column
+    :param label_fontsize: font size for task label
+    :param desc_fontsize: font size for description
+    :param row_gap: vertical distance between rows
+    """
+    for i, task in enumerate(tasks):
+        col = i % 2
+        row = i // 2
+        x = x_cols[col]
+        y = y_start - row * row_gap
+
+        fig.text(
+            x,
+            y,
+            f"{i + 1}.  {task['label']}  \u25a2",
+            fontsize=label_fontsize,
+            va="top",
+            color=COLOR_TEXT,
+            fontfamily="monospace",
+            fontweight="bold",
+        )
+        if task.get("description"):
+            fig.text(
+                x + 0.025,
+                y - 0.030,
+                task["description"],
+                fontsize=desc_fontsize,
+                va="top",
+                color=COLOR_MUTED,
+                fontfamily="monospace",
+                style="italic",
+            )
+
+
 # ── Public save functions ────────────────────────────────────────────────────
 
 
@@ -220,10 +262,10 @@ def save_figure(
     """
     Save figure as PDF with logo and footer text.
 
-    :param filename: Name of the file where to save a fig
-    :type filename: str
     :param fig: Figure to be saved
     :type fig: plt.Figure
+    :param filename: Name of the file where to save a fig
+    :type filename: str
     :param logo_path: path to the logo
     :type logo_path: str | None
     :param footer_text: text to be written
@@ -241,7 +283,12 @@ def save_figure(
         add_footer_text(fig, footer_text, text_position)
     if not filename.endswith(".pdf"):
         filename += ".pdf"
-    fig.savefig(filename, dpi=dpi, bbox_inches="tight", pad_inches=0.1)
+    fig.savefig(
+        filename,
+        dpi=dpi,
+        bbox_inches="tight",
+        pad_inches=0.1,
+    )
     logger.info(f"Figure saved as '{filename}'")
 
 
@@ -257,12 +304,13 @@ def save_figure_pinhole(
     chart_margins: tuple[float, float, float, float] = (0.1, 0.2, 0.1, 0.1),
 ):
     """
-    Save figure as PDF with logo and footer text (pinhole projection result).
+    Save pinhole projection result as a two-page PDF.
+    Page 1 — task sheet.  Page 2 — the projection image.
 
-    :param filename: Name of the file where to save a fig
-    :type filename: str
     :param fig: Figure to be saved
     :type fig: plt.Figure
+    :param filename: Name of the file where to save a fig
+    :type filename: str
     :param logo_path: path to the logo
     :type logo_path: str | None
     :param footer_text: text to be written
@@ -275,7 +323,7 @@ def save_figure_pinhole(
     :type dpi: int
     :param page_size: size of output page
     :type page_size: tuple[float, float]
-    :param chart_margins: side margins
+    :param chart_margins: side margins (left, bottom, right, top)
     :type chart_margins: tuple[float, float, float, float]
     """
     if not filename.endswith(".pdf"):
@@ -287,34 +335,34 @@ def save_figure_pinhole(
         {
             "label": "Обозначьте созвездия",
             "description": (
-                "Найдите на снимке видимые созвездия и подпишите каждое\n"
-                "трёхбуквенным латинским сокращением (Ori, UMa, Cas…).\n"
-                "Соедините главные звёзды, проведя контуры созвездий."
+                "Найдите на снимке видимые созвездия и подпишите\n"
+                "каждое трёхбуквенным латинским сокращением\n"
+                "(Ori, UMa, Cas…). Соедините главные звёзды,\n"
+                "проведя контуры созвездий."
             ),
         },
         {
             "label": "Проведите эклиптику",
             "description": (
-                "Эклиптика — видимый путь Солнца среди звёзд "
-                "(наклонена к экватору\n"
-                "на ε ≈ 23°26′). Нанесите её, "
+                "Эклиптика — видимый путь Солнца среди звёзд\n"
+                "(наклонена к экватору на ε ≈ 23°26′). Нанесите её,\n"
                 "если она попадает в поле зрения снимка."
             ),
         },
         {
             "label": "Проведите небесный экватор",
             "description": (
-                "Небесный экватор — проекция земного экватора "
-                "на небесную сферу.\n"
-                "Нанесите его дугой, если он присутствует на снимке."
+                "Небесный экватор — проекция земного экватора\n"
+                "на небесную сферу. Нанесите его дугой,\n"
+                "если он присутствует на снимке."
             ),
         },
         {
             "label": "Обозначьте точку равноденствия",
             "description": (
-                "Нанесите точки осеннего или весеннего равноденствия, "
-                "если они видны.\n"
-                "Это точки пересечения эклиптики с небесным экватором."
+                "Нанесите точку осеннего или весеннего равноденствия,\n"
+                "если она видна — это точка пересечения эклиптики\n"
+                "с небесным экватором."
             ),
         },
     ]
@@ -322,7 +370,7 @@ def save_figure_pinhole(
     with PdfPages(filename) as pdf:
         plt.rcParams["font.family"] = "monospace"
 
-        # ── Task page (landscape) ──────────────────────────────────────────
+        # ── Task page (landscape) ──────────────────────────────────────
         info_fig = plt.figure(figsize=page_size)
         info_fig.patch.set_facecolor(COLOR_BG)
         info_fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
@@ -330,20 +378,29 @@ def save_figure_pinhole(
         _draw_header(
             info_fig,
             title="Камера-обскура  (Pinhole projection)",
-            logo_path=resolved_logo,
-            page_size=page_size,
         )
-        _draw_task_block(info_fig, tasks, y_start=0.895, block_gap=0.180)
-
+        if resolved_logo:
+            add_logo_to_figure(
+                info_fig,
+                resolved_logo,
+                position=logo_position,
+            )
+        _draw_task_block_two_columns(
+            info_fig,
+            tasks,
+            y_start=0.855,
+            x_cols=(0.05, 0.52),
+            row_gap=0.200,
+        )
         if footer_text:
             add_footer_text(info_fig, footer_text, text_position)
 
         pdf.savefig(info_fig, pad_inches=0.25, dpi=dpi)
         plt.close(info_fig)
 
-        # ── Chart page ─────────────────────────────────────────────────────
+        # ── Chart page ─────────────────────────────────────────────────
         original_size = fig.get_size_inches().copy()
-        original_ax_positions = [ax.get_position().frozen() for ax in fig.axes]
+        original_positions = [ax.get_position().frozen() for ax in fig.axes]
         fig.set_size_inches(page_size, forward=False)
         fig.patch.set_facecolor(COLOR_BG)
 
@@ -354,9 +411,14 @@ def save_figure_pinhole(
             for ax in fig.axes:
                 ax.set_position((left, bottom, width, height))
 
-        pdf.savefig(fig, pad_inches=0.5, dpi=dpi, orientation="landscape")
+        pdf.savefig(
+            fig,
+            pad_inches=0.5,
+            dpi=dpi,
+            orientation="landscape",
+        )
 
-        for ax, pos in zip(fig.axes, original_ax_positions):
+        for ax, pos in zip(fig.axes, original_positions):
             ax.set_position(pos)
         fig.set_size_inches(original_size, forward=False)
 
@@ -417,7 +479,7 @@ def save_figure_skychart(
     :type page_size: tuple[float, float]
     :param chart_margins: (left, bottom, right, top) as figure fractions
     :type chart_margins: tuple[float, float, float, float]
-    :param print_skychart_info: whether to include observation info block
+    :param print_skychart_info: include observation info block
     :type print_skychart_info: bool
     """
     if not filename.endswith(".pdf"):
@@ -437,45 +499,42 @@ def save_figure_skychart(
         {
             "label": "Обозначьте зенит и стороны света",
             "description": (
-                "Зенит Z, стороны горизонта: N (север), E (восток), "
-                "S (юг), W (запад)."
+                "Зенит Z, стороны горизонта:\n"
+                "N (север), E (восток), S (юг), W (запад)."
             ),
         },
         {
             "label": "Полюс мира и небесный меридиан",
             "description": (
-                "Полюс мира P лежит на оси вращения Земли. "
-                "Для северного полушария\n"
-                "он близок к Полярной звезде (α UMi). Небесный меридиан —\n"
+                "Полюс мира P лежит на оси вращения Земли.\n"
+                "Для северного полушария он близок к Полярной\n"
+                "звезде (α UMi). Небесный меридиан —\n"
                 "большой круг через Z, P, N и S."
             ),
         },
         {
             "label": "Проведите эклиптику",
             "description": (
-                "Эклиптика — путь Солнца за год, "
-                "наклонена к экватору на ε ≈ 23°26′.\n"
-                "В стереографической проекции она изображается окружностью\n"
-                "или дугой большого круга."
+                "Эклиптика — путь Солнца за год, наклонена\n"
+                "к экватору на ε ≈ 23°26′. В стереографической\n"
+                "проекции она изображается окружностью."
             ),
         },
         {
             "label": "Проведите небесный экватор",
             "description": (
-                "Небесный экватор перпендикулярен оси P–Z. "
-                "В стереографической\n"
-                "проекции он тоже является окружностью. Угол между ним и\n"
-                "горизонтом равен (90° − φ), где φ — широта наблюдателя."
+                "Небесный экватор перпендикулярен оси P–Z.\n"
+                "В стереографической проекции он тоже является\n"
+                "окружностью. Угол между ним и горизонтом\n"
+                "равен (90° − φ), где φ — широта наблюдателя."
             ),
         },
         {
             "label": "Обозначьте точку равноденствия",
             "description": (
-                "Точка весеннего равноденствия (Овен ♈) или "
-                "осеннего (Весы ♎) —\n"
-                "пересечение эклиптики с экватором. "
-                "Нанесите ту, что попадает\n"
-                "в поле зрения карты."
+                "Точка весеннего равноденствия (Овен ♈)\n"
+                "или осеннего (Весы ♎) — пересечение эклиптики\n"
+                "с экватором. Нанесите ту, что в поле зрения."
             ),
         },
         {
@@ -485,16 +544,17 @@ def save_figure_skychart(
         {
             "label": "Определите широту наблюдателя φ",
             "description": (
-                "Обратите внимание: карта дана в стереографической проекции.\n"
+                "Обратите внимание: карта дана\n"
+                "в стереографической проекции.\n"
                 "Ответ: _______________________________"
             ),
         },
         {
             "label": "Обозначьте созвездия",
             "description": (
-                "Подпишите все видимые созвездия трёхбуквенными латинскими\n"
-                "сокращениями (Ori, UMa, Cas…) и проведите их контуры,\n"
-                "соединив главные звёзды линиями."
+                "Подпишите все видимые созвездия трёхбуквенными\n"
+                "латинскими сокращениями (Ori, UMa, Cas…) и\n"
+                "проведите контуры, соединив главные звёзды."
             ),
         },
     ]
@@ -502,7 +562,7 @@ def save_figure_skychart(
     with PdfPages(filename) as pdf:
         plt.rcParams["font.family"] = "monospace"
 
-        # ── Task page ──────────────────────────────────────────────────────
+        # ── Task page ──────────────────────────────────────────────────
         info_fig = plt.figure(figsize=page_size)
         info_fig.patch.set_facecolor(COLOR_BG)
         info_fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
@@ -510,20 +570,30 @@ def save_figure_skychart(
         _draw_header(
             info_fig,
             title="Стереографическая карта звёздного неба",
-            logo_path=resolved_logo,
-            page_size=page_size,
         )
-        _draw_task_block(info_fig, tasks, y_start=0.908, block_gap=0.088)
+        if resolved_logo:
+            add_logo_to_figure(
+                info_fig,
+                resolved_logo,
+                position=logo_position,
+            )
+        _draw_task_block(
+            info_fig,
+            tasks,
+            y_start=0.908,
+            block_gap=0.088,
+        )
 
-        # ── Observation info ───────────────────────────────────────────────
+        # ── Observation info ───────────────────────────────────────────
         if print_skychart_info:
             info_lines: list[str] = [
-                f"Время наблюдения : {
-                    observation_time.strftime('%Y-%m-%d  %H:%M:%S')
-                }",
-                f"Звёздное время   : {
+                "Время наблюдения : "
+                f"{observation_time.strftime('%Y-%m-%d  %H:%M:%S')}",
+                "Звёздное время   : "
+                f"{
                     get_sidereal_time(
-                        longitude=longitude, local=observation_time
+                        longitude=longitude,
+                        local=observation_time,
                     )
                 }",
             ]
@@ -558,9 +628,9 @@ def save_figure_skychart(
         pdf.savefig(info_fig, pad_inches=0.25, dpi=dpi)
         plt.close(info_fig)
 
-        # ── Chart page ─────────────────────────────────────────────────────
+        # ── Chart page ─────────────────────────────────────────────────
         original_size = fig.get_size_inches().copy()
-        original_ax_positions = [ax.get_position().frozen() for ax in fig.axes]
+        original_positions = [ax.get_position().frozen() for ax in fig.axes]
         fig.set_size_inches(page_size, forward=False)
         fig.patch.set_facecolor(COLOR_BG)
 
@@ -574,15 +644,13 @@ def save_figure_skychart(
         sq_h = side / phys_h
         cx = left + width / 2
         cy = bottom + height / 2
-        ax_l = cx - sq_w / 2
-        ax_b = cy - sq_h / 2
 
         for ax in fig.axes:
-            ax.set_position((ax_l, ax_b, sq_w, sq_h))
+            ax.set_position((cx - sq_w / 2, cy - sq_h / 2, sq_w, sq_h))
 
         pdf.savefig(fig, pad_inches=0.25, dpi=dpi)
 
-        for ax, pos in zip(fig.axes, original_ax_positions):
+        for ax, pos in zip(fig.axes, original_positions):
             ax.set_position(pos)
         fig.set_size_inches(original_size, forward=False)
 
