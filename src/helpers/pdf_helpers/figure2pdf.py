@@ -586,16 +586,14 @@ def save_figure_skychart(
 
         # ── Observation info ───────────────────────────────────────────
         if print_skychart_info:
+            sid_time = get_sidereal_time(
+                longitude=longitude,local=observation_time,
+            )
             info_lines: list[str] = [
                 "Время наблюдения : "
                 f"{observation_time.strftime('%Y-%m-%d  %H:%M:%S')}",
                 "Звёздное время   : "
-                f"{
-                    get_sidereal_time(
-                        longitude=longitude,
-                        local=observation_time,
-                    )
-                }",
+                f"{sid_time}",
             ]
             if latitude is not None and longitude is not None:
                 loc = f"{latitude:.2f}°,  {longitude:.2f}°"
