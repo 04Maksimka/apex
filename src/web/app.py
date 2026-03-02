@@ -2,7 +2,7 @@ import os
 import tempfile
 import threading
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -98,7 +98,7 @@ def generate():
     dtime = (
         datetime.fromisoformat(data["datetime"])
         if data.get("datetime")
-        else datetime.now(UTC)
+        else datetime.now(timezone.utc)
     )
     v_mag_limit = float(data.get("v_mag_limit", 6.5))
     constraints = CatalogConstraints(max_magnitude=v_mag_limit)
