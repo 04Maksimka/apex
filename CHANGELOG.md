@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Sphinx compatibility
+- Constellation lines 
 
 ### Changed
 - The layout and design of the proposed tasks on the first page of the files for our star maps
