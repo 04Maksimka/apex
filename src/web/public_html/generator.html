@@ -435,6 +435,74 @@
         .info-preview-box .preview-val {
             color: var(--cyan);
         }
+        /* ── GRID STEPS CARD ── */
+        .grid-steps-card {
+            margin-top: 20px;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent2);
+            border-radius: 12px;
+            padding: 18px 22px;
+        }
+        .grid-steps-title {
+            font-size: .85rem;
+            font-weight: 700;
+            color: var(--accent2);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-bottom: 16px;
+        }
+        .grid-steps-fields {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+        }
+        .grid-step-field {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 0 18px;
+        }
+        .grid-step-field:first-child { padding-left: 0; }
+        .grid-step-field:last-child  { padding-right: 0; }
+        .grid-step-divider {
+            width: 1px;
+            align-self: stretch;
+            background: var(--border);
+            margin: 4px 0;
+        }
+        .grid-step-label {
+            font-size: .88rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .grid-step-hint {
+            font-size: .78rem;
+            color: var(--text-dim);
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+        .grid-step-field input {
+            width: 80px;
+            padding: 8px 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: .95rem;
+            font-family: inherit;
+            transition: border-color .2s;
+        }
+        .grid-step-field input:focus {
+            outline: none;
+            border-color: var(--accent2);
+        }
+        .grid-step-unit {
+            font-size: .82rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
 
         /* ── GENERATE BUTTON ── */
         .generate-btn {
@@ -597,17 +665,43 @@
         <div id="pinhole-fields">
             <div class="section-label">Область и ориентация</div>
             <div class="fields-grid">
+
+                <!-- Случайное направление — наверху, блокирует поле созвездия -->
+                <div class="field full">
+                    <label class="check-item">
+                        <input type="checkbox" id="random_direction"
+                            onchange="toggleRandomDirection(this.checked)">
+                        <span class="check-label">🎲 Случайное направление камеры</span>
+                    </label>
+                </div>
+
+                <!-- Случайный поворот — блокирует поле угла -->
+                <div class="field full">
+                    <label class="check-item">
+                        <input type="checkbox" id="random_tilt"
+                            onchange="toggleRandomTilt(this.checked)">
+                        <span class="check-label">🎲 Случайный поворот камеры (0°–360°)</span>
+                    </label>
+                </div>
+
+
                 <div class="field">
                     <label>⭐ Созвездие (код IAU)</label>
-                    <input type="text" id="constellation" placeholder="ORI, UMA, CAS, CYG…" maxlength="3" style="text-transform:uppercase">
+                    <input type="text" id="constellation"
+                        placeholder="ORI, UMA, CAS, CYG…"
+                        maxlength="3"
+                        style="text-transform:uppercase">
                 </div>
                 <div class="field">
                     <label>🔭 Угол зрения FOV (°)</label>
-                    <input type="number" id="fov" placeholder="60" value="60" min="5" max="180">
+                    <input type="number" id="fov"
+                        placeholder="60" value="60" min="5" max="180">
                 </div>
+
                 <div class="field">
                     <label>🔄 Поворот камеры (°)</label>
-                    <input type="number" id="tilt_angle" placeholder="0" value="0" min="-180" max="180">
+                    <input type="number" id="tilt_angle"
+                        placeholder="0" value="0" min="0" max="360">
                 </div>
                 <div class="field">
                     <label>📐 Соотношение сторон</label>
@@ -624,6 +718,8 @@
                 </div>
             </div>
         </div>
+
+
 
         <div class="divider"></div>
 
@@ -671,7 +767,6 @@
                 <input type="checkbox" id="add_planets">
                 <span class="check-label">Планеты</span>
             </label>
-
             <label class="check-item">
                 <input type="checkbox" id="add_equatorial_grid">
                 <span class="check-label">Экваториальная сетка</span>
@@ -681,19 +776,55 @@
                 <span class="check-label">Линии созвездий</span>
             </label>
             <label class="check-item">
-                <input type="checkbox" id="add_constellation_names">
+                <input type="checkbox" id="add_constellations_names">
                 <span class="check-label">Названия созвездий</span>
             </label>
-            <label class="check-item">
+            <!-- Только для stereo -->
+            <label class="check-item stereo-only">
                 <input type="checkbox" id="add_ticks">
                 <span class="check-label">Засечки осей</span>
             </label>
-            <label class="check-item">
-                <input type="checkbox" id="add_cardinal_directions">
-                <span class="check-label">Стороны света</span>
+            <label class="check-item stereo-only">
+                <input type="checkbox" id="add_zenith">
+                <span class="check-label">Зенит (Z)</span>
+            </label>
+            <label class="check-item stereo-only">
+                <input type="checkbox" id="add_poles">
+                <span class="check-label">Полюс мира (P)</span>
+            </label>
+            <label class="check-item stereo-only">
+                <input type="checkbox" id="add_horizontal_grid">
+                <span class="check-label">Горизонтальная сетка</span>
+            </label>
+            <label class="check-item stereo-only">
+                <input type="checkbox" id="random_origin">
+                <span class="check-label">Случайный поворот карты</span>
             </label>
         </div>
+
+        <!-- Шаг сетки — появляется когда включена любая сетка -->
+        <div class="grid-steps-card" id="grid-steps-row" style="display:none">
+            <div class="grid-steps-title">📐 Шаг координатной сетки</div>
+            <div class="grid-steps-fields">
+                <div class="grid-step-field">
+                    <label class="grid-step-label">По азимуту / RA</label>
+                    <span class="grid-step-hint">Угловой шаг в горизонтальном направлении</span>
+                    <input type="number" id="grid_theta_step"
+                        value="15" min="1" max="90" step="1">
+                    <span class="grid-step-unit">°</span>
+                </div>
+                <div class="grid-step-divider"></div>
+                <div class="grid-step-field">
+                    <label class="grid-step-label">По зениту / Dec</label>
+                    <span class="grid-step-hint">Угловой шаг в вертикальном направлении</span>
+                    <input type="number" id="grid_phi_step"
+                        value="15" min="1" max="90" step="1">
+                    <span class="grid-step-unit">°</span>
+                </div>
+            </div>
+        </div>
     </div>
+
 
     <!-- ── PRINT SKYCHART INFO TOGGLE ─────────────────────────────────── -->
     <div class="info-toggle-card" id="print-info-card">
@@ -780,7 +911,13 @@
         requestAnimationFrame(draw);
     }
     resize(); init(); draw();
-    window.addEventListener('resize', () => { resize(); stars.forEach(s => { s.x = Math.random() * c.width; s.y = Math.random() * c.height; }); });
+    window.addEventListener('resize', () => {
+        resize();
+        stars.forEach(s => {
+            s.x = Math.random() * c.width;
+            s.y = Math.random() * c.height;
+        });
+    });
 })();
 
 // ── NAVBAR SCROLL ─────────────────────────────────────────────────────────
@@ -791,6 +928,19 @@ window.addEventListener('scroll', () => {
 // ── MODE SWITCHER ─────────────────────────────────────────────────────────
 let currentMode = 'stereo';
 
+function updateStereoOnlyFlags(mode) {
+    document.querySelectorAll('.stereo-only').forEach(el => {
+        el.style.display = mode === 'stereo' ? '' : 'none';
+    });
+}
+
+function updateGridStepsRow() {
+    const eqGrid  = document.getElementById('add_equatorial_grid');
+    const hGrid   = document.getElementById('add_horizontal_grid');
+    const show = (eqGrid && eqGrid.checked) || (hGrid && hGrid.checked);
+    document.getElementById('grid-steps-row').style.display = show ? 'flex' : 'none';
+}
+
 function setMode(mode) {
     currentMode = mode;
     document.getElementById('btn-stereo').classList.toggle('active', mode === 'stereo');
@@ -798,36 +948,65 @@ function setMode(mode) {
     document.getElementById('stereo-fields').style.display = mode === 'stereo' ? 'block' : 'none';
     document.getElementById('pinhole-fields').style.display = mode === 'pinhole' ? 'block' : 'none';
 
-    // Hide print_skychart_info card for pinhole — parameter not applicable
     const infoCard = document.getElementById('print-info-card');
     infoCard.style.display = mode === 'stereo' ? 'block' : 'none';
+
+    updateStereoOnlyFlags(mode);
+    updateGridStepsRow();
 }
+
+// Подписываемся на чекбоксы сетки для показа шага
+['add_equatorial_grid', 'add_horizontal_grid'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateGridStepsRow);
+});
+
+// ── RANDOM DIRECTION (pinhole) ────────────────────────────────────────────
+function toggleRandomDirection(enabled) {
+    const consInput = document.getElementById('constellation');
+    consInput.disabled = enabled;
+    consInput.style.opacity = enabled ? '0.4' : '1';
+    if (enabled) consInput.value = '';
+}
+
+// RANDOM TILT ANGLE
+function toggleRandomTilt(enabled) {
+    const tiltInput = document.getElementById('tilt_angle');
+    tiltInput.disabled = enabled;
+    tiltInput.style.opacity = enabled ? '0.4' : '1';
+    if (enabled) tiltInput.value = '';
+}
+
 
 // ── PRESETS ───────────────────────────────────────────────────────────────
 const PRESETS = {
     teacher: {
-        add_ecliptic: true, add_equator: true, add_galactic_equator: false,
-        add_planets: true, add_horizontal_grid: true, add_equatorial_grid: false,
-        add_constellations: true, add_constellation_names: true,
-        add_ticks: true, add_cardinal_directions: true
+        add_ecliptic: true,  add_equator: true,  add_galactic_equator: false,
+        add_planets: true,   add_horizontal_grid: false, add_equatorial_grid: true,
+        add_constellations: true,  add_constellations_names: true,
+        add_ticks: true,  add_zenith: true,  add_poles: true,
+        random_origin: true
     },
     student: {
         add_ecliptic: false, add_equator: false, add_galactic_equator: false,
-        add_planets: false, add_horizontal_grid: false, add_equatorial_grid: false,
-        add_constellations: false, add_constellation_names: false,
-        add_ticks: false, add_cardinal_directions: true
+        add_planets: false,  add_horizontal_grid: false, add_equatorial_grid: false,
+        add_constellations: false, add_constellations_names: false,
+        add_ticks: false, add_zenith: false, add_poles: false,
+        random_origin: false
     },
     all: {
-        add_ecliptic: true, add_equator: true, add_galactic_equator: true,
-        add_planets: true, add_horizontal_grid: true, add_equatorial_grid: true,
-        add_constellations: true, add_constellation_names: true,
-        add_ticks: true, add_cardinal_directions: true
+        add_ecliptic: true,  add_equator: true,  add_galactic_equator: true,
+        add_planets: true,   add_horizontal_grid: true,  add_equatorial_grid: true,
+        add_constellations: true,  add_constellations_names: true,
+        add_ticks: true,  add_zenith: true,  add_poles: true,
+        random_origin: true
     },
     none: {
         add_ecliptic: false, add_equator: false, add_galactic_equator: false,
-        add_planets: false, add_horizontal_grid: false, add_equatorial_grid: false,
-        add_constellations: false, add_constellation_names: false,
-        add_ticks: false, add_cardinal_directions: false
+        add_planets: false,  add_horizontal_grid: false, add_equatorial_grid: false,
+        add_constellations: false, add_constellations_names: false,
+        add_ticks: false, add_zenith: false, add_poles: false,
+        random_origin: false
     }
 };
 
@@ -837,6 +1016,7 @@ function applyPreset(name) {
         const el = document.getElementById(id);
         if (el) el.checked = p[id];
     });
+    updateGridStepsRow();
 }
 
 // ── SET DEFAULT DATETIME ──────────────────────────────────────────────────
@@ -853,19 +1033,18 @@ document.getElementById('print_skychart_info').addEventListener('change', functi
     preview.classList.toggle('visible', this.checked);
 
     if (this.checked) {
-        // Fill preview with current form values
         const dtVal = document.getElementById('datetime-stereo').value;
         document.getElementById('preview-time').textContent =
             dtVal ? dtVal.replace('T', '  ') : '— не задано —';
-
         const lat = document.getElementById('latitude').value;
         const lon = document.getElementById('longitude').value;
         document.getElementById('preview-coords').textContent =
-            (lat && lon) ? `${parseFloat(lat).toFixed(2)}°,  ${parseFloat(lon).toFixed(2)}°` : '— не задано —';
+            (lat && lon)
+                ? `${parseFloat(lat).toFixed(2)}°,  ${parseFloat(lon).toFixed(2)}°`
+                : '— не задано —';
     }
 });
 
-// Update preview values live when fields change (only if toggle is on)
 ['datetime-stereo', 'latitude', 'longitude'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => {
         if (!document.getElementById('print_skychart_info').checked) return;
@@ -875,14 +1054,16 @@ document.getElementById('print_skychart_info').addEventListener('change', functi
         const lat = document.getElementById('latitude').value;
         const lon = document.getElementById('longitude').value;
         document.getElementById('preview-coords').textContent =
-            (lat && lon) ? `${parseFloat(lat).toFixed(2)}°,  ${parseFloat(lon).toFixed(2)}°` : '— не задано —';
+            (lat && lon)
+                ? `${parseFloat(lat).toFixed(2)}°,  ${parseFloat(lon).toFixed(2)}°`
+                : '— не задано —';
     });
 });
 
 // ── STATUS BOX ────────────────────────────────────────────────────────────
 function showStatus(state, text) {
-    const box = document.getElementById('status-box');
-    const spinner = document.getElementById('status-spinner');
+    const box        = document.getElementById('status-box');
+    const spinner    = document.getElementById('status-spinner');
     const statusText = document.getElementById('status-text');
     box.className = 'visible ' + state;
     spinner.style.display = state === 'loading' ? 'block' : 'none';
@@ -906,9 +1087,13 @@ async function generate() {
         }
     }
     if (currentMode === 'pinhole') {
-        const cons = document.getElementById('constellation').value.trim();
-        if (!cons || cons.length !== 3) {
-            showStatus('error', '⚠️ Введите трёхбуквенный код созвездия (например: ORI, CYG, UMA).');
+        const randomDir = document.getElementById('random_direction').checked;
+        const cons      = document.getElementById('constellation').value.trim();
+        if (!randomDir && (!cons || cons.length !== 3)) {
+            showStatus('error',
+                '⚠️ Введите трёхбуквенный код созвездия (например: ORI, CYG, UMA) ' +
+                'или включите «Случайное направление».'
+            );
             return;
         }
     }
@@ -916,37 +1101,62 @@ async function generate() {
     btn.disabled = true;
     showStatus('loading', 'Генерируем карту, это займёт несколько секунд…');
 
-    const datetimeId = currentMode === 'stereo' ? 'datetime-stereo' : 'datetime-pinhole';
+    const datetimeId  = currentMode === 'stereo' ? 'datetime-stereo' : 'datetime-pinhole';
     const datetimeVal = document.getElementById(datetimeId).value;
 
+    // ── Общие флаги ───────────────────────────────────────────────────────
     const payload = {
-        mode: currentMode,
-        datetime: datetimeVal || null,
-        v_mag_limit: parseFloat(document.getElementById('v_mag_limit').value),
+        mode:                 currentMode,
+        datetime:             datetimeVal || null,
+        v_mag_limit:          parseFloat(document.getElementById('v_mag_limit').value),
+
+        // Флаги общие для обоих режимов
         add_ecliptic:            document.getElementById('add_ecliptic').checked,
         add_equator:             document.getElementById('add_equator').checked,
         add_galactic_equator:    document.getElementById('add_galactic_equator').checked,
         add_planets:             document.getElementById('add_planets').checked,
         add_equatorial_grid:     document.getElementById('add_equatorial_grid').checked,
         add_constellations:      document.getElementById('add_constellations').checked,
-        add_constellation_names: document.getElementById('add_constellation_names').checked,
-        add_ticks:               document.getElementById('add_ticks').checked,
-        add_cardinal_directions: document.getElementById('add_cardinal_directions').checked,
-        // Only relevant for stereo, ignored by backend for pinhole
-        print_skychart_info:     currentMode === 'stereo'
-                                    ? document.getElementById('print_skychart_info').checked
-                                    : false,
+        add_constellations_names: document.getElementById('add_constellations_names').checked,
+
+        // Шаг сетки
+        grid_theta_step: parseFloat(document.getElementById('grid_theta_step').value) || 15.0,
+        grid_phi_step:   parseFloat(document.getElementById('grid_phi_step').value)   || 15.0,
+
+        // Флаги только для stereo (false для pinhole)
+        add_horizontal_grid: currentMode === 'stereo'
+            ? document.getElementById('add_horizontal_grid').checked : false,
+        add_ticks:           currentMode === 'stereo'
+            ? document.getElementById('add_ticks').checked           : false,
+        add_zenith:          currentMode === 'stereo'
+            ? document.getElementById('add_zenith').checked          : false,
+        add_poles:           currentMode === 'stereo'
+            ? document.getElementById('add_poles').checked           : false,
+        random_origin:       currentMode === 'stereo'
+            ? document.getElementById('random_origin').checked       : false,
+
+        // Только для stereo
+        print_skychart_info: currentMode === 'stereo'
+            ? document.getElementById('print_skychart_info').checked : false,
     };
 
+    // ── Специфичные поля по режиму ────────────────────────────────────────
     if (currentMode === 'stereo') {
         payload.latitude  = parseFloat(document.getElementById('latitude').value);
         payload.longitude = parseFloat(document.getElementById('longitude').value);
     } else {
-        payload.constellation = document.getElementById('constellation').value.trim().toUpperCase();
-        payload.fov           = parseFloat(document.getElementById('fov').value);
-        payload.tilt_angle    = parseFloat(document.getElementById('tilt_angle').value);
-        payload.aspect_ratio  = parseFloat(document.getElementById('aspect_ratio').value);
-        payload.height_pix    = 1200;
+        const randomDir = document.getElementById('random_direction').checked;
+        payload.random_direction = randomDir;
+        if (!randomDir) {
+            payload.constellation = document.getElementById('constellation').value.trim().toUpperCase();
+        }
+        payload.fov          = parseFloat(document.getElementById('fov').value);
+        const randomTilt = document.getElementById('random_tilt').checked;
+        payload.tilt_angle = randomTilt
+            ? Math.floor(Math.random() * 360)
+            : parseFloat(document.getElementById('tilt_angle').value) || 0;
+        payload.aspect_ratio = parseFloat(document.getElementById('aspect_ratio').value);
+        payload.height_pix   = 1200;
     }
 
     try {
@@ -963,9 +1173,9 @@ async function generate() {
         }
 
         const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
         a.download = `skychart_${currentMode}_${Date.now()}.pdf`;
         document.body.appendChild(a);
         a.click();

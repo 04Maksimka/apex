@@ -11,6 +11,7 @@ from flask import Flask, redirect, request, send_file
 from src.constellations_metadata.constellations_data import (
     get_constellation_center,
 )
+from src.helpers.geometry.geometry import generate_random_direction
 from src.helpers.pdf_helpers.figure2pdf import (
     save_figure_pinhole,
     save_figure_skychart,
@@ -40,7 +41,6 @@ app.register_blueprint(game_bp)
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
-# BASE_DIR = корень проекта AstraGeek/
 
 CATALOG = Catalog(
     catalog_name=os.path.join(BASE_DIR, "src", "hip_catalog", "hip_data.tsv"),
@@ -48,15 +48,9 @@ CATALOG = Catalog(
 )
 
 
-# ── Предзапуск каталогов при старте (чтобы первый игровой запрос не лагал) ───
 def _warmup_catalogs():
-    """
-    Загружаем все каталоги игры в фоновом потоке сразу после старта сервера.
-    Это устраняет задержку 15–40 секунд при первом открытии игры,
-    когда Hipparcos / Мессье / matplotlib ещё не инициализированы.
-    """
     try:
-        print("[warmup] Предзапуск каталогов игры...")
+        print("[warmup] Preloading game catalogues...")
         from src.game.question_factory import (
             _get_catalog,
             _get_messier_catalog,
@@ -66,18 +60,14 @@ def _warmup_catalogs():
         _get_catalog()
         _get_messier_catalog()
         _load_named_stars()
-        # Первый plt.subplots() всегда медленный — запускаем заранее
         fig, _ax = plt.subplots()
         plt.close(fig)
-        print("[warmup] Каталоги загружены ✓")
+        print("[warmup] Catalogs loaded")
     except Exception as exc:
-        print(f"[warmup] Предупреждение: не удалось запустить каталоги: {exc}")
+        print(f"[warmup] Warning: {exc}")
 
 
 threading.Thread(target=_warmup_catalogs, daemon=True).start()
-
-
-# ── Основные страницы ────────────────────────────────────────────────────────
 
 
 @app.route("/")
@@ -90,24 +80,14 @@ def generator():
     return app.send_static_file("generator.html")
 
 
-# ── Игры ─────────────────────────────────────────────────────────────────────
-
-
 @app.route("/games")
 def games_redirect():
-    """Удобный алиас /games → /game/ (лобби игр)."""
     return redirect("/game/", code=301)
 
 
 @app.route("/messier.html")
 def messier_html_redirect():
-    """
-    Обратная совместимость: старые ссылки на /messier.html → /game/messier.
-    """
     return redirect("/game/messier", code=301)
-
-
-# ── Генерация карт ───────────────────────────────────────────────────────────
 
 
 @app.route("/generate", methods=["POST"])
@@ -123,28 +103,45 @@ def generate():
     v_mag_limit = float(data.get("v_mag_limit", 6.5))
     constraints = CatalogConstraints(max_magnitude=v_mag_limit)
 
-    flags = {
-        "add_ecliptic": data.get("add_ecliptic", False),
-        "add_equator": data.get("add_equator", False),
-        "add_galactic_equator": data.get("add_galactic_equator", False),
-        "add_planets": data.get("add_planets", False),
-        "add_equatorial_grid": data.get("add_equatorial_grid", False),
-        "add_constellations": data.get("add_constellations", False),
-        "add_constellations_names": data.get("add_constellation_names", False),
-    }
-
-    # Whether to print observation info block on the task page (stereo only)
-    print_skychart_info = bool(data.get("print_skychart_info", False))
+    # grid_steps — общий для обоих режимов
+    grid_theta = float(data.get("grid_theta_step", 15.0))
+    grid_phi = float(data.get("grid_phi_step", 15.0))
 
     tmp_path = os.path.join(
         tempfile.gettempdir(), f"skychart_{uuid.uuid4().hex}.pdf"
     )
 
     if mode == "stereo":
+        print_skychart_info = bool(data.get("print_skychart_info", False))
+        flags = {
+            "add_ecliptic": bool(data.get("add_ecliptic", False)),
+            "add_equator": bool(data.get("add_equator", False)),
+            "add_galactic_equator": bool(
+                data.get("add_galactic_equator", False)
+            ),
+            "add_planets": bool(data.get("add_planets", False)),
+            "add_horizontal_grid": bool(
+                data.get("add_horizontal_grid", False)
+            ),
+            "add_equatorial_grid": bool(
+                data.get("add_equatorial_grid", False)
+            ),
+            "add_constellations": bool(data.get("add_constellations", False)),
+            "add_constellations_names": bool(
+                data.get("add_constellations_names", False)
+            ),
+            "add_ticks": bool(data.get("add_ticks", False)),
+            "add_zenith": bool(data.get("add_zenith", False)),
+            "add_poles": bool(data.get("add_poles", False)),
+            "random_origin": bool(data.get("random_origin", False)),
+        }
+
         config = StereoProjConfig(
             local_time=dtime,
             latitude=float(data["latitude"]),
             longitude=float(data["longitude"]),
+            grid_theta_step=grid_theta,
+            grid_phi_step=grid_phi,
             **flags,
         )
         proj = StereoProjector(
@@ -160,7 +157,11 @@ def generate():
             config=config,
             location_name="",
             logo_path=os.path.join(
-                BASE_DIR, "src", "helpers", "pdf_helpers", "logo_astrageek.png"
+                BASE_DIR,
+                "src",
+                "helpers",
+                "pdf_helpers",
+                "logo_astrageek.png",
             ),
             footer_text="skychart.astrageek.ru",
             print_skychart_info=print_skychart_info,
@@ -168,8 +169,29 @@ def generate():
         plt.close(fig)
 
     elif mode == "pinhole":
-        constellation = data.get("constellation", "ORI").upper()
-        center = get_constellation_center(constellation)
+        flags = {
+            "add_ecliptic": bool(data.get("add_ecliptic", False)),
+            "add_equator": bool(data.get("add_equator", False)),
+            "add_galactic_equator": bool(
+                data.get("add_galactic_equator", False)
+            ),
+            "add_planets": bool(data.get("add_planets", False)),
+            "add_equatorial_grid": bool(
+                data.get("add_equatorial_grid", False)
+            ),
+            "add_constellations": bool(data.get("add_constellations", False)),
+            "add_constellations_names": bool(
+                data.get("add_constellations_names", False)
+            ),
+        }
+
+        random_direction = bool(data.get("random_direction", False))
+        if random_direction:
+            center = generate_random_direction()
+        else:
+            constellation = data.get("constellation", "ORI").upper()
+            center = get_constellation_center(constellation)
+
         camera_cfg = CameraConfig.from_fov_and_aspect(
             fov_deg=float(data.get("fov", 60)),
             aspect_ratio=float(data.get("aspect_ratio", 1.5)),
@@ -179,7 +201,12 @@ def generate():
             center_direction=center,
             tilt_angle=float(data.get("tilt_angle", 0)),
         )
-        config = PinholeConfig(local_time=dtime, **flags)
+        config = PinholeConfig(
+            local_time=dtime,
+            grid_theta_step=grid_theta,
+            grid_phi_step=grid_phi,
+            **flags,
+        )
         projector = Pinhole(
             shot_cond=shot_cond,
             camera_cfg=camera_cfg,
@@ -192,7 +219,13 @@ def generate():
         save_figure_pinhole(
             fig=fig,
             filename=tmp_path,
-            logo_path="src/helpers/pdf_helpers/logo_astrageek.png",
+            logo_path=os.path.join(
+                BASE_DIR,
+                "src",
+                "helpers",
+                "pdf_helpers",
+                "logo_astrageek.png",
+            ),
             footer_text="skychart.astrageek.ru",
         )
         plt.close(fig)

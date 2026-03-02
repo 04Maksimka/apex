@@ -60,7 +60,7 @@ _NAMED_STARS: Dict[int, str] = {}
 OBS_TIME = datetime(2004, 6, 14, 6, 10, 0)
 
 # ---------------------------------------------------------------------------
-# Fallback named-star list (used when lines_data.json is unavailable/broken)
+# Fallback named-star list (used when index.json is unavailable/broken)
 # HIP ID → English name for the brightest, most recognisable named stars
 # ---------------------------------------------------------------------------
 _FALLBACK_NAMED_STARS: Dict[int, str] = {
@@ -460,7 +460,7 @@ def _get_messier_catalog() -> MessierCatalog:
 
 def _load_named_stars() -> Dict[int, str]:
     """
-    Load named stars from lines_data.json.
+    Load named stars from index.json.
 
     The file has a mixed structure — it may be a dict whose values include
     arrays of boundary strings, constellation-line objects, AND named-star
@@ -476,18 +476,22 @@ def _load_named_stars() -> Dict[int, str]:
     if _NAMED_STARS:
         return _NAMED_STARS
 
-    lines_path = (
-        _BASE_DIR / "src" / "constellations_metadata" / "lines_data.json"
-    )
+    lines_path = _BASE_DIR / "src" / "constellations_metadata" / "index.json"
     parsed: Dict[int, str] = {}
 
     try:
         with open(lines_path, encoding="utf-8") as f:
             raw = json.load(f)
 
+        common_names = raw.get("common_names")
+        if not isinstance(common_names, dict):
+            raise SystemExit(
+                "ERROR: index.json: expected key 'common_names' as dict"
+            )
+
         # Handle top-level dict  (expected format)
-        if isinstance(raw, dict):
-            for key, value in raw.items():
+        if isinstance(common_names, dict):
+            for key, value in common_names.items():
                 if not isinstance(key, str) or not key.startswith("HIP "):
                     continue
                 try:
@@ -504,30 +508,10 @@ def _load_named_stars() -> Dict[int, str]:
                 except Exception:
                     continue  # skip this one entry, keep going
 
-        # Handle top-level list  (rare alternative format)
-        elif isinstance(raw, list):
-            for item in raw:
-                if not isinstance(item, dict):
-                    continue
-                for key, value in item.items():
-                    if not isinstance(key, str) or not key.startswith("HIP "):
-                        continue
-                    try:
-                        hip_id = int(key.split()[1])
-                        if isinstance(value, list) and value:
-                            entry = value[0]
-                            name = (
-                                entry.get("english") or entry.get("native")
-                                if isinstance(entry, dict)
-                                else None
-                            )
-                            if name:
-                                parsed[hip_id] = str(name)
-                    except Exception:
-                        continue
-
+            print("Stars loaded from index.json")
     except Exception:
-        pass  # file missing or JSON invalid — fall through to fallback
+        # file missing or JSON invalid — fall through to fallback
+        print("Stars loaded from data")
 
     # Merge: fallback first (lower priority), parsed data overrides
     _NAMED_STARS = {**_FALLBACK_NAMED_STARS, **parsed}
@@ -842,10 +826,7 @@ class QuestionFactory:
         difficulty = getattr(session, "difficulty", "easy")
         if difficulty == "easy":
             question_text = "Как называется звезда, отмеченная красным?"
-            hint_text = (
-                "Звезда находится точно в центре изображения, "
-                "отмечена красным кольцом и перекрестием"
-            )
+            hint_text = f"Это {correct_name}"
         elif difficulty == "medium":
             question_text = "Введите название звезды, отмеченной красным"
             hint_text = (
