@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import base64
 import io
-import json
 import math
 import random
 from datetime import datetime
@@ -477,9 +476,10 @@ def _load_named_stars() -> Dict[int, str]:
     if _NAMED_STARS:
         return _NAMED_STARS
 
-    lines_path = _BASE_DIR / "src" / "constellations_metadata" / "index.json"
     parsed: Dict[int, str] = {}
-
+    # Don't use index.json
+    """
+    lines_path = _BASE_DIR / "src" / "constellations_metadata" / "index.json"
     try:
         with open(lines_path, encoding="utf-8") as f:
             raw = json.load(f)
@@ -512,7 +512,7 @@ def _load_named_stars() -> Dict[int, str]:
             print("Stars loaded from index.json")
     except Exception:
         # file missing or JSON invalid — fall through to fallback
-        print("Stars loaded from data")
+        print("Stars loaded from data")"""
 
     # Merge: fallback first (lower priority), parsed data overrides
     _NAMED_STARS = {**_FALLBACK_NAMED_STARS, **parsed}
