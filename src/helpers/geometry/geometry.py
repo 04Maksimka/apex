@@ -1,5 +1,7 @@
 """Module with astronomical geometrical functions."""
 
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Tuple, Union
 
@@ -8,6 +10,68 @@ from matplotlib.collections import LineCollection
 from numpy.typing import NDArray
 
 from src.helpers.time.time import vequinox_hour_angle
+
+
+def _orthonormal_basis(v: NDArray) -> Tuple[NDArray, NDArray, NDArray]:
+    """
+    Make orthonormal basis (u, w, v_norm),
+    where u is orthogonal to v_norm and w = v_norm cross u.
+
+    :param v: vector
+    :type v: NDArray
+    :return: u, w, v_norm
+    :rtype: tuple
+    """
+
+    v = np.asarray(v, dtype=float)
+    v_norm = v / np.linalg.norm(v)
+
+    if abs(v_norm[0]) < abs(v_norm[1]):
+        if abs(v_norm[0]) < abs(v_norm[2]):
+            a = np.array([1.0, 0.0, 0.0])
+        else:
+            a = np.array([0.0, 0.0, 1.0])
+    else:
+        if abs(v_norm[1]) < abs(v_norm[2]):
+            a = np.array([0.0, 1.0, 0.0])
+        else:
+            a = np.array([0.0, 0.0, 1.0])
+
+    u = a - np.dot(a, v_norm) * v_norm
+    u /= np.linalg.norm(u)
+    w = np.cross(v_norm, u)
+    return u, w, v_norm
+
+
+def rotate_direction_random(vec: NDArray, fov_deg: float) -> NDArray:
+    """
+    Rotates a vector by an arbitrary angle within a cone
+    with an angle of fov in the direction of the original vector
+
+    :param vec: initial vector
+    :type vec: NDArray
+    :param fov_deg: maximum angle
+    :type fov_deg: float
+    :return: rotated vector
+    :rtype: NDArray
+    """
+
+    vec = np.asarray(vec, dtype=float)
+    orig_norm = np.linalg.norm(vec)
+    if np.isclose(orig_norm, 0.0):
+        return np.zeros(3)
+
+    u, w, v = _orthonormal_basis(vec)
+
+    theta_max = np.deg2rad(fov_deg)
+    cos_theta = np.random.uniform(np.cos(theta_max), 1.0)
+    sin_theta = np.sqrt(1.0 - cos_theta**2)
+    phi = np.random.uniform(0.0, 2.0 * np.pi)
+
+    # cone direction
+    d = v * cos_theta + (u * np.cos(phi) + w * np.sin(phi)) * sin_theta
+
+    return d * orig_norm
 
 
 def generate_random_direction() -> NDArray:
