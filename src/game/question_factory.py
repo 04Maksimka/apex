@@ -524,7 +524,7 @@ def _fig_to_base64(fig: plt.Figure) -> str:
     fig.savefig(
         buf,
         format="png",
-        dpi=100,
+        dpi=150,
         bbox_inches="tight",
         facecolor=fig.get_facecolor(),
         edgecolor="none",
@@ -559,7 +559,7 @@ def _generate_pinhole_image(
     camera_cfg = CameraConfig.from_fov_and_aspect(
         fov_deg=fov,
         aspect_ratio=aspect_ratio,
-        height_pix=600,
+        height_pix=1200,
     )
 
     if random_tilt:
@@ -699,6 +699,8 @@ class QuestionFactory:
             magnitude=magnitude,
             show_const=True,
             show_names=False,
+            random_tilt=True,
+            aspect_ratio=1.0,
             fov=60.0,
         )
 
@@ -816,15 +818,6 @@ class QuestionFactory:
                 zorder=10,
             )
 
-        image_b64 = _generate_pinhole_image(
-            direction=direction,
-            magnitude=magnitude,
-            show_const=True,
-            show_names=False,
-            fov=60,
-            extra_draw=_add_ring,
-        )
-
         # Option buttons (used in easy mode; for all modes for completeness)
         all_names = [n for h, n in named_stars.items() if h != correct_hip]
         distractors = random.sample(all_names, min(3, len(all_names)))
@@ -835,12 +828,14 @@ class QuestionFactory:
         if difficulty == "easy":
             question_text = "Как называется звезда, отмеченная красным?"
             hint_text = f"Это {correct_name}"
+            random_tilt = False
         elif difficulty == "medium":
             question_text = "Введите название звезды, отмеченной красным"
             hint_text = (
                 f"Название этой звезды состоит из {len(correct_name)} символов"
                 f" и начинается на «{correct_name[0]}»"
             )
+            random_tilt = False
         else:  # hard
             question_text = (
                 "Введите название звезды и её экваториальные координаты "
@@ -851,6 +846,17 @@ class QuestionFactory:
                 f"RA ≈ {correct_ra_deg:.0f}° ({ra_h:.1f}ч), "
                 f"Dec ≈ {correct_dec_deg:.0f}°"
             )
+            random_tilt = True
+
+        image_b64 = _generate_pinhole_image(
+            direction=direction,
+            magnitude=magnitude,
+            show_const=True,
+            show_names=False,
+            fov=60,
+            extra_draw=_add_ring,
+            random_tilt=random_tilt,
+        )
 
         question = {
             "type": "star",

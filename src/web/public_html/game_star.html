@@ -78,8 +78,12 @@
     /* ── Sky image ── */
     .sky-wrap {
       background: #020208; border-radius: var(--radius);
-      overflow: hidden; aspect-ratio: 4/3;
+      overflow: hidden;
       position: relative; margin-bottom: 20px;
+      border: 1px solid rgba(123,97,255,.25);
+    }
+    .sky-wrap img {
+      display: block; width: 100%; height: auto;
     }
     .sky-loader {
       position: absolute; inset: 0;
