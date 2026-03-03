@@ -24,12 +24,14 @@
     .question-label{text-align:center;font-size:1rem;color:var(--muted);margin-bottom:16px;}
 
     .instructions{
-      display:flex;align-items:center;gap:16px;
+      display:flex;align-items:flex-start;gap:12px;
       background:rgba(79,195,247,.07);border:1px solid rgba(79,195,247,.2);
-      border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:.88rem;color:var(--accent2);
+      border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:.88rem;color:var(--accent2);
     }
-    .instructions ul{list-style:none;display:flex;gap:16px;flex-wrap:wrap;}
+    .instructions ul{list-style:none;display:flex;flex-direction:column;gap:8px;margin:0;padding:0;}
+    .instructions li{line-height:1.5;}
     .instructions li::before{content:"• ";color:var(--accent);}
+
 
     .canvas-wrap{
       border-radius:var(--radius);overflow:hidden;
@@ -48,10 +50,13 @@
       display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;
     }
     .btn{padding:11px 24px;border-radius:30px;font-weight:700;font-size:.9rem;cursor:pointer;border:none;transition:all .15s;}
-    .btn-undo{background:rgba(123,97,255,.18);color:var(--accent);border:1px solid rgba(123,97,255,.4);}
-    .btn-undo:hover{background:rgba(123,97,255,.3);}
+    .btn-erase{background:rgba(255,152,0,.15);color:#ff9800;border:1px solid rgba(255,152,0,.3);}
+    .btn-erase:hover{background:rgba(255,152,0,.25);}
+    .btn-erase:disabled{opacity:.4;cursor:default;}
+    .btn-erase.active{background:rgba(255,152,0,.35);border-color:#ff9800;font-weight:800;}
     .btn-clear{background:rgba(239,83,80,.15);color:var(--red);border:1px solid rgba(239,83,80,.3);}
     .btn-clear:hover{background:rgba(239,83,80,.25);}
+    .btn-clear:disabled{opacity:.4;cursor:default;}
     .btn-submit{background:var(--accent);color:#fff;}
     .btn-submit:hover{filter:brightness(1.15);}
     .btn-submit:disabled{opacity:.4;cursor:default;}
@@ -116,9 +121,9 @@
     <div class="instructions">
       <div>📖</div>
       <ul>
-        <li>Кликни на звезду созвездия, чтобы выбрать</li>
-        <li>Кликни на другую — нарисуй линию</li>
-        <li>Кликни на ту же — снимется выбор</li>
+        <li><b>Левая кнопка мыши:</b> рисуй ребра — выбери первую звезду, потом вторую</li>
+        <li><b>Правая кнопка мыши:</b> стирай ребра по нажатию на них</li>
+        <li><b>Мобильные:</b> стирай ребра долгим нажатием на линию</li>
       </ul>
     </div>
 
@@ -137,8 +142,8 @@
 
     <div class="draw-controls">
       <button class="btn btn-hint" id="btn-hint" onclick="useHint()">💡 Подсказка (−50%)</button>
-      <button class="btn btn-undo" onclick="undoLast()">↩ Отменить</button>
-      <button class="btn btn-clear" onclick="clearAll()">🗑 Очистить</button>
+      <button class="btn btn-erase" id="btn-erase" onclick="toggleEraseMode()">🗑️ Стереть линию</button>
+      <button class="btn btn-clear" id="btn-clear" onclick="clearAll()">🧹 Очистить всё</button>
       <button class="btn btn-submit" id="btn-submit" onclick="submitDrawing()">✔ Проверить</button>
       <button class="btn btn-show-answer" id="btn-show-answer" onclick="toggleRef()">👁 Показать ответ</button>
       <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">Следующий →</button>
@@ -172,13 +177,14 @@
   let sessionId = null, usedHint = false, questionStartTime = null;
   let stars = [], drawnEdges = [], selectedStar = null;
   let showingResult = false;
-  let refEdges = [];       // correct answer edges
-  let showRef = false;     // toggle for showing reference lines
+  let refEdges = [];
+  let showRef = false;
+  let eraseMode = false;
 
   // ── Canvas setup ──────────────────────────────────────────────────────────
   const canvas = document.getElementById('sky-canvas');
   const ctx    = canvas.getContext('2d');
-  const CLICK_TOLERANCE = 16;  // pixels, used for hit-testing
+  const CLICK_TOLERANCE = 16;
 
   function resizeCanvas() {
     const w = canvas.parentElement.clientWidth;
@@ -187,7 +193,6 @@
     drawAll();
   }
 
-  // Normalized coords → canvas pixels with padding
   function toCanvas(nx, ny) {
     const pad   = 56;
     const cx    = canvas.width  / 2;
@@ -196,19 +201,15 @@
     return { x: cx - nx * scale, y: cy - ny * scale };
   }
 
-  // Visual radius from apparent magnitude (brighter = larger)
-  // v_mag range roughly 0..7; result range ~7..2px
   function magToRadius(vMag) {
     return Math.max(1.5, 7.5 - vMag * 0.9);
   }
 
-  // Hit-test radius: larger for constellation stars to be easier to click
   function hitRadius(star) {
     return star.is_constellation ? Math.max(CLICK_TOLERANCE, magToRadius(star.v_mag) + 8) : 0;
   }
 
   function starAtPos(mx, my) {
-    // Only constellation stars are clickable
     return stars.find(s => {
       if (!s.is_constellation) return false;
       const p = toCanvas(s.x, s.y);
@@ -219,25 +220,22 @@
   // ── Main draw routine ─────────────────────────────────────────────────────
   function drawAll() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Deep space background
     ctx.fillStyle = '#020208';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 1. Background (non-constellation) stars — brighter and slightly larger
+    // Background stars
     stars.forEach(s => {
       if (s.is_constellation) return;
       const { x, y } = toCanvas(s.x, s.y);
       const r = Math.max(1.0, magToRadius(s.v_mag) * 0.7);
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
-      // Vary brightness by magnitude — min 0.35, max ~0.75
       const alpha = Math.max(0.35, 0.75 - s.v_mag * 0.06);
       ctx.fillStyle = `rgba(160,170,220,${alpha})`;
       ctx.fill();
     });
 
-    // 2. Reference edges (correct answer) — green dashed, shown after submit
+    // Reference edges
     if (showRef && refEdges.length) {
       ctx.save();
       ctx.strokeStyle = 'rgba(102,187,106,0.75)';
@@ -253,7 +251,7 @@
       ctx.restore();
     }
 
-    // 3. User-drawn edges — purple solid
+    // User-drawn edges
     ctx.save();
     ctx.strokeStyle = 'rgba(123,97,255,0.85)';
     ctx.lineWidth = 2.5;
@@ -267,14 +265,13 @@
     });
     ctx.restore();
 
-    // 4. Constellation stars — size by magnitude, with glow for selected
+    // Constellation stars
     const constStars = stars.filter(s => s.is_constellation);
     constStars.forEach(s => {
       const { x, y } = toCanvas(s.x, s.y);
       const r = magToRadius(s.v_mag);
       const isSelected = selectedStar && selectedStar.hip_id === s.hip_id;
 
-      // Glow halo for selected star
       if (isSelected) {
         const grd = ctx.createRadialGradient(x, y, r, x, y, r * 4);
         grd.addColorStop(0, 'rgba(255,213,79,0.35)');
@@ -285,7 +282,6 @@
         ctx.fill();
       }
 
-      // Subtle glow for all constellation stars
       if (!isSelected) {
         const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 2.5);
         grd.addColorStop(0, 'rgba(197,202,233,0.2)');
@@ -296,13 +292,11 @@
         ctx.fill();
       }
 
-      // Star core
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fillStyle = isSelected ? '#ffd54f' : '#dde0f0';
       ctx.fill();
 
-      // Selection ring
       if (isSelected) {
         ctx.beginPath();
         ctx.arc(x, y, r + 5, 0, Math.PI * 2);
@@ -312,7 +306,6 @@
         ctx.stroke();
       }
 
-      // Star name label (only for named stars)
       if (s.name) {
         ctx.font = '10px Segoe UI, sans-serif';
         ctx.fillStyle = 'rgba(121,134,203,0.75)';
@@ -321,44 +314,170 @@
     });
   }
 
-  // ── Mouse / touch input ───────────────────────────────────────────────────
-  function getPos(e) {
-    const rect = canvas.getBoundingClientRect();
-    const sx = canvas.width  / rect.width;
-    const sy = canvas.height / rect.height;
-    if (e.touches) return {
-      x: (e.touches[0].clientX - rect.left) * sx,
-      y: (e.touches[0].clientY - rect.top)  * sy,
-    };
-    return { x: (e.clientX - rect.left) * sx, y: (e.clientY - rect.top) * sy };
+  // ── Edge detection ────────────────────────────────────────────────────────
+  function findEdgeAtPos(mx, my) {
+    const tolerance = 8;
+    for (let i = 0; i < drawnEdges.length; i++) {
+      const [a, b] = drawnEdges[i];
+      const sa = stars.find(s => s.hip_id === a);
+      const sb = stars.find(s => s.hip_id === b);
+      if (!sa || !sb) continue;
+
+      const pa = toCanvas(sa.x, sa.y);
+      const pb = toCanvas(sb.x, sb.y);
+
+      const dist = pointToSegmentDist(mx, my, pa.x, pa.y, pb.x, pb.y);
+      if (dist < tolerance) return i;
+    }
+    return null;
   }
 
-  canvas.addEventListener('click', e => {
-    if (showingResult) return;
-    const { x, y } = getPos(e);
-    const hit = starAtPos(x, y);
-    if (!hit) { selectedStar = null; drawAll(); return; }
-    if (!selectedStar) { selectedStar = hit; drawAll(); return; }
-    if (selectedStar.hip_id === hit.hip_id) { selectedStar = null; drawAll(); return; }
+  function pointToSegmentDist(px, py, ax, ay, bx, by) {
+    const dx = bx - ax;
+    const dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    if (len2 === 0) return Math.hypot(px - ax, py - ay);
 
-    const edge = [selectedStar.hip_id, hit.hip_id];
-    const already = drawnEdges.some(([a, b]) =>
-      (a === edge[0] && b === edge[1]) || (a === edge[1] && b === edge[0])
-    );
-    if (!already) drawnEdges.push(edge);
-    selectedStar = null;
-    drawAll();
-  });
+    let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const projX = ax + t * dx;
+    const projY = ay + t * dy;
+    return Math.hypot(px - projX, py - projY);
+  }
 
-  canvas.addEventListener('touchstart', e => {
-    e.preventDefault();
-    const pos = getPos(e);
-    canvas.dispatchEvent(new MouseEvent('click', { clientX: pos.x, clientY: pos.y }));
-  }, { passive: false });
+  // ── Mouse / touch input ───────────────────────────────────────────────────
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const sx = canvas.width  / rect.width;
+      const sy = canvas.height / rect.height;
+      if (e.touches && e.touches.length > 0) {
+        return {
+          x: (e.touches[0].clientX - rect.left) * sx,
+          y: (e.touches[0].clientY - rect.top)  * sy,
+        };
+      }
+      return { x: (e.clientX - rect.left) * sx, y: (e.clientY - rect.top) * sy };
+    }
+
+    // Универсальная функция обработки клика
+    function handleCanvasClick(x, y) {
+      if (showingResult) return;
+
+      // Режим стирания через кнопку
+      if (eraseMode) {
+        const clickedEdge = findEdgeAtPos(x, y);
+        if (clickedEdge !== null) {
+          drawnEdges.splice(clickedEdge, 1);
+          drawAll();
+        }
+        return;
+      }
+
+      // Режим рисования
+      const hit = starAtPos(x, y);
+      if (!hit) { selectedStar = null; drawAll(); return; }
+      if (!selectedStar) { selectedStar = hit; drawAll(); return; }
+      if (selectedStar.hip_id === hit.hip_id) { selectedStar = null; drawAll(); return; }
+
+      const edge = [selectedStar.hip_id, hit.hip_id];
+      const already = drawnEdges.some(([a, b]) =>
+        (a === edge[0] && b === edge[1]) || (a === edge[1] && b === edge[0])
+      );
+      if (!already) drawnEdges.push(edge);
+      selectedStar = null;
+      drawAll();
+    }
+
+    // Левая кнопка мыши: рисование
+    canvas.addEventListener('click', e => {
+      const { x, y } = getPos(e);
+      handleCanvasClick(x, y);
+    });
+
+    // Правая кнопка мыши: стирание линий
+    canvas.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      if (showingResult) return;
+
+      const { x, y } = getPos(e);
+      const clickedEdge = findEdgeAtPos(x, y);
+      if (clickedEdge !== null) {
+        drawnEdges.splice(clickedEdge, 1);
+        selectedStar = null;
+        drawAll();
+      }
+    });
+
+    // Touch events
+    let touchTimer = null;
+    let touchMoved = false;
+    let touchStartPos = null; // Сохраняем позицию начала касания
+
+    canvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      touchMoved = false;
+      touchStartPos = getPos(e); // Сохраняем координаты
+
+      // Долгое нажатие для стирания
+      touchTimer = setTimeout(() => {
+        if (showingResult || touchMoved) return;
+        const clickedEdge = findEdgeAtPos(touchStartPos.x, touchStartPos.y);
+        if (clickedEdge !== null) {
+          drawnEdges.splice(clickedEdge, 1);
+          selectedStar = null;
+          drawAll();
+          touchTimer = null; // Предотвращаем обычный клик после стирания
+        }
+      }, 500);
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', e => {
+      touchMoved = true;
+      if (touchTimer) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+      }
+    });
+
+    canvas.addEventListener('touchend', e => {
+      e.preventDefault();
+
+      if (touchTimer) {
+        clearTimeout(touchTimer);
+        // Обычный короткий тап - используем сохранённую позицию начала касания
+        if (!touchMoved && touchStartPos) {
+          handleCanvasClick(touchStartPos.x, touchStartPos.y);
+        }
+        touchTimer = null;
+      }
+      touchMoved = false;
+      touchStartPos = null;
+    }, { passive: false });
 
   // ── Controls ──────────────────────────────────────────────────────────────
-  function undoLast()  { drawnEdges.pop(); drawAll(); }
-  function clearAll()  { drawnEdges = []; selectedStar = null; drawAll(); }
+  function clearAll() {
+    drawnEdges = [];
+    selectedStar = null;
+    drawAll();
+  }
+
+  function toggleEraseMode() {
+    if (showingResult) return;
+    eraseMode = !eraseMode;
+    selectedStar = null;
+
+    const btn = document.getElementById('btn-erase');
+    if (eraseMode) {
+      btn.classList.add('active');
+      btn.textContent = '✏️ Рисовать';
+      canvas.style.cursor = 'not-allowed';
+    } else {
+      btn.classList.remove('active');
+      btn.textContent = '🗑️ Стереть линию';
+      canvas.style.cursor = 'crosshair';
+    }
+    drawAll();
+  }
 
   function toggleRef() {
     showRef = !showRef;
@@ -371,7 +490,12 @@
   async function submitDrawing() {
     if (showingResult) return;
     showingResult = true;
+
     document.getElementById('btn-submit').disabled = true;
+    document.getElementById('btn-hint').disabled = true;
+    document.getElementById('btn-clear').disabled = true;
+    document.getElementById('btn-erase').disabled = true;
+
     const timeSec = ((Date.now() - questionStartTime) / 1000).toFixed(1);
 
     const resp = await fetch('/game/api/answer', {
@@ -386,12 +510,13 @@
     });
     const data = await resp.json();
 
-    // Обработка ошибки сервера (например "No active question")
     if (data.error) {
       console.error('Ошибка ответа:', data.error);
-      // Сброс флага и перезагрузка вопроса
-      answered = false;
-      document.querySelectorAll('.opt-btn').forEach(b => b.disabled = false);
+      showingResult = false;
+      document.getElementById('btn-submit').disabled = false;
+      document.getElementById('btn-hint').disabled = false;
+      document.getElementById('btn-clear').disabled = false;
+      document.getElementById('btn-erase').disabled = false;
       document.getElementById('result-area').innerHTML =
         `<div style="color:#f87171;text-align:center">⚠️ Ошибка: ${data.error}. Перезагрузка...</div>`;
       setTimeout(() => loadQuestion(), 1500);
@@ -399,20 +524,17 @@
     }
     updateHeader(data);
 
-    // Store reference edges from server
     const details = data.draw_details || {};
     refEdges = details.ref_edges || [];
     const pct     = details.score_pct    || 0;
     const correct = data.correct;
 
-    // Auto-show reference if answer is wrong
     if (!correct) {
       showRef = true;
       const btnSA = document.getElementById('btn-show-answer');
       btnSA.textContent = '🙈 Скрыть ответ';
       btnSA.style.display = 'inline-block';
     } else {
-      // On correct also offer toggling
       const btnSA = document.getElementById('btn-show-answer');
       btnSA.style.display = 'inline-block';
     }
@@ -458,10 +580,18 @@
 
   // ── Next ──────────────────────────────────────────────────────────────────
   async function nextQuestion() {
+    eraseMode = false;
+    document.getElementById('btn-erase').classList.remove('active');
+    document.getElementById('btn-erase').textContent = '🗑️ Стереть линию';
+    canvas.style.cursor = 'crosshair';
+
     document.getElementById('btn-next').style.display        = 'none';
     document.getElementById('btn-show-answer').style.display = 'none';
     document.getElementById('btn-submit').style.display      = 'inline-block';
     document.getElementById('btn-submit').disabled           = false;
+    document.getElementById('btn-hint').disabled             = false;
+    document.getElementById('btn-clear').disabled            = false;
+    document.getElementById('btn-erase').disabled            = false;
     await loadQuestion();
   }
 
@@ -469,9 +599,13 @@
   async function loadQuestion() {
     stars = []; drawnEdges = []; selectedStar = null; refEdges = [];
     showingResult = false; usedHint = false; showRef = false;
+    eraseMode = false;
+
     document.getElementById('hint-box').style.display   = 'none';
     document.getElementById('result-area').innerHTML    = '';
     document.getElementById('btn-hint').disabled        = false;
+    document.getElementById('btn-erase').disabled       = false;
+    canvas.style.cursor = 'crosshair';
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#020208';
