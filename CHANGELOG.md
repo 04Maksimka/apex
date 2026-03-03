@@ -10,9 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Messier objects guessing game
 - Constellation drawing game
-- Constellation lines
 ### Added
-- images for each object in Messier objects guessing game
+- Images for each object in Messier objects guessing game
 
 ---
 
