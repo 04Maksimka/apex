@@ -76,6 +76,7 @@
 | Раздел           | Ссылка                                                           |
 |------------------|------------------------------------------------------------------|
 | Узнать больше    | [Документация](https://04maksimka.github.io/AstraGeek/)          |
+| Пакет на PyPI    | [PyPI](https://pypi.org/project/astrageek/)               |
 | Проект на GitHub | [Репозиторий на GitHub](https://github.com/04Maksimka/AstraGeek) |
 | Обратная связь   | [Issue](https://github.com/04Maksimka/AstraGeek/issues/new)      |
 

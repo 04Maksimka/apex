@@ -74,10 +74,11 @@ The student's file contains only assignments and a "bare" map. The file for the 
 
 ## Documentation
 
-| Section          | Link                                                                                      |
-| ---------------- |-------------------------------------------------------------------------------------------|
-| Learn More       | [Usage documentation](https://04maksimka.github.io/AstraGeek/) |
-| Project on GitHub| [GitHub Repo](https://github.com/04Maksimka/AstraGeek)                                    |
-| Submit Issue     | [Report](https://github.com/04Maksimka/AstraGeek/issues/new)                              |
+| Section           | Link                                                          |
+|-------------------|---------------------------------------------------------------|
+| Learn More        | [Usage documentation](https://04maksimka.github.io/AstraGeek/) |
+| Package on PyPI   | [PyPI](https://pypi.org/project/astrageek/)               |
+| Project on GitHub | [GitHub Repo](https://github.com/04Maksimka/AstraGeek)        |
+| Submit Issue      | [Report](https://github.com/04Maksimka/AstraGeek/issues/new)  |
 
 ---
