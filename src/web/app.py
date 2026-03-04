@@ -30,12 +30,10 @@ from src.stereographic_projection.stereographic_projector import (
     StereoProjector,
 )
 from src.web.game_blueprint import game_bp
-from src.web.messier_blueprint import messier_bp
 
 matplotlib.use("Agg")
 
 app = Flask(__name__, static_folder="public_html", static_url_path="")
-app.register_blueprint(messier_bp)
 app.register_blueprint(game_bp)
 
 BASE_DIR = os.path.dirname(

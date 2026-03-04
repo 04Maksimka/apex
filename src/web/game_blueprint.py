@@ -128,10 +128,7 @@ def game_page(mode: str):
     if mode not in VALID_MODES:
         abort(404)
 
-    if mode == "messier":
-        filename = "messier.html"
-    else:
-        filename = f"game_{mode}.html"
+    filename = f"game_{mode}.html"
 
     path = os.path.join(_STATIC_DIR, filename)
     if not os.path.exists(path):
