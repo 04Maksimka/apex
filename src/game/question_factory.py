@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import base64
 import io
-import json
 import math
 import random
 from datetime import datetime
@@ -32,6 +31,7 @@ from src.constellations_metadata.constellations_data import (
     get_constellation_lines,
 )
 from src.game.session import DIFFICULTY_CONSTELLATIONS, DIFFICULTY_MAGNITUDE
+from src.helpers.geometry.geometry import rotate_direction_random
 from src.hip_catalog.hip_catalog import Catalog, CatalogConstraints
 from src.messier.messier_catalog import MessierCatalog, MessierType
 from src.pinhole_projection.pinhole_projector import (
@@ -476,9 +476,10 @@ def _load_named_stars() -> Dict[int, str]:
     if _NAMED_STARS:
         return _NAMED_STARS
 
-    lines_path = _BASE_DIR / "src" / "constellations_metadata" / "index.json"
     parsed: Dict[int, str] = {}
-
+    # Don't use index.json
+    """
+    lines_path = _BASE_DIR / "src" / "constellations_metadata" / "index.json"
     try:
         with open(lines_path, encoding="utf-8") as f:
             raw = json.load(f)
@@ -511,7 +512,7 @@ def _load_named_stars() -> Dict[int, str]:
             print("Stars loaded from index.json")
     except Exception:
         # file missing or JSON invalid — fall through to fallback
-        print("Stars loaded from data")
+        print("Stars loaded from data")"""
 
     # Merge: fallback first (lower priority), parsed data overrides
     _NAMED_STARS = {**_FALLBACK_NAMED_STARS, **parsed}
@@ -523,7 +524,7 @@ def _fig_to_base64(fig: plt.Figure) -> str:
     fig.savefig(
         buf,
         format="png",
-        dpi=100,
+        dpi=150,
         bbox_inches="tight",
         facecolor=fig.get_facecolor(),
         edgecolor="none",
@@ -543,6 +544,8 @@ def _generate_pinhole_image(
     show_const: bool = True,
     show_names: bool = False,
     fov: float = 60.0,
+    random_tilt: bool = False,
+    aspect_ratio: float = 1.5,
     extra_draw=None,  # callable(fig, ax, camera_cfg)
 ) -> str:
     """Render a pinhole projection → base64 PNG."""
@@ -555,13 +558,18 @@ def _generate_pinhole_image(
 
     camera_cfg = CameraConfig.from_fov_and_aspect(
         fov_deg=fov,
-        aspect_ratio=1.5,
-        height_pix=600,
+        aspect_ratio=aspect_ratio,
+        height_pix=1200,
     )
+
+    if random_tilt:
+        tilt_angle = np.random.rand() * 360.0
+    else:
+        tilt_angle = 0.0
 
     shot_cond = ShotConditions(
         center_direction=direction,
-        tilt_angle=0.0,
+        tilt_angle=tilt_angle,
     )
 
     config = PinholeConfig(
@@ -691,6 +699,8 @@ class QuestionFactory:
             magnitude=magnitude,
             show_const=True,
             show_names=False,
+            random_tilt=True,
+            aspect_ratio=1.0,
             fov=60.0,
         )
 
@@ -808,15 +818,6 @@ class QuestionFactory:
                 zorder=10,
             )
 
-        image_b64 = _generate_pinhole_image(
-            direction=direction,
-            magnitude=magnitude,
-            show_const=True,
-            show_names=False,
-            fov=60,
-            extra_draw=_add_ring,
-        )
-
         # Option buttons (used in easy mode; for all modes for completeness)
         all_names = [n for h, n in named_stars.items() if h != correct_hip]
         distractors = random.sample(all_names, min(3, len(all_names)))
@@ -827,12 +828,14 @@ class QuestionFactory:
         if difficulty == "easy":
             question_text = "Как называется звезда, отмеченная красным?"
             hint_text = f"Это {correct_name}"
+            random_tilt = False
         elif difficulty == "medium":
             question_text = "Введите название звезды, отмеченной красным"
             hint_text = (
                 f"Название этой звезды состоит из {len(correct_name)} символов"
                 f" и начинается на «{correct_name[0]}»"
             )
+            random_tilt = False
         else:  # hard
             question_text = (
                 "Введите название звезды и её экваториальные координаты "
@@ -843,6 +846,17 @@ class QuestionFactory:
                 f"RA ≈ {correct_ra_deg:.0f}° ({ra_h:.1f}ч), "
                 f"Dec ≈ {correct_dec_deg:.0f}°"
             )
+            random_tilt = True
+
+        image_b64 = _generate_pinhole_image(
+            direction=direction,
+            magnitude=magnitude,
+            show_const=True,
+            show_names=False,
+            fov=60,
+            extra_draw=_add_ring,
+            random_tilt=random_tilt,
+        )
 
         question = {
             "type": "star",
@@ -1151,12 +1165,17 @@ class QuestionFactory:
         )
 
         center = CONSTELLATIONS_DATA[correct_abbr]["center"]
+        # Add some random rotation
+        fov = 110.0
+        direction = rotate_direction_random(center, fov / 3)
         image_b64 = _generate_pinhole_image(
-            direction=center,
+            direction=direction,
             magnitude=magnitude,
             show_const=True,
             show_names=False,
-            fov=110.0,
+            fov=fov,
+            random_tilt=True,
+            aspect_ratio=1.0,
         )
 
         question = {

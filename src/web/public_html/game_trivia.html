@@ -20,7 +20,7 @@
     .progress-wrap{padding:10px 24px 0;background:var(--surface);}
     .progress-bar{height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
     .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s;}
-    main{max-width:900px;margin:0 auto;padding:28px 20px 60px;}
+    main{max-width:1200px;margin:0 auto;padding:28px 20px 60px;}
 
     /* ── Trivia question card ── */
     .trivia-card{
@@ -31,21 +31,32 @@
     .trivia-label{font-size:.78rem;color:var(--accent);font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;}
     .trivia-text{font-size:1.05rem;line-height:1.65;color:var(--text);}
 
+    /* ── Desktop: two-column layout (map left, options right) ── */
+    .game-content{display:block;}
+    @media(min-width:768px){
+      .game-content{
+        display:grid;
+        grid-template-columns:1.4fr 1fr;
+        gap:24px;
+        align-items:center;
+      }
+    }
+
+
     /* ── Map ── */
     .map-label{text-align:center;font-size:.88rem;color:var(--muted);margin-bottom:12px;}
-    .sky-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid rgba(123,97,255,.25);margin-bottom:24px;background:#020208;text-align:center;}
-    .sky-wrap img{width:100%;max-height:440px;object-fit:contain;display:block;}
+    .sky-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid rgba(123,97,255,.25);background:#020208;text-align:center;}
+    .sky-wrap img{width:100%;height:auto;object-fit:contain;display:block;}
     .sky-loader{
       position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
       background:var(--bg);font-size:.9rem;color:var(--muted);gap:10px;
-      flex-direction:column;
+      flex-direction:column;min-height:400px;
     }
     .spinner{width:24px;height:24px;border:3px solid rgba(123,97,255,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
     @keyframes spin{to{transform:rotate(360deg);}}
 
     /* ── Options ── */
-    .options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
-    @media(max-width:480px){.options{grid-template-columns:1fr;}}
+    .options{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:20px;}
     .opt-btn{
       background:var(--surface2);border:2px solid rgba(123,97,255,.2);
       border-radius:var(--radius);padding:16px 20px;
@@ -57,7 +68,7 @@
     .opt-btn.correct{background:rgba(102,187,106,.15);border-color:var(--green);color:var(--green);}
     .opt-btn.wrong{background:rgba(239,83,80,.12);border-color:var(--red);color:var(--red);}
 
-    .controls{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+    .controls{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:8px;}
     .btn{padding:12px 28px;border-radius:30px;font-weight:700;font-size:.95rem;cursor:pointer;border:none;transition:all .15s;}
     .btn-hint{background:rgba(123,97,255,.18);color:var(--accent);border:1px solid rgba(123,97,255,.4);}
     .btn-hint:hover{background:rgba(123,97,255,.3);}
@@ -115,28 +126,33 @@
       <div class="trivia-text" id="trivia-text">Загрузка...</div>
     </div>
 
-    <!-- Sky map with labels -->
-    <div class="map-label">🔭 На карте видны контуры созвездий — найди
-        описанное выше</div>
-    <div class="sky-wrap">
-      <div class="sky-loader" id="sky-loader">
-        <div class="spinner"></div>
-        <span>
-          Генерируем карту…<br>
-          <small style="opacity:.6">При первом запуске может занять до 30 сек</small>
-        </span>
+    <!-- Desktop: two columns | Mobile: vertical -->
+    <div class="game-content">
+      <!-- Left: Sky map -->
+      <div class="left-col">
+        <div class="map-label">🔭 На карте видны контуры созвездий — найди описанное выше</div>
+        <div class="sky-wrap">
+          <div class="sky-loader" id="sky-loader">
+            <div class="spinner"></div>
+            <span>
+              Генерируем карту…<br>
+              <small style="opacity:.6">При первом запуске может занять до 30 сек</small>
+            </span>
+          </div>
+          <img id="sky-img" src="" alt="Карта неба" style="display:none" />
+        </div>
       </div>
-      <img id="sky-img" src="" alt="Карта неба" style="display:none" />
-    </div>
 
-    <div class="hint-box" id="hint-box"></div>
-
-    <div class="options" id="options"></div>
-    <div id="result-area"></div>
-
-    <div class="controls">
-      <button class="btn btn-hint" id="btn-hint" onclick="useHint()">💡 Подсказка (−50%)</button>
-      <button class="btn btn-next" id="btn-next" onclick="nextQuestion()" disabled>Следующий →</button>
+      <!-- Right: Options + Result + Controls (centered vertically) -->
+      <div class="right-col">
+        <div class="hint-box" id="hint-box"></div>
+        <div class="options" id="options"></div>
+        <div id="result-area"></div>
+        <div class="controls">
+          <button class="btn btn-hint" id="btn-hint" onclick="useHint()">💡 Подсказка (−50%)</button>
+          <button class="btn btn-next" id="btn-next" onclick="nextQuestion()" disabled>Следующий →</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -188,7 +204,6 @@
     const resp = await fetch(`/game/api/question?session_id=${sessionId}`);
     const data = await resp.json();
 
-    // ── FIX: обработка ошибки загрузки вопроса ──
     if (data.error) {
       document.getElementById('sky-loader').style.display = 'none';
       document.getElementById('trivia-text').textContent = '';
@@ -208,17 +223,15 @@
     updateHeader(data.session);
     document.getElementById('trivia-text').textContent = data.question;
 
-    // Load wide sky map
     const img = document.getElementById('sky-img');
     const _showImg = () => {
       document.getElementById('sky-loader').style.display = 'none';
       img.style.display = 'block';
     };
     img.onload = _showImg;
-    img.onerror = _showImg;   // показать область даже при ошибке декодирования
-    img.src = '';             // сброс состояния "complete" в браузере
+    img.onerror = _showImg;
+    img.src = '';
     img.src = 'data:image/png;base64,' + data.image;
-    // Fallback: браузер уже декодировал изображение синхронно
     if (img.complete && img.naturalHeight > 0) _showImg();
 
     const optEl = document.getElementById('options');
@@ -243,7 +256,7 @@
       body: JSON.stringify({ session_id: sessionId, answer, used_hint: usedHint, time_seconds: parseFloat(timeSec) }),
     });
     const data = await resp.json();
-    // Обработка ошибки сервера (например "No active question")
+
     if (data.error) {
       console.error('Ошибка ответа:', data.error);
       answered = false;
@@ -253,7 +266,16 @@
       setTimeout(() => loadQuestion(), 1500);
       return;
     }
+
     updateHeader(data);
+
+    // Автоскролл к кнопке "Следующий" на мобильных
+    if (window.innerWidth < 768) {
+      setTimeout(() => {
+        document.getElementById('btn-next')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 400);
+    }
+
     document.querySelectorAll('.opt-btn').forEach(btn => {
       if (btn.textContent === data.correct_answer) btn.classList.add('correct');
       else if (btn.textContent === answer && !data.correct) btn.classList.add('wrong');
