@@ -967,6 +967,7 @@ class QuestionFactory:
         question = {
             "type": "messier",
             "image": image_b64,
+            "photo_url": f"/game/messier-photos/m{m_num}.jpeg",
             "question": f"Объект типа «{obj_type_name}» в созвездии "
             f"{obj['constellation']}. Что это за объект Мессье?",
             "options": options,

@@ -20,11 +20,98 @@
     .progress-wrap{padding:10px 24px 0;background:var(--surface);}
     .progress-bar{height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
     .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s;}
-    main{max-width:900px;margin:0 auto;padding:32px 20px 60px;}
+    main{max-width:1200px;margin:0 auto;padding:32px 20px 60px;}
     .question-label{text-align:center;font-size:1rem;color:var(--muted);margin-bottom:20px;min-height:48px;line-height:1.5;}
-    .sky-wrap{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid rgba(123,97,255,.25);margin-bottom:28px;background:#020208;text-align:center;}
-    .sky-wrap img{width:100%;max-height:460px;object-fit:contain;display:block;}
-    .sky-loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);font-size:.9rem;color:var(--muted);gap:10px;}
+    /* ── Контейнер ─────────────────────────────────────────────────────── */
+    .sky-wrap {
+        border-radius: var(--radius);
+        overflow: hidden;
+        border: 1px solid rgba(123,97,255,.25);
+        margin-bottom: 28px;
+        background: #020208;
+        /* БЕЗ фиксированной высоты — одиночное фото задаёт высоту само */
+    }
+
+    /* Режим two-images (easy и medium после подсказки) — фиксированная высота */
+    .sky-wrap.two-images {
+        display: flex;
+        gap: 2px;
+        align-items: stretch;
+        height: 400px;
+    }
+
+    /* ── Карта (two-images) ─────────────────────────────────────────────── */
+    #chart-cell {
+        flex: 0 0 auto;
+        min-width: 0;
+        max-width: 65%;
+    }
+    #sky-img {
+        display: block;
+        height: 100%;
+        width: auto;            /* ширина = 400px × 1.5, без полос */
+    }
+
+    /* ── Фото (two-images) ──────────────────────────────────────────────── */
+    #photo-cell {
+        flex: 1;
+        min-width: 0;
+    }
+    #photo-img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* ── Одиночный режим (medium до подсказки, hard) ────────────────────── */
+    .sky-wrap:not(.two-images) #chart-cell,
+    .sky-wrap:not(.two-images) #photo-cell {
+        width: 100%;
+    }
+    /* Одиночное фото — естественные пропорции, без полос, без растяжки */
+    .sky-wrap:not(.two-images) #photo-img {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 400px;
+        object-fit: contain;
+    }
+    /* Карта в hard — тоже естественные пропорции */
+    .sky-wrap:not(.two-images) #sky-img {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 400px;
+        object-fit: contain;
+    }
+
+    /* ── Мобильные ──────────────────────────────────────────────────────── */
+    @media(max-width: 600px) {
+        .sky-wrap.two-images {
+            flex-direction: column;
+            height: auto;
+        }
+        #chart-cell {
+            flex: 0 0 auto;
+            width: 100%;
+            max-width: 100%;
+        }
+        #sky-img {
+            width: 100%;
+            height: auto;
+        }
+        #photo-cell {
+            flex: 0 0 260px;
+            width: 100%;
+        }
+        .sky-wrap:not(.two-images) #photo-img,
+        .sky-wrap:not(.two-images) #sky-img {
+            max-height: none;
+        }
+    }
+
+    .sky-loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);font-size:.9rem;color:var(--muted);gap:10px;z-index:2;}
     .spinner{width:24px;height:24px;border:3px solid rgba(123,97,255,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
     @keyframes spin{to{transform:rotate(360deg);}}
     .options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
@@ -34,7 +121,7 @@
     .opt-btn:disabled{cursor:default;}
     .opt-btn.correct{background:rgba(102,187,106,.15);border-color:var(--green);color:var(--green);}
     .opt-btn.wrong{background:rgba(239,83,80,.12);border-color:var(--red);color:var(--red);}
-    .controls{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+    .controls { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:24px; }
     .btn{padding:12px 28px;border-radius:30px;font-weight:700;font-size:.95rem;cursor:pointer;border:none;transition:all .15s;}
     .btn-hint{background:rgba(123,97,255,.18);color:var(--accent);border:1px solid rgba(123,97,255,.4);}
     .btn-hint:hover{background:rgba(123,97,255,.3);}
@@ -85,10 +172,18 @@
 <main>
   <div id="game-area">
     <div class="question-label" id="question-label">Загрузка...</div>
-    <div class="sky-wrap">
-      <div class="sky-loader" id="sky-loader"><div class="spinner"></div> Генерируем карту…</div>
-      <img id="sky-img" src="" alt="Область неба" style="display:none" />
+
+    <div class="sky-wrap" id="sky-wrap">
+      <div class="img-cell" id="chart-cell">
+        <div class="sky-loader" id="sky-loader"><div class="spinner"></div> Генерируем карту…</div>
+        <img id="sky-img" src="" alt="Область неба" style="display:none" />
+      </div>
+      <div class="img-cell" id="photo-cell" style="display:none">
+        <img id="photo-img" src="" alt="Фото объекта"
+             onerror="document.getElementById('photo-cell').style.display='none'" />
+      </div>
     </div>
+
     <div class="hint-box" id="hint-box"></div>
     <div class="options" id="options"></div>
     <div id="result-area"></div>
@@ -97,6 +192,7 @@
       <button class="btn btn-next" id="btn-next" onclick="nextQuestion()" disabled>Следующий →</button>
     </div>
   </div>
+
   <div class="finish-screen" id="finish-screen">
     <div class="finish-rank" id="finish-rank">🌌</div>
     <h2 style="margin-bottom:6px">Игра завершена!</h2>
@@ -112,124 +208,208 @@
     </div>
   </div>
 </main>
-<script>
-  const MODE='messier';
-  const params=new URLSearchParams(location.search);
-  const DIFFICULTY=params.get('difficulty')||'medium';
-  const ROUNDS=parseInt(params.get('rounds')||'10');
-  let sessionId=null,usedHint=false,questionStartTime=null,answered=false;
 
-  async function initGame(){
-    const r=await fetch('/game/api/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:MODE,difficulty:DIFFICULTY,rounds:ROUNDS})});
-    const d=await r.json(); sessionId=d.session_id; updateHeader(d); await loadQuestion();
+<script>
+  const MODE = 'messier';
+  const params = new URLSearchParams(location.search);
+  const DIFFICULTY = params.get('difficulty') || 'medium';
+  const ROUNDS = parseInt(params.get('rounds') || '10');
+
+  const SHOW_CHART = (DIFFICULTY === 'easy' || DIFFICULTY === 'hard');
+  const SHOW_PHOTO = (DIFFICULTY === 'easy' || DIFFICULTY === 'medium');
+  const CHART_IS_HINT = (DIFFICULTY === 'medium');
+
+  let sessionId = null, usedHint = false, questionStartTime = null, answered = false;
+  let currentChartB64 = null;
+
+  async function initGame() {
+    const r = await fetch('/game/api/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({mode: MODE, difficulty: DIFFICULTY, rounds: ROUNDS})
+    });
+    const d = await r.json();
+    sessionId = d.session_id;
+    updateHeader(d);
+    await loadQuestion();
   }
 
-  async function loadQuestion(){
-    answered=false; usedHint=false;
-    document.getElementById('hint-box').style.display='none';
-    document.getElementById('result-area').innerHTML='';
-    document.getElementById('btn-hint').disabled=false;
-    document.getElementById('btn-next').disabled=true;
-    document.getElementById('sky-loader').style.display='flex';
-    document.getElementById('sky-img').style.display='none';
-    document.getElementById('options').innerHTML='';
+  async function loadQuestion() {
+    answered = false;
+    usedHint = false;
+    currentChartB64 = null;
 
-    const r=await fetch(`/game/api/question?session_id=${sessionId}`);
-    const data=await r.json();
-    if(data.finished){showFinish(data);return;}
-    if(data.error){
-        document.getElementById('result-area').innerHTML=
-            `<div style="color:#f87171;text-align:center">⚠️ ${data.error}</div>`;
-        return;
+    document.getElementById('hint-box').style.display = 'none';
+    document.getElementById('result-area').innerHTML = '';
+    document.getElementById('btn-hint').disabled = false;
+    document.getElementById('btn-next').disabled = true;
+    document.getElementById('options').innerHTML = '';
+
+    const skyImg   = document.getElementById('sky-img');
+    const photoImg = document.getElementById('photo-img');
+    const chartCell = document.getElementById('chart-cell');
+    const photoCell = document.getElementById('photo-cell');
+    const skyWrap  = document.getElementById('sky-wrap');
+
+    skyImg.style.display  = 'none';
+    skyImg.src            = '';
+    photoImg.style.display = 'none';
+    photoImg.src          = '';
+    chartCell.style.display = 'flex';
+    photoCell.style.display = 'none';
+    document.getElementById('sky-loader').style.display = 'flex';
+
+    // easy: два изображения сразу рядом
+    skyWrap.classList.toggle('two-images', DIFFICULTY === 'easy');
+
+    const r    = await fetch(`/game/api/question?session_id=${sessionId}`);
+    const data = await r.json();
+
+    if (data.finished) { showFinish(data); return; }
+    if (data.error) {
+      document.getElementById('result-area').innerHTML =
+        `<div style="color:#f87171;text-align:center">⚠️ ${data.error}</div>`;
+      return;
     }
 
     updateHeader(data.session);
-    document.getElementById('question-label').textContent=data.question;
+    document.getElementById('question-label').textContent = data.question;
+    currentChartB64 = data.image || null;
 
-    // Надёжная загрузка картинки
-    const img=document.getElementById('sky-img');
-    const _showImg=()=>{
-        document.getElementById('sky-loader').style.display='none';
-        img.style.display='block';
-    };
-    img.onload=_showImg;
-    img.onerror=_showImg;
-    img.src='';
-    img.src='data:image/png;base64,'+data.image;
-    if(img.complete&&img.naturalHeight>0)_showImg();
+    // ── Карта звёздного неба ──
+    if (SHOW_CHART && data.image) {
+      const _show = () => {
+        document.getElementById('sky-loader').style.display = 'none';
+        skyImg.style.display = 'block';
+      };
+      skyImg.onload  = _show;
+      skyImg.onerror = _show;
+      skyImg.src = 'data:image/png;base64,' + data.image;
+      if (skyImg.complete && skyImg.naturalHeight > 0) _show();
+    } else {
+      document.getElementById('sky-loader').style.display = 'none';
+      if (CHART_IS_HINT) chartCell.style.display = 'none';
+    }
 
-    const optEl=document.getElementById('options');
-    (data.options||[]).forEach(opt=>{
-        const btn=document.createElement('button');
-        btn.className='opt-btn'; btn.textContent=opt;
-        btn.onclick=()=>submitAnswer(opt); optEl.appendChild(btn);
+    // ── Фото объекта ──
+    if (SHOW_PHOTO && data.photo_url) {
+      photoCell.style.display = 'flex';
+      photoImg.src = data.photo_url;
+      photoImg.style.display = 'block';
+    }
+
+    // ── Варианты ответов ──
+    const optEl = document.getElementById('options');
+    (data.options || []).forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = opt;
+      btn.onclick = () => submitAnswer(opt);
+      optEl.appendChild(btn);
     });
-    questionStartTime=Date.now();
-}
 
-  async function submitAnswer(answer){
-    if(answered)return; answered=true;
-    document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
-    document.getElementById('btn-hint').disabled=true;
-    const timeSec=((Date.now()-questionStartTime)/1000).toFixed(1);
-    const r=await fetch('/game/api/answer',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({session_id:sessionId,answer,used_hint:usedHint,time_seconds:parseFloat(timeSec)})});
-    const data=await r.json();
+    questionStartTime = Date.now();
+  }
 
-    // Обработка ошибки сервера
-    if(data.error){
-        console.error('submitAnswer error:',data.error);
-        answered=false;
-        document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=false);
-        document.getElementById('result-area').innerHTML=
-            `<div style="color:#f87171;text-align:center">⚠️ Ошибка: ${data.error}. Перезагрузка...</div>`;
-        setTimeout(()=>loadQuestion(),1500);
-        return;
+  async function useHint() {
+    document.getElementById('btn-hint').disabled = true;
+    usedHint = true;
+
+    // ИЗМЕНЕНИЕ 2: medium — карта появляется сбоку от фото, как в easy
+    if (CHART_IS_HINT && currentChartB64) {
+      const chartCell = document.getElementById('chart-cell');
+      const skyImg    = document.getElementById('sky-img');
+      const loader    = document.getElementById('sky-loader');
+
+      document.getElementById('sky-wrap').classList.add('two-images'); // ← ключевая строка
+      chartCell.style.display = 'flex';
+      loader.style.display    = 'flex';
+
+      const _show = () => {
+        loader.style.display   = 'none';
+        skyImg.style.display   = 'block';
+      };
+      skyImg.onload  = _show;
+      skyImg.onerror = _show;
+      skyImg.src = 'data:image/png;base64,' + currentChartB64;
+      if (skyImg.complete && skyImg.naturalHeight > 0) _show();
+    }
+
+    const r  = await fetch(`/game/api/hint?session_id=${sessionId}`);
+    const d  = await r.json();
+    const hb = document.getElementById('hint-box');
+    hb.textContent = '💡 ' + (d.hint || 'Подсказка недоступна');
+    hb.style.display = 'block';
+  }
+
+  async function submitAnswer(answer) {
+    if (answered) return;
+    answered = true;
+    document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+    document.getElementById('btn-hint').disabled = true;
+
+    const timeSec = ((Date.now() - questionStartTime) / 1000).toFixed(1);
+    const r = await fetch('/game/api/answer', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({session_id: sessionId, answer, used_hint: usedHint, time_seconds: parseFloat(timeSec)})
+    });
+    const data = await r.json();
+
+    if (data.error) {
+      answered = false;
+      document.querySelectorAll('.opt-btn').forEach(b => b.disabled = false);
+      document.getElementById('result-area').innerHTML =
+        `<div style="color:#f87171;text-align:center">⚠️ Ошибка: ${data.error}. Перезагрузка...</div>`;
+      setTimeout(() => loadQuestion(), 1500);
+      return;
     }
 
     updateHeader(data);
-    document.querySelectorAll('.opt-btn').forEach(btn=>{
-        if(btn.textContent===data.correct_answer)btn.classList.add('correct');
-        else if(btn.textContent===answer&&!data.correct)btn.classList.add('wrong');
+    document.querySelectorAll('.opt-btn').forEach(btn => {
+      if (btn.textContent === data.correct_answer) btn.classList.add('correct');
+      else if (btn.textContent === answer && !data.correct) btn.classList.add('wrong');
     });
-    const el=document.getElementById('result-area');
-    const pts=data.correct?`<span class="points-badge">+${data.points_earned}</span>`:'';
-    el.innerHTML=`<div class="result-card ${data.correct?'correct-card':'wrong-card'}">
-        <div class="result-title">${data.correct?'✅ Верно!':'❌ Неверно.'} ${pts}</div>
-        ${!data.correct?`<div style="font-size:.9rem;margin-top:4px">Правильный ответ: <b>${data.correct_answer}</b></div>`:''}
-        <div class="result-fact">${data.fun_fact||''}</div>
-    </div>`;
-    document.getElementById('btn-next').disabled=false;
-}
 
-  async function useHint(){
-    document.getElementById('btn-hint').disabled=true;usedHint=true;
-    const r=await fetch(`/game/api/hint?session_id=${sessionId}`);
-    const d=await r.json();
-    const hb=document.getElementById('hint-box');
-    hb.textContent='💡 '+(d.hint||'Подсказка недоступна');hb.style.display='block';
+    const pts = data.correct ? `<span class="points-badge">+${data.points_earned}</span>` : '';
+    document.getElementById('result-area').innerHTML =
+      `<div class="result-card ${data.correct ? 'correct-card' : 'wrong-card'}">
+        <div class="result-title">${data.correct ? '✅ Верно!' : '❌ Неверно.'} ${pts}</div>
+        ${!data.correct ? `<div style="font-size:.9rem;margin-top:4px">Правильный ответ: <b>${data.correct_answer}</b></div>` : ''}
+        <div class="result-fact">${data.fun_fact || ''}</div>
+      </div>`;
+
+    document.getElementById('btn-next').disabled = false;
   }
 
-  async function nextQuestion(){document.getElementById('btn-next').disabled=true;await loadQuestion();}
-
-function updateHeader(s){
-    document.getElementById('hdr-round').textContent=s.round||0;
-    document.getElementById('hdr-total').textContent=s.total_rounds||ROUNDS;
-    document.getElementById('hdr-score').textContent=s.total_score??s.score??0;
-    document.getElementById('hdr-streak').textContent=s.streak||0;
-    document.getElementById('progress-fill').style.width=((s.round||0)/(s.total_rounds||ROUNDS)*100)+'%';
-}
-
-  function showFinish(data){
-    document.getElementById('game-area').style.display='none';
-    document.getElementById('finish-screen').style.display='block';
-    document.getElementById('finish-rank').textContent=data.rank||'🌌';
-    document.getElementById('finish-score-val').textContent=data.score||0;
-    document.getElementById('fs-correct').textContent=data.correct_count||0;
-    document.getElementById('fs-acc').textContent=(data.accuracy||0)+'%';
-    document.getElementById('fs-streak').textContent=data.best_streak||0;
+  async function nextQuestion() {
+    document.getElementById('btn-next').disabled = true;
+    await loadQuestion();
   }
-  function restartGame(){location.href=`/game/messier?difficulty=${DIFFICULTY}&rounds=${ROUNDS}`;}
+
+  function updateHeader(s) {
+    document.getElementById('hdr-round').textContent  = s.round || 0;
+    document.getElementById('hdr-total').textContent  = s.total_rounds || ROUNDS;
+    document.getElementById('hdr-score').textContent  = s.total_score ?? s.score ?? 0;
+    document.getElementById('hdr-streak').textContent = s.streak || 0;
+    document.getElementById('progress-fill').style.width =
+      ((s.round || 0) / (s.total_rounds || ROUNDS) * 100) + '%';
+  }
+
+  function showFinish(data) {
+    document.getElementById('game-area').style.display   = 'none';
+    document.getElementById('finish-screen').style.display = 'block';
+    document.getElementById('finish-rank').textContent      = data.rank || '🌌';
+    document.getElementById('finish-score-val').textContent = data.score || 0;
+    document.getElementById('fs-correct').textContent = data.correct_count || 0;
+    document.getElementById('fs-acc').textContent     = (data.accuracy || 0) + '%';
+    document.getElementById('fs-streak').textContent  = data.best_streak || 0;
+  }
+
+  function restartGame() {
+    location.href = `/game/messier?difficulty=${DIFFICULTY}&rounds=${ROUNDS}`;
+  }
+
   initGame();
 </script>
 </body>

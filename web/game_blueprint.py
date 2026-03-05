@@ -58,6 +58,7 @@ VALID_DIFFICULTIES = {"easy", "medium", "hard"}
 # Static dir
 # ---------------------------------------------------------------------------
 _STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+_IMAGES_DIR = os.path.join(os.path.dirname(__file__), "images")
 
 # ---------------------------------------------------------------------------
 # Мета-информация о режимах (используется /game/api/modes и лобби)
@@ -322,6 +323,7 @@ def api_question():
     else:
         resp["image"] = question["image"]
         resp["options"] = question["options"]
+        resp["photo_url"] = question.get("photo_url")
 
     return jsonify(resp)
 
@@ -512,3 +514,8 @@ def api_finish():
     }
     delete_session(session_id)
     return jsonify(result)
+
+
+@game_bp.route("/messier-photos/<path:filename>")
+def messier_photos(filename: str):
+    return send_from_directory(_IMAGES_DIR, filename)
