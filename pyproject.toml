@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "astrageek"
-version = "0.2.3"
+version = "0.2.4"
 authors = [
     {name = "Ilia Bespyatyy", email = "ilia.bespytatyy@gmail.com"},
     {name = "Maksim Ramenskyy", email = "msramenskiy@edu.hse.ru"},
@@ -57,7 +57,11 @@ select = ["E", "F", "I"]
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["astrageek*"]
-exclude = ["web*"]             # web/ not to PyPI
+
+[tool.setuptools.package-data]
+"astrageek.catalogs.hip" = ["*.tsv"]
+"astrageek.catalogs.constellations" = ["*.json"]
+"astrageek.helpers.pdf_helpers" = ["*.png", "*.jpg"]
 
 [tool.sphinx-pyproject]
 project = "AstraGeek"

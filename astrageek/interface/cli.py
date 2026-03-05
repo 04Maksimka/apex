@@ -3,12 +3,6 @@ from typing import Tuple
 
 import click
 import numpy as np
-from projections.pinhole import (
-    CameraConfig,
-    Pinhole,
-    PinholeConfig,
-    ShotConditions,
-)
 
 from astrageek.catalogs.constellations import (
     get_constellation_center,
@@ -22,6 +16,12 @@ from astrageek.helpers.pdf_helpers.figure2pdf import (
     save_figure_skychart,
 )
 from astrageek.messier_game.game import messier_game
+from astrageek.projections.pinhole import (
+    CameraConfig,
+    Pinhole,
+    PinholeConfig,
+    ShotConditions,
+)
 from astrageek.projections.stereographic import (
     ConstellationConfig,
     StereoProjConfig,
