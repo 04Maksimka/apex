@@ -488,8 +488,8 @@ function draw() {
   ctx.fillStyle = eg; ctx.fill();
   if (er > 5) {
     ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(120,190,255,0.45)';
-    ctx.lineWidth = Math.max(1, er * 0.014); ctx.stroke();
+    ctx.strokeStyle = 'rgba(160,230,255,0.85)';
+    ctx.lineWidth = 1; ctx.stroke();
   }
 
   if (!data) { drawScaleBar(W, H); return; }
