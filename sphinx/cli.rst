@@ -1,6 +1,6 @@
 CLI Reference
 =============
 
-.. click:: src.interface.cli:cli
+.. click:: astrageek.interface.cli:cli
    :prog: astrageek
    :nested: full

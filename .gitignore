@@ -169,4 +169,6 @@ Desktop.ini
 astrageek/projections/stereographic/samples/
 astrageek/projections/pinhole/pinhole_samples
 
+sphinx/_build/
+
 README_PYPI.md
