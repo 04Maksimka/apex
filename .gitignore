@@ -166,7 +166,7 @@ Desktop.ini
 # temp_data/
 # output/
 
-src/stereographic_projection/samples/
-src/pinhole_projection/pinhole_samples
+astrageek/projections/stereographic/samples/
+astrageek/projections/pinhole/pinhole_samples
 
 README_PYPI.md

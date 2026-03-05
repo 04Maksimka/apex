@@ -24,11 +24,9 @@ dependencies = [
     "astropy",
     "scipy",
     "pandas",
-    "pygame",        # messier_pygame/
     "pillow",        # PIL
     "loguru",
     "click>=8.0",
-    "flask"
 ]
 
 [project.optional-dependencies]
@@ -47,16 +45,19 @@ dev = [
     "ruff",
     "pre-commit",
 ]
+web = ["flask"]
 
 [tool.ruff]
 line-length = 79
 target-version = "py38"
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]  # ошибки + pyflakes + сортировка импортов
+select = ["E", "F", "I"]
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["astrageek*"]
+exclude = ["web*"]             # web/ not to PyPI
 
 [tool.sphinx-pyproject]
 project = "AstraGeek"
@@ -84,4 +85,4 @@ matplotlib = ["https://matplotlib.org/stable/", "https://matplotlib.org/stable/o
 
 
 [project.scripts]
-astrageek = "src.interface.cli:cli"
+astrageek = "astrageek.interface.cli:cli"
