@@ -3,7 +3,7 @@ Flask Blueprint: /game/*
 Provides REST API and page routing for AstraGeek Sky Quiz.
 
 Registration in app.py:
-    from astrageek.web.game_blueprint import game_bp
+    from web.game_blueprint import game_bp
     app.register_blueprint(game_bp)
 
 Supported game modes
