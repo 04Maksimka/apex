@@ -51,7 +51,7 @@ CATALOG = Catalog(
 def _warmup_catalogs():
     try:
         print("[warmup] Preloading game catalogues...")
-        from astrageek.game.question_factory import (
+        from web.game.question_factory import (
             _get_catalog,
             _get_messier_catalog,
             _load_named_stars,

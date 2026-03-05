@@ -1,8 +1,8 @@
 """AstraGeek Sky Quiz — educational astronomy game module."""
 
-from astrageek.game.question_factory import QuestionFactory
-from astrageek.game.scoring import calculate_score, get_rank
-from astrageek.game.session import (
+from web.game.question_factory import QuestionFactory
+from web.game.scoring import calculate_score, get_rank
+from web.game.session import (
     GameSession,
     create_session,
     delete_session,

@@ -39,9 +39,9 @@ from typing import Any, Dict
 
 from flask import Blueprint, abort, jsonify, request, send_from_directory
 
-from astrageek.game.question_factory import QuestionFactory
-from astrageek.game.scoring import build_result, calculate_score, get_rank
-from astrageek.game.session import (
+from web.game.question_factory import QuestionFactory
+from web.game.scoring import build_result, calculate_score, get_rank
+from web.game.session import (
     cleanup_old_sessions,
     create_session,
     delete_session,

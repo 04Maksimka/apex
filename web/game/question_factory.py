@@ -12,11 +12,11 @@ Modes:
 from __future__ import annotations
 
 import base64
+import importlib.resources
 import io
 import math
 import random
 from datetime import datetime
-from pathlib import Path
 from threading import Lock
 from typing import Any, Dict, List, Optional, Set
 
@@ -33,10 +33,6 @@ from astrageek.catalogs.constellations import (
 from astrageek.catalogs.hip import Catalog, CatalogConstraints
 from astrageek.catalogs.messier import MessierCatalog, MessierType
 from astrageek.catalogs.planets import PlanetCatalog
-from astrageek.game.session import (
-    DIFFICULTY_CONSTELLATIONS,
-    DIFFICULTY_MAGNITUDE,
-)
 from astrageek.helpers.geometry.geometry import rotate_direction_random
 from astrageek.projections.pinhole import (
     CameraConfig,
@@ -44,6 +40,10 @@ from astrageek.projections.pinhole import (
     Pinhole,
     PinholeConfig,
     ShotConditions,
+)
+from web.game.session import (
+    DIFFICULTY_CONSTELLATIONS,
+    DIFFICULTY_MAGNITUDE,
 )
 
 # Close any figures that matplotlib may have created during import
@@ -53,7 +53,6 @@ plt.close("all")
 # ---------------------------------------------------------------------------
 # Module-level singletons
 # ---------------------------------------------------------------------------
-_BASE_DIR = Path(__file__).resolve().parents[1]
 _HIP_CATALOG: Optional[Catalog] = None
 _PLANET_CATALOG: Optional[PlanetCatalog] = None
 _MESSIER_CATALOG: Optional[MessierCatalog] = None
@@ -434,7 +433,9 @@ def _get_catalog() -> Catalog:
             if _HIP_CATALOG is None:
                 _HIP_CATALOG = Catalog(
                     catalog_name=str(
-                        _BASE_DIR / "catalogs" / "hip" / "hip_data.tsv"
+                        importlib.resources.files(
+                            "astrageek.catalogs.hip"
+                        ).joinpath("hip_data.tsv")
                     ),
                     use_cache=True,
                 )
