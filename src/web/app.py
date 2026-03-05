@@ -30,11 +30,13 @@ from src.stereographic_projection.stereographic_projector import (
     StereoProjector,
 )
 from src.web.game_blueprint import game_bp
+from src.web.astra_etudes_blueprint import astra_etudes_bp
 
 matplotlib.use("Agg")
 
 app = Flask(__name__, static_folder="public_html", static_url_path="")
 app.register_blueprint(game_bp)
+app.register_blueprint(astra_etudes_bp)
 
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
