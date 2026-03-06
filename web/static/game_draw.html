@@ -127,11 +127,21 @@
       </ul>
     </div>
 
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#e8eaf6"></div> Звёзды созвездия</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#3a3a6a"></div> Фоновые звёзды</div>
-      <div class="legend-item"><div class="legend-dot" style="background:rgba(123,97,255,0.8);width:24px;height:3px;border-radius:2px"></div> Нарисованные линии</div>
-      <div class="legend-item"><div class="legend-dot" style="background:rgba(102,187,106,0.7);width:24px;height:3px;border-radius:2px"></div> Правильный ответ</div>
+    <div class="legend" id="legend-draw">
+        <div class="legend-item"><div class="legend-dot" style="background:#e8eaf6"></div> Звёзды созвездия</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3a3a6a"></div> Фоновые звёзды</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(79,195,247,0.85);width:24px;height:3px;border-radius:2px"></div> Подсказка (easy)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(123,97,255,0.85);width:24px;height:3px;border-radius:2px"></div> Нарисованные линии</div>
+    </div>
+
+    <!-- Легенда результата — скрыта до проверки -->
+    <div class="legend" id="legend-result" style="display:none">
+        <div class="legend-item"><div class="legend-dot" style="background:#e8eaf6"></div> Звёзды созвездия</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3a3a6a"></div> Фоновые звёзды</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(79,195,247,0.85);width:24px;height:3px;border-radius:2px"></div> Подсказка (easy)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(102,187,106,0.9);width:24px;height:3px;border-radius:2px"></div> Верные линии</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(239,83,80,0.85);width:24px;height:3px;border-radius:2px"></div> Лишние линии</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,213,79,0.8);width:24px;height:3px;border-radius:2px;border-bottom:2px dashed rgba(255,213,79,0.8)"></div> Недостающие</div>
     </div>
 
     <div class="hint-box" id="hint-box"></div>
@@ -146,7 +156,6 @@
       <button class="btn btn-clear" id="btn-clear" onclick="clearAll()">🧹 Очистить всё</button>
       <button class="btn btn-submit" id="btn-submit" onclick="submitDrawing()">✔ Проверить</button>
       <button class="btn btn-show-answer" id="btn-show-answer" onclick="toggleRef()">👁 Показать ответ</button>
-      <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">Следующий →</button>
     </div>
 
     <div id="result-area"></div>
@@ -180,6 +189,18 @@
   let refEdges = [];
   let showRef = false;
   let eraseMode = false;
+  let predrawnSet = new Set(); // ключи вида "a-b" (min-max)
+  let resultCorrectEdges = [];
+  let resultWrongEdges   = [];
+  let resultMissingEdges = [];
+
+
+  function edgeKey(a, b) {
+    return Math.min(a, b) + '-' + Math.max(a, b);
+  }
+  function isPredrawn(a, b) {
+    return predrawnSet.has(edgeKey(a, b));
+  }
 
   // ── Canvas setup ──────────────────────────────────────────────────────────
   const canvas = document.getElementById('sky-canvas');
@@ -235,35 +256,100 @@
       ctx.fill();
     });
 
-    // Reference edges
-    if (showRef && refEdges.length) {
-      ctx.save();
-      ctx.strokeStyle = 'rgba(102,187,106,0.75)';
-      ctx.lineWidth = 2.5;
-      ctx.setLineDash([7, 5]);
-      refEdges.forEach(([a, b]) => {
+    // ── Pre-drawn edges — синие сплошные ────────────────────────────────────
+    ctx.save();
+    ctx.strokeStyle = 'rgba(79,195,247,0.85)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+    drawnEdges.forEach(([a, b]) => {
+        if (!isPredrawn(a, b)) return;
         const sa = stars.find(s => s.hip_id === a);
         const sb = stars.find(s => s.hip_id === b);
         if (!sa || !sb) return;
         const pa = toCanvas(sa.x, sa.y), pb = toCanvas(sb.x, sb.y);
         ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
-      });
-      ctx.restore();
-    }
-
-    // User-drawn edges
-    ctx.save();
-    ctx.strokeStyle = 'rgba(123,97,255,0.85)';
-    ctx.lineWidth = 2.5;
-    ctx.setLineDash([]);
-    drawnEdges.forEach(([a, b]) => {
-      const sa = stars.find(s => s.hip_id === a);
-      const sb = stars.find(s => s.hip_id === b);
-      if (!sa || !sb) return;
-      const pa = toCanvas(sa.x, sa.y), pb = toCanvas(sb.x, sb.y);
-      ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
     });
     ctx.restore();
+
+    // ── После проверки: недостающие / верные / лишние ───────────────────────
+    if (showingResult) {
+        // Недостающие — жёлтые пунктирные
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,213,79,0.8)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([6, 4]);
+        resultMissingEdges.forEach(([a, b]) => {
+            const sa = stars.find(s => s.hip_id === a);
+            const sb = stars.find(s => s.hip_id === b);
+            if (!sa || !sb) return;
+            const pa = toCanvas(sa.x, sa.y), pb = toCanvas(sb.x, sb.y);
+            ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+        });
+        ctx.restore();
+
+        // Верные — зелёные сплошные
+        ctx.save();
+        ctx.strokeStyle = 'rgba(102,187,106,0.9)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([]);
+        resultCorrectEdges.forEach(([a, b]) => {
+            const sa = stars.find(s => s.hip_id === a);
+            const sb = stars.find(s => s.hip_id === b);
+            if (!sa || !sb) return;
+            const pa = toCanvas(sa.x, sa.y), pb = toCanvas(sb.x, sb.y);
+            ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+        });
+        ctx.restore();
+
+        // Лишние — красные сплошные
+        ctx.save();
+        ctx.strokeStyle = 'rgba(239,83,80,0.85)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([]);
+        resultWrongEdges.forEach(([a, b]) => {
+            const sa = stars.find(s => s.hip_id === a);
+            const sb = stars.find(s => s.hip_id === b);
+            if (!sa || !sb) return;
+            const pa = toCanvas(sa.x, sa.y), pb = toCanvas(sb.x, sb.y);
+            ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+        });
+        ctx.restore();
+
+    } else {
+        // До проверки — обычные фиолетовые
+        ctx.save();
+        ctx.strokeStyle = 'rgba(123,97,255,0.85)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([]);
+        drawnEdges.forEach(([a, b]) => {
+            if (isPredrawn(a, b)) return;
+            const sa = stars.find(s => s.hip_id === a);
+            const sb = stars.find(s => s.hip_id === b);
+            if (!sa || !sb) return;
+            const pa = toCanvas(sa.x, sa.y), pb = toCanvas(sb.x, sb.y);
+            ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+        });
+        ctx.restore();
+    }
+
+    // ── "Показать ответ" — поверх всего ─────────────────────────────────────
+    if (showRef && refEdges.length) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(102,187,106,0.5)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([7, 5]);
+        refEdges.forEach(([a, b]) => {
+            const sa = stars.find(s => s.hip_id === a);
+            const sb = stars.find(s => s.hip_id === b);
+            if (!sa || !sb) return;
+            const pa = toCanvas(sa.x, sa.y), pb = toCanvas(sb.x, sb.y);
+            ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+        });
+        ctx.restore();
+    }
+
+
+
 
     // Constellation stars
     const constStars = stars.filter(s => s.is_constellation);
@@ -367,6 +453,8 @@
       if (eraseMode) {
         const clickedEdge = findEdgeAtPos(x, y);
         if (clickedEdge !== null) {
+          const [a, b] = drawnEdges[clickedEdge];
+          if (isPredrawn(a, b)) return; // ← нельзя стирать подсказку
           drawnEdges.splice(clickedEdge, 1);
           drawAll();
         }
@@ -402,10 +490,11 @@
       const { x, y } = getPos(e);
       const clickedEdge = findEdgeAtPos(x, y);
       if (clickedEdge !== null) {
-        drawnEdges.splice(clickedEdge, 1);
-        selectedStar = null;
-        drawAll();
-      }
+          const [a, b] = drawnEdges[clickedEdge];
+          if (isPredrawn(a, b)) return; // ← нельзя стирать подсказку
+          drawnEdges.splice(clickedEdge, 1);
+          drawAll();
+        }
     });
 
     // Touch events
@@ -487,85 +576,97 @@
   }
 
   // ── Submit ────────────────────────────────────────────────────────────────
-  async function submitDrawing() {
-    if (showingResult) return;
-    showingResult = true;
+    async function submitDrawing() {
+        if (showingResult) return;
+        showingResult = true;
+        document.getElementById('btn-submit').disabled = true;
+        document.getElementById('btn-hint').disabled = true;
+        document.getElementById('btn-clear').disabled = true;
+        document.getElementById('btn-erase').disabled = true;
 
-    document.getElementById('btn-submit').disabled = true;
-    document.getElementById('btn-hint').disabled = true;
-    document.getElementById('btn-clear').disabled = true;
-    document.getElementById('btn-erase').disabled = true;
+        const timeSec = ((Date.now() - questionStartTime) / 1000).toFixed(1);
 
-    const timeSec = ((Date.now() - questionStartTime) / 1000).toFixed(1);
+        const resp = await fetch('/game/api/answer', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                session_id: sessionId,
+                drawn_edges: drawnEdges.filter(([a, b]) => !isPredrawn(a, b)),
+                used_hint: usedHint,
+                time_seconds: parseFloat(timeSec),
+            }),
+        });
 
-    const resp = await fetch('/game/api/answer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        session_id: sessionId,
-        drawn_edges: drawnEdges,
-        used_hint:   usedHint,
-        time_seconds: parseFloat(timeSec),
-      }),
-    });
-    const data = await resp.json();
+        const data = await resp.json();
 
-    if (data.error) {
-      console.error('Ошибка ответа:', data.error);
-      showingResult = false;
-      document.getElementById('btn-submit').disabled = false;
-      document.getElementById('btn-hint').disabled = false;
-      document.getElementById('btn-clear').disabled = false;
-      document.getElementById('btn-erase').disabled = false;
-      document.getElementById('result-area').innerHTML =
-        `<div style="color:#f87171;text-align:center">⚠️ Ошибка: ${data.error}. Перезагрузка...</div>`;
-      setTimeout(() => loadQuestion(), 1500);
-      return;
+        if (data.error) {
+            console.error('API error:', data.error);
+            showingResult = false;
+            document.getElementById('btn-submit').disabled = false;
+            document.getElementById('btn-hint').disabled = false;
+            document.getElementById('btn-clear').disabled = false;
+            document.getElementById('btn-erase').disabled = false;
+            document.getElementById('result-area').innerHTML =
+                `<div style="color:#f87171;text-align:center">${data.error}.</div>`;
+            setTimeout(loadQuestion, 1500);
+            return;
+        }
+
+        updateHeader(data.session || data);
+
+        const details = data.draw_details || {};
+        refEdges             = details.ref_edges          || [];
+        resultCorrectEdges   = details.correct_drawn_edges || [];
+        resultWrongEdges     = details.wrong_drawn_edges   || [];
+
+        const _predrawnKeys = new Set((details.predrawn_edges || []).map(([a,b]) => edgeKey(a,b)));
+        const _correctKeys  = new Set(resultCorrectEdges.map(([a,b]) => edgeKey(a,b)));
+        resultMissingEdges  = (details.ref_edges || []).filter(([a, b]) =>
+            !_predrawnKeys.has(edgeKey(a, b)) && !_correctKeys.has(edgeKey(a, b))
+        );
+        const pct            = details.score_pct           ?? 0;
+
+        drawAll();
+        document.getElementById('legend-draw').style.display   = 'none';
+        document.getElementById('legend-result').style.display = 'flex';
+
+        const cls      = pct >= 85 ? 'correct-card' : (pct >= 40 ? 'partial-card' : 'wrong-card');
+        const icon     = pct >= 85 ? '✅' : (pct >= 40 ? '🟡' : '❌');
+        const barColor = pct >= 85 ? '#66bb6a' : (pct >= 40 ? '#ffd54f' : '#ef5350');
+        const pts      = data.points_earned
+            ? `<span class="points-badge">+${data.points_earned}</span>` : '';
+        const extraCount = (details.total_drawn || 0) - (details.correct_edges || 0);
+        const extraLine  = extraCount > 0
+            ? `<div class="edge-count" style="color:#ef5350">Лишних линий: ${extraCount}</div>` : '';
+        const note = pct < 85 && pct > 0
+            ? `<div class="edge-count" style="color:var(--gold)">Засчитано частично</div>` : '';
+
+        document.getElementById('result-area').innerHTML = `
+            <div class="result-card ${cls}">
+              <div class="result-title">${icon} Созвездие: <b>${data.correct_answer}</b> ${pts}</div>
+              <div class="edge-count">Верных линий: ${details.correct_edges||0} из ${details.total_ref_edges||0}</div>
+              ${extraLine}
+              <div class="score-bar"><div class="score-fill" style="width:0%;background:${barColor}" id="score-fill-anim"></div></div>
+              ${note}
+              <div class="result-fact">${data.fun_fact || ''}</div>
+              <div style="margin-top:16px;text-align:center">
+                <button class="btn btn-next" onclick="nextQuestion()" style="display:inline-block">Следующий →</button>
+              </div>
+            </div>`;
+
+        setTimeout(() => {
+            document.getElementById('result-area')
+                .scrollIntoView({behavior: 'smooth', block: 'nearest'});
+        }, 50);
+
+        setTimeout(() => {
+            const el = document.getElementById('score-fill-anim');
+            if (el) el.style.width = pct + '%';
+            // строку с btn-next убрать
+            document.getElementById('btn-submit').style.display = 'none';
+        }, 100);
     }
-    updateHeader(data);
 
-    const details = data.draw_details || {};
-    refEdges = details.ref_edges || [];
-    const pct     = details.score_pct    || 0;
-    const correct = data.correct;
-
-    if (!correct) {
-      showRef = true;
-      const btnSA = document.getElementById('btn-show-answer');
-      btnSA.textContent = '🙈 Скрыть ответ';
-      btnSA.style.display = 'inline-block';
-    } else {
-      const btnSA = document.getElementById('btn-show-answer');
-      btnSA.style.display = 'inline-block';
-    }
-    drawAll();
-
-    const cls     = correct ? 'correct-card' : (pct > 30 ? 'partial-card' : 'wrong-card');
-    const icon    = correct ? '✅' : (pct > 30 ? '🟡' : '❌');
-    const pts     = data.points_earned > 0
-      ? `<span class="points-badge">+${data.points_earned}</span>` : '';
-    const barColor = correct ? '#66bb6a' : (pct > 30 ? '#ffd54f' : '#ef5350');
-    const note     = !correct
-      ? '<div style="font-size:.82rem;color:rgba(79,195,247,.8);margin-top:6px;">📍 Зелёным пунктиром показан правильный рисунок созвездия</div>'
-      : '';
-
-    document.getElementById('result-area').innerHTML = `
-      <div class="result-card ${cls}">
-        <div class="result-title">${icon} Созвездие: <b>${data.correct_answer}</b> ${pts}</div>
-        <div class="edge-count">Совпало линий: ${details.correct_edges||0} из ${details.total_ref_edges||0}</div>
-        <div class="score-bar"><div class="score-fill" style="width:0%;background:${barColor}" id="score-fill-anim"></div></div>
-        ${note}
-        <div class="result-fact">${data.fun_fact || ''}</div>
-      </div>`;
-
-    setTimeout(() => {
-      const el = document.getElementById('score-fill-anim');
-      if (el) el.style.width = pct + '%';
-    }, 100);
-
-    document.getElementById('btn-next').style.display   = 'inline-block';
-    document.getElementById('btn-submit').style.display = 'none';
-  }
 
   // ── Hint ──────────────────────────────────────────────────────────────────
   async function useHint() {
@@ -580,12 +681,15 @@
 
   // ── Next ──────────────────────────────────────────────────────────────────
   async function nextQuestion() {
+    resultCorrectEdges = [];
+    resultWrongEdges   = [];
+    resultMissingEdges = [];
+
     eraseMode = false;
     document.getElementById('btn-erase').classList.remove('active');
     document.getElementById('btn-erase').textContent = '🗑️ Стереть линию';
     canvas.style.cursor = 'crosshair';
 
-    document.getElementById('btn-next').style.display        = 'none';
     document.getElementById('btn-show-answer').style.display = 'none';
     document.getElementById('btn-submit').style.display      = 'inline-block';
     document.getElementById('btn-submit').disabled           = false;
@@ -600,6 +704,7 @@
     stars = []; drawnEdges = []; selectedStar = null; refEdges = [];
     showingResult = false; usedHint = false; showRef = false;
     eraseMode = false;
+    resultMissingEdges = [];
 
     document.getElementById('hint-box').style.display   = 'none';
     document.getElementById('result-area').innerHTML    = '';
@@ -620,11 +725,22 @@
     const data = await resp.json();
     if (data.finished) { showFinish(data); return; }
 
+    predrawnSet = new Set();
+    drawnEdges = [];
+    if (data.predrawn_edges && data.predrawn_edges.length) {
+      data.predrawn_edges.forEach(([a, b]) => {
+        predrawnSet.add(edgeKey(a, b));
+        drawnEdges.push([a, b]);
+      });
+    }
+
     updateHeader(data.session);
     document.getElementById('question-label').textContent = data.question;
     stars = data.stars || [];
     questionStartTime = Date.now();
     drawAll();
+    document.getElementById('legend-draw').style.display   = 'flex';
+    document.getElementById('legend-result').style.display = 'none';
   }
 
   // ── Game init ─────────────────────────────────────────────────────────────

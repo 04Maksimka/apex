@@ -320,6 +320,7 @@ def api_question():
 
     if question["type"] == "draw":
         resp["stars"] = question["stars"]
+        resp["predrawn_edges"] = question.get("predrawn_edges", [])
     else:
         resp["image"] = question["image"]
         resp["options"] = question["options"]

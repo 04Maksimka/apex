@@ -302,12 +302,11 @@
       });
     });
 
-    // Клик по CTA → старт игры с выбранной сложностью
-    card.querySelector('.card-cta').addEventListener('click', () => {
-      const d = localStorage.getItem(`diff_${mode}`) || DEFAULT_DIFFICULTY[mode];
-      const rounds = document.getElementById('rounds-select').value;
-      window.location.href = `/game/${mode}?difficulty=${d}&rounds=${rounds}`;
-    });
+     card.addEventListener('click', () => {
+        const d = localStorage.getItem(`diff_${mode}`) || DEFAULT_DIFFICULTY[mode];
+        const rounds = document.getElementById('rounds-select').value;
+        window.location.href = `/game/${mode}?difficulty=${d}&rounds=${rounds}`;
+     });
   });
 
   function applyDifficulty(card, d) {

@@ -987,10 +987,11 @@ class QuestionFactory:
 
     # ── Mode 4: Draw the Constellation ─────────────────────────────────────
     def make_draw_question(self, session) -> Dict[str, Any]:
-        magnitude = DIFFICULTY_MAGNITUDE[session.difficulty]
+        difficulty = session.difficulty
+        magnitude = DIFFICULTY_MAGNITUDE[difficulty]
         bg_magnitude = min(magnitude + 1.0, 6.5)
 
-        pool = _get_constellation_list(session.difficulty)
+        pool = _get_constellation_list(difficulty)
         available = [c for c in pool if c not in session.used_objects]
         if not available:
             session.used_objects.clear()
@@ -1093,12 +1094,38 @@ class QuestionFactory:
                 if a in const_projected and b in const_projected:
                     ref_edges.append([a, b])
 
+        # ── Difficulty: pre-drawn edges and rotation ─────────────────────────
+        # easy:   25% рёбер уже нарисовано (floor), фиксированная ориентация
+        # medium: рёбер нет, фиксированная ориентация
+        # hard:   рёбер нет, случайный поворот 2D-координат
+        predrawn_edges: List[List[int]] = []
+
+        if difficulty == "easy":
+            n_pre = math.floor(0.25 * len(ref_edges))
+            if n_pre > 0:
+                predrawn_edges = random.sample(ref_edges, n_pre)
+            tilt_deg = 0.0
+        elif difficulty == "medium":
+            tilt_deg = 0.0
+        else:  # hard
+            tilt_deg = random.uniform(0.0, 360.0)
+
+        # Apply 2D rotation (hard mode)
+        if tilt_deg != 0.0:
+            cos_a = math.cos(math.radians(tilt_deg))
+            sin_a = math.sin(math.radians(tilt_deg))
+            for star in stars_list:
+                x, y = star["x"], star["y"]
+                star["x"] = round(cos_a * x - sin_a * y, 4)
+                star["y"] = round(sin_a * x + cos_a * y, 4)
+
         question = {
             "type": "draw",
             "question": "Соедините звёзды созвездия линиями так, "
             "как они соединены на официальных картах.",
             "stars": stars_list,
             "ref_edges": ref_edges,
+            "predrawn_edges": predrawn_edges,
             "correct": constellation_name,
             "correct_abbr": correct_abbr,
             "hint": f"В рисунке этого созвездия {len(ref_edges)} линий",
@@ -1118,22 +1145,39 @@ class QuestionFactory:
         ):
             return {"error": "No active draw question"}
 
-        ref = session.current_question["ref_edges"]
+        q = session.current_question
+        ref = q["ref_edges"]
+        predrawn = q.get("predrawn_edges", [])
+
         ref_set = {(min(a, b), max(a, b)) for a, b in ref}
-        drawn_set = {(min(a, b), max(a, b)) for a, b in drawn_edges}
-        correct_edges = len(ref_set & drawn_set)
-        total_ref = len(ref_set)
-        score_pct = correct_edges / total_ref * 100 if total_ref else 0
+        predrawn_set = {(min(a, b), max(a, b)) for a, b in predrawn}
+        target_set = ref_set - predrawn_set
+
+        # ← переставить сюда:
+        user_set = {(min(a, b), max(a, b)) for a, b in drawn_edges}
+        correct_edges = len(user_set & target_set)
+        total_target = len(target_set)
+        total_drawn = len(user_set)
+
+        union = total_target + total_drawn - correct_edges
+        score_pct = correct_edges / union * 100 if union else 100.0
         passed = score_pct >= 50.0
+
+        correct_drawn_list = [list(e) for e in (user_set & target_set)]
+        wrong_drawn_list = [list(e) for e in (user_set - target_set)]
 
         return {
             "correct": passed,
             "score_pct": round(score_pct, 1),
             "correct_edges": correct_edges,
-            "total_ref_edges": total_ref,
-            "correct_answer": session.current_question["correct"],
+            "total_ref_edges": total_target,
+            "total_drawn": total_drawn,
+            "correct_drawn_edges": correct_drawn_list,
+            "wrong_drawn_edges": wrong_drawn_list,
+            "correct_answer": q["correct"],
             "ref_edges": ref,
-            "fun_fact": session.current_question["fun_fact"],
+            "predrawn_edges": predrawn,
+            "fun_fact": q["fun_fact"],
         }
 
     # ── Mode 5: Trivia ──────────────────────────────────────────────────────
