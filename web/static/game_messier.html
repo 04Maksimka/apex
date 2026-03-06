@@ -29,10 +29,10 @@
         border: 1px solid rgba(123,97,255,.25);
         margin-bottom: 28px;
         background: #020208;
-        /* БЕЗ фиксированной высоты — одиночное фото задаёт высоту само */
+        position: relative;
     }
 
-    /* Режим two-images (easy и medium после подсказки) — фиксированная высота */
+    /* Двойной режим (easy, medium после подсказки) */
     .sky-wrap.two-images {
         display: flex;
         gap: 2px;
@@ -41,19 +41,19 @@
     }
 
     /* ── Карта (two-images) ─────────────────────────────────────────────── */
-    #chart-cell {
+    .sky-wrap.two-images #chart-cell {
         flex: 0 0 auto;
         min-width: 0;
         max-width: 65%;
     }
-    #sky-img {
+    .sky-wrap.two-images #sky-img {
         display: block;
         height: 100%;
-        width: auto;            /* ширина = 400px × 1.5, без полос */
+        width: auto;
     }
 
     /* ── Фото (two-images) ──────────────────────────────────────────────── */
-    #photo-cell {
+    .sky-wrap.two-images #photo-cell {
         flex: 1;
         min-width: 0;
     }
@@ -63,51 +63,113 @@
         height: 100%;
         object-fit: cover;
     }
-
-    /* ── Одиночный режим (medium до подсказки, hard) ────────────────────── */
-    .sky-wrap:not(.two-images) #chart-cell,
-    .sky-wrap:not(.two-images) #photo-cell {
-        width: 100%;
+    /* ── Одиночный режим: рамка облегает изображение ───────────────────── */
+    .sky-wrap:not(.two-images) {
+        width: fit-content;   /* рамка = ширина контента */
+        max-width: 100%;       /* не выйти за родителя */
+        min-width: 220px;      /* чтобы лоадер был виден до загрузки */
+        min-height: 120px;
+        margin-left: auto;
+        margin-right: auto;
     }
-    /* Одиночное фото — естественные пропорции, без полос, без растяжки */
+
+    .sky-wrap:not(.two-images) #sky-img,
     .sky-wrap:not(.two-images) #photo-img {
         display: block;
-        width: 100%;
-        height: auto;
-        max-height: 400px;
-        object-fit: contain;
+        width: auto;           /* естественная ширина, без растяжки */
+        height: auto;          /* пропорции не трогать */
+        max-width: calc(100vw - 40px);  /* не вылезти за экран */
+        max-height: 75vh;      /* не занимать весь экран по высоте */
     }
-    /* Карта в hard — тоже естественные пропорции */
-    .sky-wrap:not(.two-images) #sky-img {
-        display: block;
-        width: 100%;
-        height: auto;
-        max-height: 400px;
-        object-fit: contain;
+    /* ── img-cell: нужен для позиционирования кнопки зума ──────────────── */
+    .img-cell {
+        position: relative;
     }
 
+    /* ── Кнопка «открыть в полный размер» ──────────────────────────────── */
+    .zoom-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 34px;
+        height: 34px;
+        background: rgba(6,6,18,.65);
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 8px;
+        color: #e8eaf6;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity .2s, background .15s;
+        z-index: 5;
+        padding: 0;
+    }
+    .img-cell:hover .zoom-btn { opacity: 1; }
+    .zoom-btn:hover { background: rgba(123,97,255,.55); }
+
+    /* ── Модальное окно просмотра ───────────────────────────────────────── */
+    #zoom-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.92);
+        z-index: 2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: zoom-out;
+    }
+    #zoom-modal.open { display: flex; }
+    #zoom-modal-img {
+        max-width: 95vw;
+        max-height: 93vh;
+        object-fit: contain;
+        border-radius: 10px;
+        box-shadow: 0 0 60px rgba(0,0,0,.8);
+        cursor: default;
+    }
+    #zoom-close {
+        position: fixed;
+        top: 14px;
+        right: 14px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255,255,255,.1);
+        border: 1px solid rgba(255,255,255,.2);
+        border-radius: 50%;
+        color: #fff;
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background .15s;
+    }
+    #zoom-close:hover { background: rgba(239,83,80,.5); }
+
     /* ── Мобильные ──────────────────────────────────────────────────────── */
-    @media(max-width: 600px) {
+    @media (max-width: 600px) {
         .sky-wrap.two-images {
             flex-direction: column;
             height: auto;
         }
-        #chart-cell {
+        .sky-wrap.two-images #chart-cell {
             flex: 0 0 auto;
             width: 100%;
             max-width: 100%;
         }
-        #sky-img {
+        .sky-wrap.two-images #sky-img {
             width: 100%;
             height: auto;
         }
-        #photo-cell {
+        .sky-wrap.two-images #photo-cell {
             flex: 0 0 260px;
             width: 100%;
         }
-        .sky-wrap:not(.two-images) #photo-img,
-        .sky-wrap:not(.two-images) #sky-img {
-            max-height: none;
+        .sky-wrap:not(.two-images) #sky-img,
+        .sky-wrap:not(.two-images) #photo-img {
+            max-height: 60vh;
         }
     }
 
@@ -175,12 +237,24 @@
 
     <div class="sky-wrap" id="sky-wrap">
       <div class="img-cell" id="chart-cell">
-        <div class="sky-loader" id="sky-loader"><div class="spinner"></div> Генерируем карту…</div>
-        <img id="sky-img" src="" alt="Область неба" style="display:none" />
+          <div class="sky-loader" id="sky-loader"><div class="spinner"></div> Генерируем карту…</div>
+          <img id="sky-img" src="" alt="Область неба" style="display:none" />
+          <button class="zoom-btn" onclick="openZoom('sky-img')" title="Открыть карту">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+              </svg>
+</button>
+
       </div>
       <div class="img-cell" id="photo-cell" style="display:none">
-        <img id="photo-img" src="" alt="Фото объекта"
+          <img id="photo-img" src="" alt="Фото объекта"
              onerror="document.getElementById('photo-cell').style.display='none'" />
+          <button class="zoom-btn" onclick="openZoom('photo-img')" title="Открыть фото">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+              </svg>
+</button>
+
       </div>
     </div>
 
@@ -409,8 +483,26 @@
   function restartGame() {
     location.href = `/game/messier?difficulty=${DIFFICULTY}&rounds=${ROUNDS}`;
   }
+    function openZoom(imgId) {
+        const img = document.getElementById(imgId);
+        if (!img || !img.src || img.style.display === 'none') return;
+        document.getElementById('zoom-modal-img').src = img.src;
+        document.getElementById('zoom-modal').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeZoom() {
+        document.getElementById('zoom-modal').classList.remove('open');
+        document.getElementById('zoom-modal-img').src = '';
+        document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeZoom(); });
+
 
   initGame();
 </script>
+<div id="zoom-modal" onclick="closeZoom()">
+    <img id="zoom-modal-img" src="" alt="" onclick="event.stopPropagation()">
+    <button id="zoom-close" onclick="closeZoom()">✕</button>
+</div>
 </body>
 </html>
