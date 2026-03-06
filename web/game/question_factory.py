@@ -698,12 +698,15 @@ class QuestionFactory:
         correct_name = CONSTELLATIONS_DATA[correct_abbr]["name"]
         center = CONSTELLATIONS_DATA[correct_abbr]["center"]
 
+        show_const = session.difficulty == "easy"
+        random_tilt = session.difficulty == "hard"
+
         image_b64 = _generate_pinhole_image(
             direction=center,
             magnitude=magnitude,
-            show_const=True,
+            show_const=show_const,
             show_names=False,
-            random_tilt=True,
+            random_tilt=random_tilt,
             aspect_ratio=1.0,
             fov=60.0,
         )
