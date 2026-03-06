@@ -58,16 +58,25 @@ def calculate_score(
     streak: int,
     used_hint: bool = False,
     time_seconds: Optional[float] = None,
+    time_bonus_threshold: int = TIME_BONUS_SECONDS,  # ← добавить параметр
 ) -> int:
     """
     Calculate points awarded for a single answer.
 
     :param difficulty: 'easy' | 'medium' | 'hard'
+    :type difficulty: str
     :param correct: whether the answer was correct
+    :type correct: bool
     :param streak: current streak count (before this answer is counted)
+    :type streak: int
     :param used_hint: whether the player used a hint
+    :type used_hint: bool
     :param time_seconds: how long the player took to answer
-    :returns: points awarded (0 for wrong answers)
+    :type time_seconds: float
+    :param time_bonus_threshold: how many seconds should the player bonus
+    :type time_bonus_threshold: int
+    :return: points awarded (0 for wrong answers)
+    :rtype: int
     """
     if not correct:
         return 0
@@ -82,7 +91,7 @@ def calculate_score(
     multiplier = _streak_multiplier(streak)
 
     # Time bonus
-    if time_seconds is not None and time_seconds <= TIME_BONUS_SECONDS:
+    if time_seconds is not None and time_seconds <= time_bonus_threshold:
         multiplier *= TIME_BONUS_MULTIPLIER
 
     return int(base * multiplier)

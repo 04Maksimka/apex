@@ -40,7 +40,12 @@ from typing import Any, Dict
 from flask import Blueprint, abort, jsonify, request, send_from_directory
 
 from web.game.question_factory import QuestionFactory
-from web.game.scoring import build_result, calculate_score, get_rank
+from web.game.scoring import (
+    TIME_BONUS_SECONDS,
+    build_result,
+    calculate_score,
+    get_rank,
+)
 from web.game.session import (
     cleanup_old_sessions,
     create_session,
@@ -413,16 +418,28 @@ def api_answer():
             correct = name_correct
 
     # ── Scoring ──────────────────────────────────────────────────────────────
+    is_draw = session.current_question.get("type") == "draw"
+    time_threshold = 45 if is_draw else TIME_BONUS_SECONDS
+
     points = calculate_score(
         difficulty=session.difficulty,
         correct=correct,
         streak=session.streak,
         used_hint=used_hint,
         time_seconds=float(time_seconds) if time_seconds is not None else None,
+        time_bonus_threshold=time_threshold,
     )
+
+    # Масштабировать очки draw пропорционально score_pct
+    if is_draw:
+        points = int(points * result.get("score_pct", 0.0) / 100.0)
+
     session.score += points
     session.round += 1
-    if correct:
+    if session.current_question.get("type") == "draw":
+        session.correct_count += result.get("score_pct", 0.0) / 100.0
+    elif correct:
+        session.correct_count += 1
         session.streak += 1
         session.correct_count += 1
         session.best_streak = max(session.best_streak, session.streak)
