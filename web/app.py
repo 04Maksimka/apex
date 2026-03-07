@@ -163,7 +163,7 @@ def generate():
                 "pdf_helpers",
                 "logo_astrageek.png",
             ),
-            footer_text="skychart.astrageek.ru",
+            footer_text="apex-skychart.ru",
             print_skychart_info=print_skychart_info,
         )
         plt.close(fig)
@@ -226,7 +226,7 @@ def generate():
                 "pdf_helpers",
                 "logo_astrageek.png",
             ),
-            footer_text="skychart.astrageek.ru",
+            footer_text="apex-skychart.ru",
         )
         plt.close(fig)
 
