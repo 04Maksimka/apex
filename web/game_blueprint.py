@@ -242,6 +242,9 @@ def api_start():
     mode = data.get("mode", "constellation")
     difficulty = data.get("difficulty", "easy")
     rounds = int(data.get("rounds", 10))
+    language   = data.get("language", "en")
+    if language not in ("en", "ru"):
+        language = "en"
 
     if mode not in VALID_MODES:
         return _err(f"Invalid mode. Choose from: {sorted(VALID_MODES)}")
@@ -251,7 +254,7 @@ def api_start():
         return _err("rounds must be between 1 and 30")
 
     session = create_session(
-        mode=mode, difficulty=difficulty, total_rounds=rounds
+        mode=mode, difficulty=difficulty, total_rounds=rounds, language=language,
     )
 
     # ── Start generating the first question in the background ─────────────
@@ -441,7 +444,6 @@ def api_answer():
     elif correct:
         session.correct_count += 1
         session.streak += 1
-        session.correct_count += 1
         session.best_streak = max(session.best_streak, session.streak)
     else:
         session.streak = 0

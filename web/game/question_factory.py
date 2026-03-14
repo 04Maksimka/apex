@@ -117,12 +117,108 @@ _FALLBACK_NAMED_STARS: Dict[int, str] = {
     86228: "Sargas",
     78820: "Acrab",
     85696: "Lesath",
-    81266: "Shaula",
+    81266: "Alniyat II",   # τ Sco (по другую сторону Антареса от Alniyat I σ Sco HIP 80112)
+    85927: "Shaula",       # λ Sco — настоящая Шаула
     92855: "Nunki",
     14135: "Menkar",
     10826: "Mira",
     20205: "Aldebaran",
 }
+
+# ---------------------------------------------------------------------------
+# Russian translations
+# ---------------------------------------------------------------------------
+CONSTELLATION_NAMES_RU: Dict[str, str] = {
+    "AND": "Андромеда",      "AQL": "Орёл",           "AQR": "Водолей",
+    "ARI": "Овен",           "AUR": "Возничий",        "BOO": "Волопас",
+    "CAM": "Жираф",          "CAP": "Козерог",         "CAS": "Кассиопея",
+    "CEP": "Цефей",          "CET": "Кит",             "CMA": "Большой Пёс",
+    "CMI": "Малый Пёс",      "CNC": "Рак",             "COL": "Голубь",
+    "COM": "Волосы Вероники", "COR": "Южная Корона",    "CRA": "Южная Корона",
+    "CRB": "Северная Корона", "CRU": "Южный Крест",    "CRV": "Ворон",
+    "CRT": "Чаша",            "CVN": "Гончие Псы",     "CYG": "Лебедь",
+    "DEL": "Дельфин",         "DRA": "Дракон",         "EQU": "Малый Конь",
+    "ERI": "Эридан",          "GEM": "Близнецы",       "GRU": "Журавль",
+    "HER": "Геркулес",        "HYA": "Гидра",          "LEO": "Лев",
+    "LIB": "Весы",            "LYR": "Лира",           "OPH": "Змееносец",
+    "ORI": "Орион",           "PEG": "Пегас",          "PER": "Персей",
+    "PSC": "Рыбы",            "SCO": "Скорпион",       "SCT": "Щит",
+    "SER": "Змея",            "SGR": "Стрелец",        "TAU": "Телец",
+    "TRI": "Треугольник",     "UMA": "Большая Медведица", "UMI": "Малая Медведица",
+    "VIR": "Дева",            "VUL": "Лисичка",        "SAG": "Стрелец",
+}
+
+STAR_NAMES_RU: Dict[str, str] = {
+    "Sirius":        "Сириус",
+    "Vega":          "Вега",
+    "Arcturus":      "Арктур",
+    "Procyon":       "Процион",
+    "Rigel":         "Ригель",
+    "Betelgeuse":    "Бетельгейзе",
+    "Canopus":       "Канопус",
+    "Capella":       "Капелла",
+    "Altair":        "Альтаир",
+    "Deneb":         "Денеб",
+    "Antares":       "Антарес",
+    "Spica":         "Спика",
+    "Regulus":       "Регул",
+    "Polaris":       "Полярная",
+    "Aldebaran":     "Альдебаран",
+    "Alpheratz":     "Альферац",
+    "Bellatrix":     "Беллатрикс",
+    "Castor":        "Кастор",
+    "Pollux":        "Поллукс",
+    "Denebola":      "Денебола",
+    "Dubhe":         "Дубхе",
+    "Merak":         "Мерак",
+    "Mizar":         "Мицар",
+    "Schedar":       "Шедар",
+    "Caph":          "Каф",
+    "Ruchbah":       "Рухба",
+    "Mirach":        "Мирах",
+    "Scheat":        "Шеат",
+    "Markab":        "Маркаб",
+    "Hadar":         "Хадар",
+    "Rigil Centaurus": "Ригель Кентавра",
+    "Acrux":         "Акрукс",
+    "Eltanin":       "Этамин",
+    "Sheliak":       "Шелиак",
+    "Sulafat":       "Сулафат",
+    "Rasalgethi":    "Расальгети",
+    "Kornephoros":   "Корнефорос",
+    "Unukalhai":     "Унукальхай",
+    "Zubenelgenubi": "Зубен эль-Генуби",
+    "Zubeneschamali": "Зубен эш-Шамали",
+    "Rastaban":      "Растабан",
+    "Pherkad":       "Феркад",
+    "Izar":          "Изар",
+    "Thuban":        "Тубан",
+    "Albireo":       "Альбирео",
+    "Sadr":          "Садр",
+    "Alderamin":     "Альдерамин",
+    "Sabik":         "Сабик",
+    "Sargas":        "Саргас",
+    "Acrab":         "Акраб",
+    "Lesath":        "Лесат",
+    "Alniyat II":    "Альнят II",
+    "Shaula":        "Шаула",
+    "Nunki":         "Нунки",
+    "Menkar":        "Менкар",
+    "Mira":          "Мира",
+}
+
+def _localize_constellation(abbr: str, name_en: str, language: str) -> str:
+    """Return constellation name in the requested language."""
+    if language == "ru":
+        return CONSTELLATION_NAMES_RU.get(abbr, name_en)
+    return name_en
+
+
+def _localize_star(name_en: str, language: str) -> str:
+    """Return star name in the requested language."""
+    if language == "ru":
+        return STAR_NAMES_RU.get(name_en, name_en)
+    return name_en
 
 # ---------------------------------------------------------------------------
 # Fun-facts
@@ -212,6 +308,14 @@ CONSTELLATION_FACTS: Dict[str, str] = {
 
 
 STAR_FACTS: Dict[str, str] = {
+    "Alniyat II": (
+        "Альнят II (τ Скорпиона) — голубой гигант, симметрично расположенный "
+        "с Альнят I по другую сторону от Антареса."
+    ),
+    "Shaula": (
+        "Шаула (λ Скорпиона) — двойная звезда, один из ярчайших «жал» "
+        "Скорпиона; в 700 световых годах от Земли."
+    ),
     "Sirius": (
         "Сириус — самая яркая звезда ночного неба (−1,46m); это двойная "
         "система на расстоянии 8,6 световых лет."
@@ -689,8 +793,10 @@ class QuestionFactory:
         pool = _get_constellation_list(session.difficulty)
         available = [c for c in pool if c not in session.used_objects]
         if not available:
+            last_used = set(session.used_objects)   # сохранить перед очисткой
             session.used_objects.clear()
-            available = pool[:]
+            # Не брать то, что стояло последним в очереди
+            available = [c for c in pool if c not in last_used] or pool[:]
 
         correct_abbr = random.choice(available)
         session.used_objects.add(correct_abbr)
@@ -710,11 +816,13 @@ class QuestionFactory:
             aspect_ratio=1.0,
             fov=60.0,
         )
-
         distractors = _random_distractors(correct_abbr, pool)
+        lang = getattr(session, "language", "en")
+        correct_name = _localize_constellation(correct_abbr, correct_name, lang)
         options = _shuffle_options(
             correct_name,
-            *[CONSTELLATIONS_DATA[d]["name"] for d in distractors],
+            *[_localize_constellation(d, CONSTELLATIONS_DATA[d]["name"], lang)
+              for d in distractors],
         )
 
         question = {
@@ -865,6 +973,11 @@ class QuestionFactory:
             random_tilt=random_tilt,
         )
 
+        lang = getattr(session, "language", "en")
+        correct_name_display = _localize_star(correct_name, lang)
+        distractors_display  = [_localize_star(n, lang) for n in distractors]
+        options = _shuffle_options(correct_name_display, *distractors_display)
+
         question = {
             "type": "star",
             "image": image_b64,
@@ -915,6 +1028,7 @@ class QuestionFactory:
             4: "Туманность",
             5: "Остаток сверхновой",
             6: "Звёздное облако",
+            7: "Двойная звезда",
         }
         obj_type_name = TYPE_NAMES.get(int(obj["obj_type"]), "Объект")
 
@@ -954,18 +1068,52 @@ class QuestionFactory:
 
         obj_catalog_name = str(obj["name"]).strip()
         correct_label = f"M{m_num}"
+        obj_constellation = str(obj["constellation"])
+
+        # Приоритет 1: объекты того же созвездия
+        same_const = [
+            int(o["m_number"])
+            for o in all_objects
+            if int(o["m_number"]) != m_num
+               and str(o["constellation"]) == obj_constellation
+        ]
+        # Приоритет 2: объекты близких созвездий (угловое расстояние < 30°)
+        direction_correct = np.array(
+            [float(obj["x"]), float(obj["y"]), float(obj["z"])], dtype=np.float64
+        )
+        nearby = [
+            int(o["m_number"])
+            for o in all_objects
+            if int(o["m_number"]) != m_num
+               and int(o["m_number"]) not in same_const
+               and float(np.dot(
+                np.array([float(o["x"]), float(o["y"]), float(o["z"])], dtype=np.float64)
+                / (np.linalg.norm([float(o["x"]), float(o["y"]), float(o["z"])]) + 1e-9),
+                direction_correct / (np.linalg.norm(direction_correct) + 1e-9)
+            )) > math.cos(math.radians(30))
+        ]
+        # Приоритет 3: произвольные объекты
         other_nums = [
             int(o["m_number"])
             for o in all_objects
             if int(o["m_number"]) != m_num
+               and int(o["m_number"]) not in same_const
+               and int(o["m_number"]) not in nearby
         ]
-        options = _shuffle_options(
-            correct_label,
-            *[
-                f"M{n}"
-                for n in random.sample(other_nums, min(3, len(other_nums)))
-            ],
-        )
+
+        # Собираем 3 дистрактора: сначала из же созвездия/близких
+        distractor_pool: List[int] = []
+        if same_const:
+            distractor_pool += random.sample(same_const, min(2, len(same_const)))
+        if len(distractor_pool) < 3 and nearby:
+            need = 3 - len(distractor_pool)
+            distractor_pool += random.sample(nearby, min(need, len(nearby)))
+        if len(distractor_pool) < 3 and other_nums:
+            need = 3 - len(distractor_pool)
+            distractor_pool += random.sample(other_nums, min(need, len(other_nums)))
+        distractor_pool = distractor_pool[:3]
+
+        options = _shuffle_options(correct_label, *[f"M{n}" for n in distractor_pool])
 
         question = {
             "type": "messier",

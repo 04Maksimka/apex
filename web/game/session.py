@@ -91,6 +91,7 @@ class GameSession:
     session_id: str
     mode: str  # constellation | star | messier | draw | trivia
     difficulty: str  # easy | medium | hard
+    language: str = "en"
 
     score: int = 0
     round: int = 0
@@ -133,6 +134,7 @@ class GameSession:
             "correct_count": self.correct_count,
             "accuracy": self.accuracy,
             "is_finished": self.is_finished,
+            "language": self.language,
         }
 
 
@@ -140,13 +142,17 @@ class GameSession:
 # CRUD helpers
 # ---------------------------------------------------------------------------
 def create_session(
-    mode: str, difficulty: str, total_rounds: int = TOTAL_ROUNDS_DEFAULT
+    mode: str,
+    difficulty: str,
+    total_rounds: int = TOTAL_ROUNDS_DEFAULT,
+    language: str = "en",
 ) -> GameSession:
     session_id = str(uuid.uuid4())
     session = GameSession(
         session_id=session_id,
         mode=mode,
         difficulty=difficulty,
+        language=language,
         total_rounds=total_rounds,
     )
     _sessions[session_id] = session

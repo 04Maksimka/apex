@@ -225,6 +225,9 @@
     <div class="stat-chip">Раунд <span class="val" id="hdr-round">0</span>/<span id="hdr-total">10</span></div>
     <div class="stat-chip">Очки <span class="val" id="hdr-score">0</span></div>
     <div class="stat-chip streak-chip">🔥 <span class="val" id="hdr-streak">0</span></div>
+      <div class="stat-chip lang-switch" style="cursor:pointer" onclick="toggleLanguage()" title="Переключить язык">
+  <span id="lang-label">🌐 EN</span>
+</div>
   </div>
 </div>
 <div class="progress-wrap">
@@ -287,6 +290,15 @@
   const MODE = 'messier';
   const params = new URLSearchParams(location.search);
   const DIFFICULTY = params.get('difficulty') || 'medium';
+  let LANGUAGE = new URLSearchParams(location.search).get('lang') || 'en';
+
+function toggleLanguage() {
+  LANGUAGE = LANGUAGE === 'en' ? 'ru' : 'en';
+  document.getElementById('lang-label').textContent = '🌐 ' + LANGUAGE.toUpperCase();
+  // Перезапустить игру с новым языком
+  location.href = location.pathname +
+    `?mode=${MODE}&difficulty=${DIFFICULTY}&rounds=${ROUNDS}&lang=${LANGUAGE}`;
+}
   const ROUNDS = parseInt(params.get('rounds') || '10');
 
   const SHOW_CHART = (DIFFICULTY === 'easy' || DIFFICULTY === 'hard');

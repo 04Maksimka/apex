@@ -176,13 +176,22 @@
   const MODE = 'trivia';
   const params = new URLSearchParams(location.search);
   const DIFFICULTY = params.get('difficulty') || 'easy';
+  let LANGUAGE = new URLSearchParams(location.search).get('lang') || 'en';
+
+function toggleLanguage() {
+  LANGUAGE = LANGUAGE === 'en' ? 'ru' : 'en';
+  document.getElementById('lang-label').textContent = '🌐 ' + LANGUAGE.toUpperCase();
+  // Перезапустить игру с новым языком
+  location.href = location.pathname +
+    `?mode=${MODE}&difficulty=${DIFFICULTY}&rounds=${ROUNDS}&lang=${LANGUAGE}`;
+}
   const ROUNDS = parseInt(params.get('rounds') || '10');
   let sessionId = null, usedHint = false, questionStartTime = null, answered = false;
 
   async function initGame() {
     const resp = await fetch('/game/api/start', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: MODE, difficulty: DIFFICULTY, rounds: ROUNDS }),
+      body: JSON.stringify({ mode: MODE, difficulty: DIFFICULTY, rounds: ROUNDS, language: LANGUAGE}),
     });
     const data = await resp.json();
     sessionId = data.session_id;

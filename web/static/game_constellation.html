@@ -165,6 +165,9 @@
     <div class="stat-chip">Раунд <span class="val" id="hdr-round">0</span>/<span id="hdr-total">10</span></div>
     <div class="stat-chip">Очки <span class="val" id="hdr-score">0</span></div>
     <div class="stat-chip streak-chip">🔥 <span class="val" id="hdr-streak">0</span></div>
+    <div class="stat-chip lang-switch" style="cursor:pointer" onclick="toggleLanguage()" title="Переключить язык">
+  <span id="lang-label">🌐 EN</span>
+</div>
   </div>
 </div>
 <div class="progress-wrap">
@@ -227,6 +230,15 @@
   const MODE = 'constellation';
   const params = new URLSearchParams(location.search);
   const DIFFICULTY = params.get('difficulty') || 'easy';
+  let LANGUAGE = new URLSearchParams(location.search).get('lang') || 'en';
+
+function toggleLanguage() {
+  LANGUAGE = LANGUAGE === 'en' ? 'ru' : 'en';
+  document.getElementById('lang-label').textContent = '🌐 ' + LANGUAGE.toUpperCase();
+  // Перезапустить игру с новым языком
+  location.href = location.pathname +
+    `?mode=${MODE}&difficulty=${DIFFICULTY}&rounds=${ROUNDS}&lang=${LANGUAGE}`;
+}
   const ROUNDS = parseInt(params.get('rounds') || '10');
 
   let sessionId = null;
@@ -239,7 +251,7 @@
     const resp = await fetch('/game/api/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: MODE, difficulty: DIFFICULTY, rounds: ROUNDS }),
+      body: JSON.stringify({ mode: MODE, difficulty: DIFFICULTY, rounds: ROUNDS, language: LANGUAGE}),
     });
     const data = await resp.json();
     sessionId = data.session_id;

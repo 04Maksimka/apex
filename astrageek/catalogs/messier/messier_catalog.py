@@ -21,6 +21,7 @@ class MessierType(IntEnum):
     NEBULA = 4  # Nebula (emission, reflection, or planetary)
     SUPERNOVA_REMNANT = 5  # Supernova remnant
     STAR_CLOUD = 6  # Star cloud
+    DOUBLE_STAR = 7
 
 
 class MessierCatalog:
@@ -590,7 +591,7 @@ class MessierCatalog:
             0.0,
             8.4,
             0.8,
-            MessierType.OPEN_CLUSTER,
+            MessierType.DOUBLE_STAR,
             "UMa",
         ),
         (
@@ -1789,6 +1790,7 @@ class MessierCatalog:
             MessierType.NEBULA: "Nebula",
             MessierType.SUPERNOVA_REMNANT: "Supernova Remnant",
             MessierType.STAR_CLOUD: "Star Cloud",
+            MessierType.DOUBLE_STAR: "Double Star",
         }
         return type_names.get(obj_type, "Unknown")
 
@@ -1803,12 +1805,13 @@ class MessierCatalog:
         :rtype: str
         """
         type_colors = {
-            MessierType.GALAXY: "#FF6B9D",
-            MessierType.GLOBULAR_CLUSTER: "#FFD700",
-            MessierType.OPEN_CLUSTER: "#87CEEB",
-            MessierType.NEBULA: "#00CED1",
+            MessierType.GALAXY:            "#FF6B9D",
+            MessierType.GLOBULAR_CLUSTER:  "#FFD700",
+            MessierType.OPEN_CLUSTER:      "#87CEEB",
+            MessierType.NEBULA:            "#00CED1",
             MessierType.SUPERNOVA_REMNANT: "#FF4500",
-            MessierType.STAR_CLOUD: "#DDA0DD",
+            MessierType.STAR_CLOUD:        "#DDA0DD",
+            MessierType.DOUBLE_STAR:       "#FFFDE7",
         }
         return type_colors.get(obj_type, "#FFFFFF")
 

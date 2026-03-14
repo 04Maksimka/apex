@@ -108,6 +108,9 @@
     <div class="stat-chip">Раунд <span class="val" id="hdr-round">0</span>/<span id="hdr-total">10</span></div>
     <div class="stat-chip">Очки <span class="val" id="hdr-score">0</span></div>
     <div class="stat-chip streak-chip">🔥 <span class="val" id="hdr-streak">0</span></div>
+    <div class="stat-chip lang-switch" style="cursor:pointer" onclick="toggleLanguage()" title="Переключить язык">
+  <span id="lang-label">🌐 EN</span>
+</div>
   </div>
 </div>
 <div class="progress-wrap">
@@ -748,7 +751,7 @@
     const resp = await fetch('/game/api/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: MODE, difficulty: DIFFICULTY, rounds: ROUNDS }),
+      body: JSON.stringify({ mode: MODE, difficulty: DIFFICULTY, rounds: ROUNDS, language: LANGUAGE}),
     });
     const data = await resp.json();
     sessionId = data.session_id;
